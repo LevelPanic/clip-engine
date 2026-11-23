@@ -40,8 +40,9 @@ The caption looks load Barlow Condensed, Luckiest Guy, Poppins and Montserrat fr
 
 ## Sounds
 
-`assets/sfx/` holds short sound effects used by the `sfx` and `bleep` markers. boom, whoosh, ding, pop,
-air-horn, record-scratch, glass-break, boing and bleep were synthesized for this project.
+`assets/sfx/` holds the short sound effects the `sfx` and `bleep` markers play. All 14 were made for this
+project and are covered by its MIT licence: air-horn, bass-drop, bleep, boing, boom, ding, glass-break,
+glitch, pop, record-scratch, riser, shutter, swish and whoosh.
 
 ## The footage you clip
 

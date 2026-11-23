@@ -298,7 +298,7 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
   - clone into a temp folder, then `npm ci`, typecheck, test and `./clip --help`
   - the Studio starts with the example configs
 - **A final scan** of the committed tree for personal data and media, and a size check.
-- **Sound origins:** riser, bass-drop, glitch, shutter and swish (`assets/sfx/`) have no recorded origin. Confirm they were made here, or replace them, then list them in THIRD_PARTY.md.
+- **Sound origins:** done. The user confirmed that riser, bass-drop, glitch, shutter and swish were made for the project (2026-11-23), and THIRD_PARTY.md lists all 14 under the MIT licence.
 - **The push:** the public GitHub repo is created by you, or with your OK through `gh repo create`, and then pushed.
 
 ## Decisions (defaults in bold)
