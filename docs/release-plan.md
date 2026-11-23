@@ -272,6 +272,7 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
    - the two key clashes settled: E exports on one page and opens the editor on another; Enter does different things too
    - one nav bar instead of three back-link styles
 5. **The watchlist status page** uses the same tokens.
+6. **Library thumbnails:** the library asks YouTube's image server (`i.ytimg.com`) for every video, Twitch broadcasts included. YouTube answers those with a 404 and a grey placeholder, so each Twitch row logs an error (144 on 2026-11-23) and shows no picture. Use the broadcast's own thumbnail, or a still, for a `tw-` id.
 
 ## Phase 4: release checks (about 2 hours)
 
