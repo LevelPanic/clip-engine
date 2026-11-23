@@ -92,11 +92,13 @@ src/review/        review decisions, feedback log, performance import, stats (th
 src/jobs/          the Studio's SQLite job queue (library/jobs.sqlite) and starting its worker (ensureWorker, LIMITS)
 src/studio/        server.ts (express + vite middleware + SSE + job polling) and web/ (React)
 src/track/         the watchlist's tracker (tracking.sqlite: streams, moments, coverage ledgers), its job queue (leases, fenced writes),
-                   the observer's ledger, moment ranking (rank.ts), change requests (revise.ts), the ranker trial
+                   the observer's ledger, moment ranking (rank.ts), change requests (revise.ts), the ranker trial,
+                   what a failed watchlist job becomes (runner.ts)
 src/pipeline/      full.ts: the unattended full process for one moment or one change request, run through OpenCode;
                    the job handlers (handlers.ts) and the worker loop (runner.ts), batches (batch.ts, startBatch.ts),
-                   clip watch (watch.ts), the Whisper re-transcribe job (whisperJob.ts)
-src/publish/       YouTube (OAuth, resumable upload, schedule, 18+), TikTok inbox, analytics, the upload pace, upload status
+                   clip watch (watch.ts), the Whisper re-transcribe job (whisperJob.ts), what the cleanup may delete (cleanup.ts)
+src/publish/       YouTube (OAuth, resumable upload, schedule, 18+), TikTok inbox, analytics, the upload pace, upload status,
+                   the upload scheduler's decisions (scheduler.ts: the gate before an upload call, what a failure means)
 src/cli/           the `./clip` commands: index.ts (ingest, transcript, jobs, worker), stream.ts (Twitch), and one file per group
                    (analyze, candidates, clips, markers, edit, batch, review, publish, studio) sharing shared.ts
 tools/             the daemons (watchlist.ts, observer.ts, upload-cron.ts, cleanup.ts) and one-off scripts;

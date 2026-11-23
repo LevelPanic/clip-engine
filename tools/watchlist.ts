@@ -25,7 +25,8 @@ import { twitchApi } from '../src/ingest/twitch';
 import { cli, reviseClip, runFullPipeline } from '../src/pipeline/full';
 import { youtubeLive } from '../src/ingest/media';
 import { revisionKey, revisionsToQueue } from '../src/track/revise';
-import { isSubscriberOnly, unreadable } from '../src/track/rank';
+import { unreadable } from '../src/track/rank';
+import { jobEnding } from '../src/track/runner';
 import { runningObserver } from '../src/track/observer';
 import { armCounts, claimNext, dropQueued, finishJob, insertJob, listJobs, renewLease, requeueStale, saveStage, workerAlive, workerId, type WatchJob } from '../src/track/jobs';
 import { paint } from '../src/track/coverage';
@@ -488,10 +489,7 @@ async function quickClips(videoId: string, fromMs: number, toMs: number, creator
   return { outcome: 'submitted', clips: made, note: `${made.length} clip${made.length === 1 ? '' : 's'} in review: ${made.join(', ')}${failed.length ? ` (${failed.length} failed)` : ''}` };
 }
 
-/** Worth retrying: a stage timed out, or the network or an API hiccuped. Not: a broadcast nobody may read. */
-const TRANSIENT = /timed out|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up|network|HTTP Error 5\d\d|\b5\d\d\b|rate limit|429|Temporary failure/i;
 const MAX_RETRIES = Number(process.env.WATCHLIST_RETRIES ?? 1);
-export const retryable = (msg: string) => TRANSIENT.test(msg) && !isSubscriberOnly(msg);
 
 /** Paint a moment job's window on the stream's `clip` ledger (src/track/coverage.ts). */
 const clipLedger = (job: Job, state: 'claimed' | 'done' | 'queued' | 'failed', reason?: string) => {
@@ -567,29 +565,24 @@ async function runJob(job: Job): Promise<End> {
 
 /** What a failed run comes to: skipped (unreadable), back in line (interrupted, or a retry), or failed. */
 function afterError(job: Job, msg: string): End {
-  const gone = unreadable(msg);
-  if (gone && job.kind === 'twitch-moment') {
-    // a later step (the audio for the transcript) found the broadcast unreadable: the stream is
-    // skipped once, instead of every one of its moments failing in turn
-    track(() => (setStreamStatus(job.videoId, 'skipped', gone), setMomentStatus(job.videoId, job.momentId!, 'skipped', { note: gone })));
-    clipLedger(job, 'failed', gone);
-    log(`skip ${job.creator} ${job.videoId}: ${gone}`);
-    return { state: 'done', result: `${gone}; skipped` };
+  const end = jobEnding(job, msg, MAX_RETRIES);
+  if (end.kind === 'skip-stream') {
+    track(() => (setStreamStatus(job.videoId, 'skipped', end.why), setMomentStatus(job.videoId, job.momentId!, 'skipped', { note: end.why })));
+    clipLedger(job, 'failed', end.why);
+    log(`skip ${job.creator} ${job.videoId}: ${end.why}`);
+    return { state: 'done', result: `${end.why}; skipped` };
   }
-  if (/\binterrupted\b/.test(msg) && job.interrupted < 3) {
-    // a restart stopped it: back in line at its checkpoint
+  if (end.kind === 'requeue-interrupted') {
     if (job.momentId) track(() => setMomentStatus(job.videoId, job.momentId!, 'queued', { note: 'interrupted by a restart; back in line' }));
     clipLedger(job, 'queued');
     log(`job ${job.id} was interrupted; back in line${job.stage ? ` (resumes after ${job.stage})` : ''}`);
     return { state: 'queued', interrupted: job.interrupted + 1 };
   }
-  if (retryable(msg) && job.attempts < MAX_RETRIES) {
-    // a stage that timed out or a network error is worth one more go, from the last checkpoint
-    const error = `attempt ${job.attempts + 1} failed: ${msg.split('\n')[0]}`;
-    if (job.momentId) track(() => setMomentStatus(job.videoId, job.momentId!, 'queued', { note: error }));
+  if (end.kind === 'retry') {
+    if (job.momentId) track(() => setMomentStatus(job.videoId, job.momentId!, 'queued', { note: end.error }));
     clipLedger(job, 'queued');
     log(`job ${job.id} will be retried (${job.attempts + 1}/${MAX_RETRIES}): ${msg.split('\n')[0]}`);
-    return { state: 'queued', attempts: job.attempts + 1, error };
+    return { state: 'queued', attempts: job.attempts + 1, error: end.error };
   }
   if (job.momentId) track(() => setMomentStatus(job.videoId, job.momentId!, 'failed', { note: msg.split('\n')[0].slice(0, 300) }));
   clipLedger(job, 'failed', msg.split('\n')[0].slice(0, 200));

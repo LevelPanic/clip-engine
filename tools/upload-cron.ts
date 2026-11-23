@@ -29,11 +29,12 @@ import { postFor } from '../src/core/post';
 import { sexualTitleWords } from '../src/qa/adult';
 import { checkCareful, neverPost, neverPostText } from '../src/qa/unsafe';
 import { carefulUntil } from '../src/core/channel';
-import { limitLiftsAt, LIFT_MARGIN_MS, pacificMidnightAfter, paceNow, paceWords, type Pace } from '../src/publish/pace';
+import { paceNow, paceWords, type Pace } from '../src/publish/pace';
+import { gateApproval, readFailure, type ApprovalFacts } from '../src/publish/scheduler';
 import { loadQa } from '../src/qa';
 import { pickApproved, markUploaded, markFailed, releasePick, blockTitle, blockAuth, deferPick, listReviews, noteAttempt, holdPick, type ReviewRow } from '../src/review/db';
 import { youtubeAccessToken } from '../src/publish/youtube';
-import { appendUploadLog, holdOf, passingError, readUploadStatus, refusalText, uploadTimes, writePace, writeUploadStatus, type UploadTry } from '../src/publish/uploadStatus';
+import { appendUploadLog, readUploadStatus, uploadTimes, writePace, writeUploadStatus, type UploadTry } from '../src/publish/uploadStatus';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
@@ -46,7 +47,6 @@ const LEAD_MIN = Number(process.env.LEAD_MIN ?? 5);
 const HOLD_RETRY_MIN = Number(process.env.HOLD_RETRY_MIN ?? process.env.QUOTA_MIN ?? 60);
 /** A pause after YouTube refused an upload for good, so a fault that refuses every clip does not set the whole line aside in minutes. */
 const REFUSED_PAUSE_MIN = Number(process.env.REFUSED_PAUSE_MIN ?? 20);
-const MIN_UPLOAD_S = Number(process.env.MIN_UPLOAD_S ?? 5);
 const ONCE = has('--once');
 const DRY = has('--dry-run');
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
@@ -83,8 +83,6 @@ function setAside(row: ReviewRow, why: string) {
   log(`failed ${row.clipId}: ${why.slice(0, 300)}`);
 }
 
-/** The YouTube login is gone (expired, revoked, never made): every upload would fail the same way. */
-const AUTH_RE = /YouTube is not connected|token refresh failed|token exchange failed|invalid_grant|expired or revoked|auth youtube/i;
 const AUTH_RETRY_MIN = Number(process.env.AUTH_RETRY_MIN ?? 10);
 
 function publish(clipId: string, publishAt: string): { ok: boolean; url?: string; error?: string; publishAt?: string; heldPrivate?: string; ageRestricted?: boolean } {
@@ -152,64 +150,52 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
   if (await authHeld()) return 'auth';
   const row = pickApproved();
   if (!row) return 'idle';
-  const file = path.join(paths.exports, `${row.clipId}.mp4`);
-  if (!fs.existsSync(file)) {
-    setAside(row, 'no export');
-    return 'next';
-  }
-  const project = loadProject(row.clipId);
+  // the cheap facts first; the never-post list (which may look at stills) and the careful period only
+  // once those pass, the order gateApproval checks them in (src/publish/scheduler.ts)
+  const hasExport = fs.existsSync(path.join(paths.exports, `${row.clipId}.mp4`));
+  const project = hasExport ? loadProject(row.clipId) : undefined;
   const report = readJsonIf<{ durationS?: number }>(path.join(paths.exports, `${row.clipId}.json`));
-  const qa = loadQa(row.clipId);
-  const duration = report?.durationS ?? qa?.durationS ?? 0;
-  if (/review clip/i.test(project.title)) {
-    blockTitle(row.clipId);
-    record({ clipId: row.clipId, try: row.attempts, outcome: 'failed', reason: 'placeholder title (uploads by itself once the title is edited)' });
-    log(`held ${row.clipId}: placeholder title`);
+  const qa = hasExport ? loadQa(row.clipId) : undefined;
+  const facts: ApprovalFacts = {
+    clipId: row.clipId,
+    hasExport,
+    title: project?.title ?? '',
+    durationS: report?.durationS ?? qa?.durationS ?? 0,
+    alreadyUploaded: fs.existsSync(path.join(paths.exports, `${row.clipId}.publish.json`)) && !DRY,
+    unsafe: [],
+    unsafeText: '',
+    sexualWords: [],
+  };
+  let gate = gateApproval(facts);
+  if (gate.action === 'upload' && project) {
+    const unsafe = await neverPost(row.clipId, { look: !DRY });
+    const until = carefulUntil();
+    const careful = until ? { until, reasons: (await checkCareful(row.clipId, row.adult ?? qa?.adult?.detected ?? false)).map((c) => c.why) } : undefined;
+    gate = gateApproval({ ...facts, unsafe, unsafeText: neverPostText(row.clipId, unsafe), sexualWords: sexualTitleWords(postFor(project.post, suggestedPost(project)).title), careful });
+  }
+  if (gate.action === 'set-aside') {
+    setAside(row, gate.why);
     return 'next';
   }
-  // YouTube Shorts have no minimum length: 15 s is the editing target, and an approval below it is the
-  // reviewer's call (a 13.6 s clip was approved as perfect and then refused here). Over 60 s stays out:
-  // YouTube blocks a Short over a minute that gets a Content ID claim. Under MIN_UPLOAD_S is a broken export.
-  if (duration < MIN_UPLOAD_S || duration > 60) {
-    setAside(row, `duration ${duration.toFixed(1)} s is outside ${MIN_UPLOAD_S}–60 s`);
+  if (gate.action === 'hold-title') {
+    blockTitle(row.clipId, ...(gate.why ? [gate.why] : []));
+    record({ clipId: row.clipId, try: row.attempts, outcome: 'failed', reason: gate.logged });
+    log(`held ${row.clipId}: ${gate.logged}`);
     return 'next';
   }
-  // QA does not hold an approval back (user, 2026-11-22): the reviewer saw its report and approved.
-  // What it failed is logged with the try. The credit and the never-post list (below) are the
-  // exceptions: the publisher refuses an uncredited export whatever QA says (src/core/channel.ts).
-  if (fs.existsSync(path.join(paths.exports, `${row.clipId}.publish.json`)) && !DRY) {
+  if (gate.action === 'already-uploaded') {
     const rec = readJsonIf<{ url?: string; publishAt?: string }>(path.join(paths.exports, `${row.clipId}.publish.json`));
     markUploaded(row.clipId, { youtubeUrl: rec?.url ?? '', publishAt: rec?.publishAt ?? '' });
     log(`already uploaded ${row.clipId} ${rec?.url ?? ''}`);
     return 'did';
   }
-  // The never-post list (src/qa/unsafe.ts; docs/research/censorship-review-2026-11-22.md) stops an approval:
-  // nudity, a slur said, a minor, a sexual title. Checked here, before an upload call is spent; the
-  // publisher refuses it too. A title can be fixed in place, so that one is held until it is edited.
-  const unsafe = await neverPost(row.clipId, { look: !DRY });
-  if (unsafe.some((r) => r.kind !== 'title')) {
-    setAside(row, neverPostText(row.clipId, unsafe));
+  if (gate.action === 'defer') {
+    if (!DRY) deferPick(row.clipId, gate.why);
+    record({ clipId: row.clipId, try: row.attempts, outcome: 'deferred', reason: gate.why });
+    log(`${DRY ? '[dry] ' : ''}deferred ${row.clipId}: ${gate.why}`);
     return 'next';
   }
-  if (unsafe.length) {
-    blockTitle(row.clipId, `the title sells it on sex (${sexualTitleWords(postFor(project.post, suggestedPost(project)).title).join(', ')}); edit the title and it uploads automatically`);
-    record({ clipId: row.clipId, try: row.attempts, outcome: 'failed', reason: unsafe[0].why });
-    log(`held ${row.clipId}: ${unsafe[0].why}`);
-    return 'next';
-  }
-  // The careful period (channel.json → careful): only the cleanest approvals go up until it ends; the
-  // rest wait for it (`deferred`) instead of being refused. Checked here, before an upload call is spent.
-  const until = carefulUntil();
-  if (until) {
-    const careful = await checkCareful(row.clipId, row.adult ?? qa?.adult?.detected ?? false);
-    if (careful.length) {
-      const why = `careful period until ${until} (channel.json): ${careful.map((c) => c.why).join('; ')}. It goes up by itself after that`;
-      if (!DRY) deferPick(row.clipId, why);
-      record({ clipId: row.clipId, try: row.attempts, outcome: 'deferred', reason: why });
-      log(`${DRY ? '[dry] ' : ''}deferred ${row.clipId}: ${why}`);
-      return 'next';
-    }
-  }
+  // QA does not hold an approval back (user, 2026-11-22): what it failed is logged with the try
   const qaFailed = qa && !qa.passed ? qa.issues.filter((i) => i.level === 'fail').map((i) => `${i.check}: ${i.detail}`).join('; ') : '';
   if (qaFailed) log(`${row.clipId}: QA failed (${qaFailed.slice(0, 200)}); uploading it anyway, as approved`);
   const at = isoIn(LEAD_MIN);
@@ -218,25 +204,20 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
   log(`${DRY ? '[dry] ' : ''}${n > 1 ? 'trying again' : 'picking'} ${row.clipId} (try ${n}${since}) → publishAt ${at}`);
   const r = publish(row.clipId, at);
   if (!r.ok) {
-    const error = r.error ?? '';
-    const hold = holdOf(error) ?? (passingError(error) && !AUTH_RE.test(error) ? 'error' : null);
-    if (hold) {
+    const f = readFailure(r.error ?? '', { now: Date.now(), uploads: uploadTimes(), retryMin: HOLD_RETRY_MIN });
+    if (f.kind === 'hold') {
       // the clip stays the current one; the channel's upload limit, the project's API units and a
       // passing error are told apart in the log and on the review page
-      const said = hold === 'error' ? (error.trim().split('\n').filter(Boolean).pop()?.slice(0, 300) ?? 'error') : refusalText(error);
-      if (!DRY) holdPick(row.clipId, said);
-      record({ clipId: row.clipId, try: n, outcome: 'held', hold, reason: said });
-      const what = hold === 'upload-limit' ? "YouTube refused it (the channel's upload limit)" : hold === 'api-quota' ? "YouTube refused it (the project's API quota)" : 'the upload failed (network or YouTube)';
-      // a limit is waited out to when it lifts: each refused call counts against the project's daily uploads
-      const now = Date.now();
-      nextTryAt =
-        hold === 'upload-limit' ? limitLiftsAt(uploadTimes(), now) : hold === 'api-quota' ? pacificMidnightAfter(now) + LIFT_MARGIN_MS : now + HOLD_RETRY_MIN * 60_000;
-      const when = hold === 'upload-limit' ? 'a day after the first upload of the last 24 hours' : hold === 'api-quota' ? 'after midnight Pacific, when the quotas reset' : `in ${HOLD_RETRY_MIN}m`;
-      log(`held ${row.clipId}: ${what}: ${said}; trying it again at ${iso(nextTryAt)} (${when})`);
-      if (!DRY) writeUploadStatus(hold, { reason: said, nextTryAt: iso(nextTryAt), ...(hold === 'error' ? { retryEveryMin: HOLD_RETRY_MIN } : {}) });
+      if (!DRY) holdPick(row.clipId, f.said);
+      record({ clipId: row.clipId, try: n, outcome: 'held', hold: f.hold, reason: f.said });
+      const what = f.hold === 'upload-limit' ? "YouTube refused it (the channel's upload limit)" : f.hold === 'api-quota' ? "YouTube refused it (the project's API quota)" : 'the upload failed (network or YouTube)';
+      nextTryAt = f.nextTryAt;
+      const when = f.hold === 'upload-limit' ? 'a day after the first upload of the last 24 hours' : f.hold === 'api-quota' ? 'after midnight Pacific, when the quotas reset' : `in ${HOLD_RETRY_MIN}m`;
+      log(`held ${row.clipId}: ${what}: ${f.said}; trying it again at ${iso(nextTryAt)} (${when})`);
+      if (!DRY) writeUploadStatus(f.hold, { reason: f.said, nextTryAt: iso(nextTryAt), ...(f.hold === 'error' ? { retryEveryMin: HOLD_RETRY_MIN } : {}) });
       return 'held';
     }
-    if (AUTH_RE.test(error)) {
+    if (f.kind === 'auth') {
       record({ clipId: row.clipId, try: n, outcome: 'held', hold: 'auth', reason: 'the YouTube login expired or was revoked' });
       blockAuth(row.clipId);
       if (!DRY) writeUploadStatus('auth', { reason: 'the YouTube login expired or was revoked: run ./clip auth youtube', nextTryAt: isoIn(AUTH_RETRY_MIN) });
@@ -244,7 +225,7 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
       return 'auth';
     }
     // a refusal retrying cannot fix (bad metadata, an uncredited export): set aside with Retry upload
-    setAside({ ...row, attempts: n }, error.trim() ? refusalText(error) : 'upload failed');
+    setAside({ ...row, attempts: n }, f.why);
     return 'refused';
   }
   // an 18+ clip is scheduled only once YouTube's record shows the age restriction; otherwise it stays
