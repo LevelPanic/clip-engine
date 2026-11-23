@@ -19,7 +19,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { paths, readJson, readJsonIf, writeJson } from '../src/core/paths';
 import { loadCreators, type Creator } from '../src/core/creators';
-import { fmtTime } from '../src/core/time';
+import { fmtTime, sleep } from '../src/core/time';
 import { YTDLP } from '../src/core/proc';
 import { twitchApi } from '../src/ingest/twitch';
 import { cli, reviseClip, runFullPipeline } from '../src/pipeline/full';
@@ -55,7 +55,6 @@ const NO_CLIPS = has('--no-clips');
 const DRY = has('--dry-run');
 const MAX_JOBS = (setting('MAX_JOBS') ?? Number(opt('--max', '2')));
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type Seen = {
   kind: 'vod' | 'video';

@@ -7,18 +7,12 @@
 // find the work already done.
 import fs from 'node:fs';
 import { paths } from './paths';
+import { pidAlive } from './proc';
 
 /** Locks this process holds right now (two tasks in one process must take turns too). */
 const held = new Set<string>();
 
-const alive = (pid: number) => {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-};
+const alive = pidAlive;
 
 /** Run `fn` holding library/<id>/<name>.lock; waits for another process, clears a dead one's lock. */
 export async function withVideoLock<T>(videoId: string, name: string, fn: () => Promise<T>, waitMs = 15 * 60_000): Promise<T> {

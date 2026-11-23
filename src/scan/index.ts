@@ -16,6 +16,7 @@ import { fmtTime } from '../core/time';
 import { doNotClipError, optedOut } from '../core/channel';
 import type { SignalsFile, VideoMeta } from '../core/schemas';
 import { discover } from '../discover';
+import { pidAlive } from '../core/proc';
 
 export const OVERLAP_MS = 2 * 60_000;
 export const LIVE_MARGIN_MS = 3 * 60_000;
@@ -188,11 +189,7 @@ function lock(videoId: string): () => void {
   const file = paths.videoFile(videoId, 'scan.lock');
   if (fs.existsSync(file)) {
     const pid = Number(fs.readFileSync(file, 'utf8'));
-    let alive = false;
-    try {
-      process.kill(pid, 0);
-      alive = pid !== process.pid;
-    } catch {}
+    const alive = pidAlive(pid) && pid !== process.pid;
     if (alive) throw new Error(`a scan of ${videoId} is already running (process ${pid})`);
   }
   fs.mkdirSync(paths.video(videoId), { recursive: true });

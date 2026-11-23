@@ -19,6 +19,7 @@ import { listJobs } from '../src/jobs/queue';
 import { listJobs as listWatchJobs } from '../src/track/jobs';
 import { isHeavyMedia, rejectedToDelete, sourceMayGo, videosInUse } from '../src/pipeline/cleanup';
 import { setting } from '../src/core/config';
+import { sleep } from '../src/core/time';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
@@ -30,7 +31,6 @@ const REJECTED_GRACE_MIN = setting('REJECTED_GRACE_MIN');
 const SOURCE_GRACE_HOURS = setting('SOURCE_GRACE_HOURS');
 const SOURCE_DELETE = setting('SOURCE_DELETE');
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function audit(entry: Record<string, unknown>) {
   fs.mkdirSync(paths.library, { recursive: true });

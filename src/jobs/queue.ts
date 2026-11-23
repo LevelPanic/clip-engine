@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { paths } from '../core/paths';
+import { openDatabase } from '../core/sqlite';
 
 export type JobKind =
   | 'ingest' // metadata, captions, comments (+ queues audio)
@@ -45,11 +46,8 @@ let db: DatabaseSync | undefined;
 
 export function jobsDb(): DatabaseSync {
   if (db) return db;
-  fs.mkdirSync(paths.library, { recursive: true });
-  db = new DatabaseSync(path.join(paths.library, 'jobs.sqlite'));
+  db = openDatabase(path.join(paths.library, 'jobs.sqlite'));
   db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA busy_timeout = 5000;
     CREATE TABLE IF NOT EXISTS jobs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       kind TEXT NOT NULL,

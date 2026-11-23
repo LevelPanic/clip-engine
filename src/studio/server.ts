@@ -14,6 +14,7 @@ import { enqueue, listJobs, latestJob, activeJobsFor, type Job } from '../jobs/q
 import { ensureWorker } from '../jobs/worker';
 import { generateMarkerIndex } from '../markers/registry-node';
 import { loadScan } from '../scan';
+import { pidAlive } from '../core/proc';
 
 type Handler = (req: express.Request, res: express.Response) => unknown;
 const h =
@@ -160,13 +161,7 @@ export async function startStudio(port: number) {
       if (!meta) throw new Error(`No video ${id}`);
       const signals = readJsonIf<SignalsFile>(paths.videoFile(id, 'signals.json'));
       const scan = loadScan(id);
-      let watchAlive = false;
-      if (scan.watch) {
-        try {
-          process.kill(scan.watch.pid, 0);
-          watchAlive = true;
-        } catch {}
-      }
+      const watchAlive = !!scan.watch && pidAlive(scan.watch.pid);
       return {
         meta,
         signals,

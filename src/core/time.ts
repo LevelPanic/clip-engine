@@ -41,4 +41,6 @@ export function fmtTime(ms: number, decimals: 0 | 1 | 2 = 1): string {
 export const msToFrames = (ms: number, fps = FPS) => Math.round((ms * fps) / 1000);
 export const framesToMs = (frames: number, fps = FPS) => Math.round((frames * 1000) / fps);
 
-export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+export const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+
+export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

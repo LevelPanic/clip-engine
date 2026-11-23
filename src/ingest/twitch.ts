@@ -3,6 +3,7 @@
 // on past broadcasts, so this is the only source of it. It's unofficial: Twitch can change it or
 // rate-limit it, so every call retries transient errors and callers treat missing data as "signal
 // unavailable", never as a crash.
+import { sleep } from '../core/time';
 
 const GQL = 'https://gql.twitch.tv/gql';
 const CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
@@ -79,7 +80,6 @@ export interface TwitchApi {
   categoryStreams(category: string, opts?: { limit?: number; language?: string }): Promise<CategoryStream[]>;
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function twitchApi(fetchImpl: Fetch = fetch as unknown as Fetch): TwitchApi {
   async function gql<T>(body: unknown, attempt = 1): Promise<T> {

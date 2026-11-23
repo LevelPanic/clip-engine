@@ -9,7 +9,7 @@ import { discover } from '../discover';
 import { buildLines } from '../ingest/transcript';
 import { addCandidates } from '../candidates';
 import { OPENING_FILLERS } from '../core/vocabulary';
-import { fmtTime } from '../core/time';
+import { fmtTime, clamp } from '../core/time';
 import type { CandidateInput, Seed, Transcript } from '../core/schemas';
 
 export interface HeuristicReport {
@@ -19,7 +19,6 @@ export interface HeuristicReport {
   reply: string;
 }
 
-const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const clean = (s: string) =>
   s
     .replace(/»/g, ' ')

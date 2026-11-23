@@ -13,6 +13,7 @@ import { paths } from '../core/paths';
 import { duplicatesOf, planMoments, type KnownMoment, type RankedMoment } from '../scan/moments';
 import { normalize, type Span } from './coverage';
 import { setting } from '../core/config';
+import { addColumns, openDatabase } from '../core/sqlite';
 
 export type StreamStatus = 'tracking' | 'done' | 'skipped';
 export type MomentStatus = 'pending' | 'queued' | 'working' | 'clipped' | 'no-clip' | 'skipped' | 'failed' | 'covered';
@@ -67,11 +68,8 @@ let db: DatabaseSync | undefined;
 
 export function trackingDb(): DatabaseSync {
   if (db) return db;
-  fs.mkdirSync(paths.library, { recursive: true });
-  db = new DatabaseSync(path.join(paths.library, 'tracking.sqlite'));
+  db = openDatabase(path.join(paths.library, 'tracking.sqlite'));
   db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA busy_timeout = 5000;
     CREATE TABLE IF NOT EXISTS streams (
       video_id TEXT PRIMARY KEY,
       platform TEXT NOT NULL,
@@ -112,16 +110,9 @@ export function trackingDb(): DatabaseSync {
     CREATE INDEX IF NOT EXISTS moments_status ON moments(status, score);
   `);
   // added 2026-11-19: every source that found a stream, not just the one that sets its tier
-  const cols = (db.prepare('PRAGMA table_info(streams)').all() as { name: string }[]).map((c) => c.name);
-  if (!cols.includes('sources')) {
-    db.exec(`ALTER TABLE streams ADD COLUMN sources TEXT NOT NULL DEFAULT '[]'`);
-    db.exec(`UPDATE streams SET sources = json_array(source)`);
-  }
+  if (addColumns(db, 'streams', { sources: `TEXT NOT NULL DEFAULT '[]'` }).length) db.exec(`UPDATE streams SET sources = json_array(source)`);
   // added 2026-11-19: moment identity (covered_by) and the shadow ranker (rank, alt_rank)
-  const mcols = (db.prepare('PRAGMA table_info(moments)').all() as { name: string }[]).map((c) => c.name);
-  if (!mcols.includes('covered_by')) db.exec('ALTER TABLE moments ADD COLUMN covered_by TEXT');
-  if (!mcols.includes('rank')) db.exec('ALTER TABLE moments ADD COLUMN rank INTEGER');
-  if (!mcols.includes('alt_rank')) db.exec('ALTER TABLE moments ADD COLUMN alt_rank INTEGER');
+  addColumns(db, 'moments', { covered_by: 'TEXT', rank: 'INTEGER', alt_rank: 'INTEGER' });
   // added 2026-11-19: the coverage ledger (src/track/coverage.ts), per stream and layer
   db.exec(`
     CREATE TABLE IF NOT EXISTS coverage (

@@ -24,6 +24,7 @@ import { chatLevels, readChat, DOUBT_MIN, MIN_CHATTERS, SPIKE_RATIO, type ChatMe
 import { reactionWeight, type AudioDetection, type ReactionKind } from '../discover/signals/audio';
 import { clipNearness } from '../ingest/twitch';
 import { chatSlurs, riskTerms } from '../core/risk';
+import { clamp } from '../core/time';
 
 export { riskTerms };
 
@@ -146,7 +147,6 @@ const REACTION_MOODS = new Set<Reaction | 'neutral'>(['funny', 'shock', 'fail', 
 /** Chunks of a scanned stream leave seconds-long seams between them; shorter gaps are not "missing". */
 const MIN_GAP_MS = 20_000;
 
-const clamp = (n: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
 
 function tstr(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));

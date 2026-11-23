@@ -2,6 +2,17 @@
 import { spawn, type SpawnOptions } from 'node:child_process';
 import type { MediaInfo } from './schemas';
 
+/** Whether a process with this pid is running (and ours to signal). A pid of 0 is never one. */
+export function pidAlive(pid: number): boolean {
+  if (!pid) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface RunResult {
   code: number;
   stdout: string;

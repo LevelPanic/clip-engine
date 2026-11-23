@@ -6,11 +6,11 @@
 import { spawn } from 'node:child_process';
 import type { FaceBox, FaceResult } from './faces';
 import type { FramingBox } from '../core/schemas';
+import { clamp } from '../core/time';
 
 const SAMPLE_WIDTH = 240;
 const SAMPLE_COUNT = 24;
 
-const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const median = (a: Float32Array) => {
   const s = [...a].sort((x, y) => x - y);
   return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;

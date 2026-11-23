@@ -3,11 +3,10 @@
 // for the channel to go live. Runs in the foreground; scan.json carries its state for the Studio.
 import fs from 'node:fs';
 import { paths } from '../core/paths';
-import { fmtTime } from '../core/time';
+import { fmtTime, sleep } from '../core/time';
 import { loadScan, saveScan, runPass, scannedRanges, type WatchState } from '../scan';
 import { resolveInput } from '../scan/resolve';
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function watch(link: string, o: { fromMs?: number; everyMs: number; judge: boolean; lens: string; log?: (s: string) => void }) {
   const log = o.log ?? ((s: string) => console.log(`${new Date().toLocaleTimeString('en-GB')}  ${s}`));

@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { paths } from '../core/paths';
+import { addColumns, openDatabase } from '../core/sqlite';
 
 export type ReviewStatus = 'review' | 'approved' | 'rejected' | 'changes' | 'editing';
 
@@ -38,11 +39,8 @@ let db: DatabaseSync | undefined;
 
 export function reviewsDb(): DatabaseSync {
   if (db) return db;
-  fs.mkdirSync(paths.library, { recursive: true });
-  db = new DatabaseSync(path.join(paths.library, 'reviews.sqlite'));
+  db = openDatabase(path.join(paths.library, 'reviews.sqlite'));
   db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA busy_timeout = 5000;
     CREATE TABLE IF NOT EXISTS reviews (
       clip_id TEXT PRIMARY KEY,
       video_id TEXT NOT NULL,
@@ -60,11 +58,7 @@ export function reviewsDb(): DatabaseSync {
     );
     CREATE INDEX IF NOT EXISTS reviews_queue ON reviews(status, picked, decision_at);
   `);
-  const cols = new Set((db.prepare('PRAGMA table_info(reviews)').all() as { name: string }[]).map((c) => c.name));
-  if (!cols.has('attempts')) db.exec('ALTER TABLE reviews ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0');
-  if (!cols.has('last_attempt_at')) db.exec('ALTER TABLE reviews ADD COLUMN last_attempt_at TEXT');
-  if (!cols.has('last_error')) db.exec('ALTER TABLE reviews ADD COLUMN last_error TEXT');
-  if (!cols.has('adult')) db.exec('ALTER TABLE reviews ADD COLUMN adult INTEGER');
+  addColumns(db, 'reviews', { attempts: 'INTEGER NOT NULL DEFAULT 0', last_attempt_at: 'TEXT', last_error: 'TEXT', adult: 'INTEGER' });
   return db;
 }
 

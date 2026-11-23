@@ -8,7 +8,7 @@
 //
 //   npx tsx tools/observer.ts --daemon     # started by the watchlist daemon when it is not running
 //   npx tsx tools/observer.ts --once       # one ranking pass and one chunk of reading
-import { fmtTime } from '../src/core/time';
+import { fmtTime, sleep } from '../src/core/time';
 import { twitchApi } from '../src/ingest/twitch';
 import { fetchChat, loadChat } from '../src/ingest/chat';
 import { claim, complete, fail, markDone, readUpTo, recover, summary, unqueueFrom, want, type Span } from '../src/track/coverage';
@@ -28,7 +28,6 @@ const IDLE_S = setting('OBSERVE_IDLE_S');
 const LIVE_BATCH_MIN = setting('OBSERVE_LIVE_BATCH_MIN');
 
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const newJob = () => `obs-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 /** Nothing past the live edge: chat trails the moment, and the last minutes are not on the VOD yet. */
 const edgeOf = (st: StreamRow) => (st.live ? Math.max(0, st.durationMs - 3 * 60_000) : st.durationMs);

@@ -1,7 +1,7 @@
 // The worker loop: takes jobs off the queue and runs them with per-kind concurrency limits (LIMITS in
 // src/jobs/worker.ts), retrying transient download errors. `./clip worker` runs it with the handlers.
 import fs from 'node:fs';
-import { paths } from '../core/paths';
+import { paths, writeJson } from '../core/paths';
 import { claimNext, finishJob, failJob, setProgress, requeueOrphans, pendingCount, getJob, retryJob, type Job, type JobKind } from '../jobs/queue';
 import { LIMITS, LOCK, workerAlive, type Handler, type Lock } from '../jobs/worker';
 
@@ -33,7 +33,7 @@ export async function runWorker(handlers: Partial<Record<JobKind, Handler>>, opt
     return;
   }
   fs.mkdirSync(paths.cache, { recursive: true });
-  const beat = () => fs.writeFileSync(LOCK(), JSON.stringify({ pid: process.pid, heartbeat: Date.now() } satisfies Lock));
+  const beat = () => writeJson(LOCK(), { pid: process.pid, heartbeat: Date.now() } satisfies Lock);
   beat();
   requeueOrphans();
   log(`worker ${process.pid} started`);

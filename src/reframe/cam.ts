@@ -9,6 +9,7 @@
 import type { FaceRect, FaceResult } from './faces';
 import type { FramingBox, SplitLayout } from '../core/schemas';
 import { camFillsWidth, camShareFor, camWithHeadroom, CANVAS_H, CANVAS_W, DEFAULT_CANVAS_PAD } from '../core/layout';
+import { clamp } from '../core/time';
 
 const even = (n: number) => 2 * Math.round(n / 2);
 /** The canvas height inside the default margin (the bands share it). */
@@ -31,7 +32,6 @@ const median = (vs: number[]) => {
   const s = [...vs].sort((a, b) => a - b);
   return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
 };
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const round = (v: number) => Math.round(v * 1000) / 1000;
 
 interface ClusterFace {
@@ -89,15 +89,15 @@ function panelBox(result: FaceResult, face: { x: number; y: number; w: number; h
   const y1 = Math.min(panel.y, face.y);
   const x2 = Math.max(panel.x + panel.w, face.x + face.w);
   const y2 = Math.max(panel.y + panel.h, face.y + face.h);
-  return { x: round(clamp01(x1)), y: round(clamp01(y1)), w: round(Math.min(1 - x1, x2 - x1)), h: round(Math.min(1 - y1, y2 - y1)) };
+  return { x: round(clamp(x1)), y: round(clamp(y1)), w: round(Math.min(1 - x1, x2 - x1)), h: round(Math.min(1 - y1, y2 - y1)) };
 }
 
 /** Grow the face box to a webcam rectangle, snapped to the frame border it sits against. */
 function camBox(fx: number, fy: number, faceW: number, faceH: number): FramingBox {
   const w = Math.min(CAM_MAX_W, Math.max(CAM_MIN_W, faceW * CAM_GROW_W));
   const h = Math.min(CAM_MAX_H, Math.max(CAM_MIN_H, faceH * CAM_GROW_H));
-  let x = clamp01(fx + faceW / 2 - w / 2);
-  let y = clamp01(fy - h * CAM_HEADROOM);
+  let x = clamp(fx + faceW / 2 - w / 2);
+  let y = clamp(fy - h * CAM_HEADROOM);
   // webcams sit flush against the frame edge
   if (x < 0.06) x = 0;
   else if (x + w > 0.94) x = 1 - w;
@@ -217,6 +217,6 @@ export function layoutForCam(result: FaceResult, panel: FramingBox, share?: numb
       game = fit(above.h >= below.h ? above : below);
     }
   }
-  game = { x: round(clamp01(game.x)), y: round(clamp01(game.y)), w: round(game.w), h: round(game.h) };
+  game = { x: round(clamp(game.x)), y: round(clamp(game.y)), w: round(game.w), h: round(game.h) };
   return { cam, game, camShare };
 }

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { paths } from '../core/paths';
 import type { Job, JobKind } from './queue';
+import { pidAlive } from '../core/proc';
 
 
 export type Handler = (job: Job, progress: (s: string) => void) => Promise<Record<string, unknown> | void>;
@@ -36,14 +37,7 @@ export interface Lock {
   heartbeat: number;
 }
 
-function pidAlive(pid: number) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
+
 
 export function workerAlive(): boolean {
   try {

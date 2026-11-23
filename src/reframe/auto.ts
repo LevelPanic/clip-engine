@@ -5,6 +5,7 @@
 // cooldown, since a cut hidden in a cut is invisible.
 // Pure functions with no Node imports, so the Studio can use them too.
 import type { FaceResult } from './faces';
+import { clamp } from '../core/time';
 
 export interface ReframeKeyframe {
   atMs: number; // source ms
@@ -72,12 +73,11 @@ export function windowWidth(srcW: number, srcH: number, zoom = 1) {
 
 /** Window centre (0–1 of the source width) → Framing.cropX. */
 function toCropX(centre: number, win: number) {
-  return win >= 1 ? 0.5 : clamp01((centre - win / 2) / (1 - win));
+  return win >= 1 ? 0.5 : clamp((centre - win / 2) / (1 - win));
 }
 function clampCentre(centre: number, win: number) {
   return win >= 1 ? 0.5 : Math.min(1 - win / 2, Math.max(win / 2, centre));
 }
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const round = (v: number) => Math.round(v * 1000) / 1000;
 const median = (vs: number[]) => {
   const s = [...vs].sort((a, b) => a - b);

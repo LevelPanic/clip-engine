@@ -10,6 +10,8 @@
 //   - Checkpoints: `stage` + `stage_data` record the last pipeline stage that finished (and what it
 //     made: candidate ids, picks, clip ids), so a restart resumes there.
 import { trackingDb } from './db';
+import { pidAlive } from '../core/proc';
+import { addColumns } from '../core/sqlite';
 
 /** `revise`: a clip the reviewer sent back with a note (its `momentId` is `<clip>@<request time>`, so each request runs once). */
 export type JobKind = 'twitch-moment' | 'youtube-check' | 'twitch-scan' | 'revise';
@@ -79,7 +81,7 @@ function db() {
     CREATE UNIQUE INDEX IF NOT EXISTS watch_jobs_active ON watch_jobs(kind, video_id, IFNULL(moment_id, '')) WHERE state IN ('queued', 'running');
   `);
   // added 2026-11-19: the blind ranker trial's arm
-  if (!(d.prepare('PRAGMA table_info(watch_jobs)').all() as { name: string }[]).some((c) => c.name === 'arm')) d.exec('ALTER TABLE watch_jobs ADD COLUMN arm TEXT');
+  addColumns(d, 'watch_jobs', { arm: 'TEXT' });
   ready = true;
   return d;
 }
@@ -225,14 +227,7 @@ export function requeueStale(alive: (worker: string) => boolean): WatchJob[] {
 /** A worker id carries its pid, so a dead worker's claims are found at once, not only when the lease runs out. */
 export const workerId = (name: string) => `${name}:${process.pid}`;
 export function workerAlive(worker: string): boolean {
-  const pid = Number(worker.split(':').pop());
-  if (!pid) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
+  return pidAlive(Number(worker.split(':').pop()));
 }
 
 /** Moment jobs per trial arm (every state but a dropped one): what keeps the arms even. */

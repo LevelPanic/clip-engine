@@ -23,7 +23,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { paths, readJsonIf } from '../src/core/paths';
+import { paths, readJsonIf, writeJson } from '../src/core/paths';
 import { loadProject, suggestedPost } from '../src/project';
 import { postFor } from '../src/core/post';
 import { sexualTitleWords } from '../src/qa/adult';
@@ -36,6 +36,7 @@ import { pickApproved, markUploaded, markFailed, releasePick, blockTitle, blockA
 import { youtubeAccessToken } from '../src/publish/youtube';
 import { appendUploadLog, readUploadStatus, uploadTimes, writePace, writeUploadStatus, type UploadTry } from '../src/publish/uploadStatus';
 import { setting } from '../src/core/config';
+import { sleep } from '../src/core/time';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
@@ -63,11 +64,10 @@ function analyticsIfDue() {
   const r = spawnSync('./clip', ['analytics', '--days', '28'], { cwd: paths.root, encoding: 'utf8', timeout: 15 * 60_000 });
   const out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
   const rows = (out.match(/ views \d+/g) ?? []).length;
-  fs.writeFileSync(analyticsFile, JSON.stringify({ at: new Date().toISOString(), ok: r.status === 0, rows }));
+  writeJson(analyticsFile, { at: new Date().toISOString(), ok: r.status === 0, rows });
   log(r.status === 0 ? `analytics: ${rows} clip${rows === 1 ? '' : 's'} with audience numbers (performance.jsonl)` : `analytics failed: ${out.trim().split('\n').pop()}`);
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 const isoIn = (min: number) => iso(Date.now() + min * 60_000);
 /** When the held clip is tried again (set by `one()` on a hold). */

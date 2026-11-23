@@ -11,6 +11,7 @@
 //              videos played on stream), with the blurred cover showing below it.
 // Nothing is black: where the pictures end, the blurred cover shows.
 import type { FramingBox, SplitLayout } from './schemas';
+import { clamp } from './time';
 
 export const CANVAS_W = 1080;
 export const CANVAS_H = 1920;
@@ -29,7 +30,6 @@ export const FILL_WIDTH_MIN = 0.75;
 export type ContentFit = 'fill' | 'fit';
 
 const even = (n: number) => 2 * Math.round(n / 2);
-const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
 /**

@@ -4,6 +4,7 @@
 // and chooses; the curator later decides keep/review/drop. Nothing is dropped here by score.
 import type { Word } from '../core/schemas';
 import type { Queue, QueueKind } from '../scan/queues';
+import { clamp } from '../core/time';
 
 /** A laugh, shout or cheer heard in the audio (from `detectReactions`, already thresholded). */
 export interface HeardReaction {
@@ -43,7 +44,6 @@ const RULES: Record<QueueKind, { peak: number; weights: Record<string, number> }
 
 const DEAD_OPEN_PENALTY = 15;
 
-const clamp = (n: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
 
 /** The buffer is part of the clip: a hair before the first word and a hair after the last. */
 export function bufferWindow(startMs: number, endMs: number, durationMs?: number): { startMs: number; endMs: number } {

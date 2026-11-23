@@ -24,6 +24,7 @@ import type { Candidate, Marker, Project, SplitLayout, Transcript, Word } from '
 import { seamOf } from '../core/layout';
 import { pickChatLine, type ChatLine } from './chatCard';
 import type { ChatMessage } from '../discover/chatAnalysis';
+import { clamp } from '../core/time';
 
 export type EditorMode = 'meme' | 'expert';
 
@@ -119,7 +120,6 @@ export interface EditorReview {
   metrics: EditorMetrics;
 }
 
-const clamp = (n: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
 const sentenceEnd = (s: string) => /[.!?]["')\]]?$/.test(s.trim());
 
 const FILLER = /^(that|this|with|have|like|just|they|what|your|then|there|about|really|yeah|know|kind|sort|mean|gonna|going|think|okay|well|because|right|thing|stuff|guys|were|when|them|been|some|it's|that's|don't|i'm|you're)$/i;

@@ -72,7 +72,7 @@ On macOS, renders go through `bin/headless-shell`, which runs Remotion's Chrome 
 ## Layout
 
 ```
-src/core/          schemas (zod, shared with the browser), config (every environment setting), time, timeline (time map), paths, proc, post text (titles, caption, the credit), channel (the posting channel's identity and do-not-clip list), vocabulary (the lists the ledgers are checked against), lock (one writer per video file)
+src/core/          schemas (zod, shared with the browser), config (every environment setting), time (and clamp, sleep), timeline (time map), paths, proc (and pidAlive), sqlite (opening the shared databases, adding columns), post text (titles, caption, the credit), channel (the posting channel's identity and do-not-clip list), vocabulary (the lists the ledgers are checked against), lock (one writer per video file)
 src/ingest/        source (links → ids), yt-dlp, downloads (sections, full, audio chunks), json3 → transcript, name fixes (vocab), SponsorBlock, media/sections/audio chunks,
                    frames, audio events, twitch (web API: broadcast, chat replay, viewer clips), chat, windowed (growing transcripts)
 src/discover/      signal.ts contract + signals/*.ts (one file per signal), seed picking, chatAnalysis (chat spikes)

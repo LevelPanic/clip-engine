@@ -2,7 +2,8 @@
 // watchlist (which starts it) without importing the daemon itself.
 import fs from 'node:fs';
 import path from 'node:path';
-import { paths } from '../core/paths';
+import { paths, writeJson } from '../core/paths';
+import { pidAlive } from '../core/proc';
 
 export const observerHeartbeatFile = () => path.join(paths.library, 'observer.json');
 
@@ -18,7 +19,7 @@ export interface ObserverHeartbeat {
 export function runningObserver(): ObserverHeartbeat | undefined {
   try {
     const h = JSON.parse(fs.readFileSync(observerHeartbeatFile(), 'utf8')) as ObserverHeartbeat;
-    process.kill(h.pid, 0);
+    if (!pidAlive(h.pid)) return undefined;
     return Date.now() - Date.parse(h.at) < 10 * 60_000 ? h : undefined;
   } catch {
     return undefined;
@@ -26,5 +27,5 @@ export function runningObserver(): ObserverHeartbeat | undefined {
 }
 
 export function writeHeartbeat(extra: Partial<ObserverHeartbeat> = {}) {
-  fs.writeFileSync(observerHeartbeatFile(), JSON.stringify({ pid: process.pid, at: new Date().toISOString(), ...extra }));
+  writeJson(observerHeartbeatFile(), { pid: process.pid, at: new Date().toISOString(), ...extra });
 }
