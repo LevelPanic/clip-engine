@@ -1,0 +1,10 @@
+[
+  { "name": "GTA 6", "twitch": "Grand Theft Auto VI", "youtube": "GTA 6", "minViewers": 10000, "priority": 1.5 },
+  { "name": "Fortnite", "twitch": "Fortnite", "youtube": "Fortnite", "minViewers": 2000 },
+  { "name": "League of Legends", "twitch": "League of Legends", "youtube": "League of Legends", "minViewers": 3000, "skip": ["riotgames", "lck", "lec", "lcs", "lolesports", "lpl"] },
+  { "name": "Counter-Strike", "twitch": "Counter-Strike", "youtube": "CS2", "minViewers": 3000, "skip": ["eslcs", "esl_csgo", "blastpremier", "pgl", "faceit", "blast"] },
+  { "name": "Valorant", "twitch": "VALORANT", "youtube": "Valorant", "minViewers": 3000, "skip": ["valorant", "valorant_americas", "valorant_emea", "valorant_pacific"] },
+  { "name": "Minecraft", "twitch": "Minecraft", "youtube": "Minecraft", "minViewers": 2000 },
+  { "name": "GTA 5 RP", "twitch": "Grand Theft Auto V", "youtube": "GTA RP", "minViewers": 2000, "priority": 0.8 },
+  { "name": "World of Warcraft", "twitch": "World of Warcraft", "youtube": "World of Warcraft", "minViewers": 3000, "priority": 0.7 }
+]

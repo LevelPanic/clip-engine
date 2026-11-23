@@ -1,0 +1,50 @@
+# Dependencies and caches
+node_modules/
+.cache/
+
+# Data the engine makes: footage, clip projects, renders, databases
+library/
+clips/
+exports/
+presets/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Secrets and logins (the *.example.json files are committed)
+client_secrets.json
+*_secrets.json
+!*.example.json
+*-token.json
+.env
+.env.*
+.claude/settings.local.json
+
+# The operator's own channel and creator lists (see the *.example.json files)
+channel.json
+channels.json
+channels.md
+
+# Scratch, previews and media made while working (creator footage and frames)
+tmp/
+.qa/
+.qa-stills/
+demo-public/
+/*-preview.html
+/watchlist-status.html
+*.mp4
+*.wav
+!assets/sfx/*.wav
+
+# Hosted separately (the TikTok app's terms and privacy pages)
+legal/
+
+# Raw data and creator stills behind a report (the reports' text is committed)
+reports/*-data/
+reports/*.png
+reports/*.jpg
+
+# OS and editor
+.DS_Store
+*.log
+*.tmp

@@ -1,0 +1,7 @@
+{
+  "name": "Your Clip Channel",
+  "disclosure": "🤖 {name} finds and cuts moments from public streams and videos with software, to send viewers to the creator. Not affiliated with {creator}.",
+  "removal": "Creators: message this channel and the clip is changed or removed.",
+  "creditOnScreen": true,
+  "doNotClip": []
+}

@@ -1,0 +1,5 @@
+[
+  { "name": "A Twitch streamer", "platform": "twitch", "handle": "twitch_login_here", "content": "stream" },
+  { "name": "A YouTube streamer", "platform": "youtube", "handle": "@YouTubeHandle", "source": "streams", "content": "stream" },
+  { "name": "A YouTube podcast", "platform": "youtube", "handle": "@PodcastHandle", "source": "videos", "content": "podcast", "minMinutes": 30 }
+]

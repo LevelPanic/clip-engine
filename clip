@@ -1,0 +1,5 @@
+#!/bin/sh
+DIR="$(cd "$(dirname "$0")" && pwd)"
+# node:sqlite prints an ExperimentalWarning on every run
+export NODE_NO_WARNINGS=1
+exec "$DIR/node_modules/.bin/tsx" "$DIR/src/cli/index.ts" "$@"

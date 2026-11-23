@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "studio",
+      "runtimeExecutable": "./clip",
+      "runtimeArgs": [
+        "studio"
+      ],
+      "port": 4400
+    }
+  ]
+}

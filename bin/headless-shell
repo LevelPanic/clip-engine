@@ -1,0 +1,8 @@
+#!/bin/sh
+# Launches Remotion's Chrome Headless Shell with the GPU work in-process.
+# On macOS 26 the shell's separate GPU process can't find icudtl.dat and the render dies with
+# "Target closed". In-process GPU avoids that and keeps Remotion's fast frame capture.
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SHELL_BIN="$(ls -d "$DIR"/node_modules/.remotion/chrome-headless-shell/*/chrome-headless-shell-*/chrome-headless-shell 2>/dev/null | head -1)"
+[ -x "$SHELL_BIN" ] || { echo "Chrome Headless Shell not downloaded yet" >&2; exit 1; }
+exec "$SHELL_BIN" --in-process-gpu "$@"
