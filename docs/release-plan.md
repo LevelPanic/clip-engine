@@ -49,6 +49,33 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
   - Presets live under the data folder.
 - **Checks:** typecheck is clean, 341 tests pass, and the personal-data and upload-trace scans of the tree are clean.
 
+**Phase 2 (2026-11-23, user: "Yes, start phase 2").** Built in a worktree so the running daemons were not disturbed, then merged. Five commits:
+- **Layers** (`004fe26`). `test/layers.test.ts` orders the `src/` folders and fails on any import, static or dynamic, that goes up a layer. The 17-folder import cycle is gone:
+  - `core/project.ts` → `src/project/`, and `setIntro` → `edit/hook.ts`.
+  - `jobs/` keeps the queue and starting the worker; the downloads went to `ingest/`.
+  - The handlers, batches and worker loop went to `pipeline/`.
+  - The marker types' context and fonts went to `markers/`; `scan/rank.ts` → `track/`; `watch.ts` and `whisperJob.ts` → `pipeline/`.
+  - `tools/` is typechecked now. It had never been, and it was clean.
+- **CLI** (`44aba19`). The 1,615-line `more.ts` is nine command groups. `--help` and every subcommand's help are identical.
+- **Daemon decisions** (`5e85038`). Each now lives in `src/` with tests:
+  - what the upload scheduler sends, holds, defers or sets aside (`src/publish/scheduler.ts`);
+  - what a failed watchlist job becomes (`src/track/runner.ts`);
+  - what the cleanup may delete (`src/pipeline/cleanup.ts`). Its old and new dry runs on the live data matched.
+- **Settings** (`9209642`).
+  - All 58 environment settings are in `src/core/config.ts`, with strict parsing: `15m` for a number is an error, not NaN.
+  - `./clip config` prints them, and `docs/operations.md` has the generated table.
+  - A test fails on any direct `process.env` read.
+- **Helpers** (`b9353d4`).
+  - One `pidAlive`, `clamp`, `sleep` and database opener replace about 20 copies.
+  - The heartbeats are written atomically.
+  - `clip jobs` and `clip reviews` print the same on the live data as before.
+- **Tests:** 364 pass (343 before phase 2). Typecheck is clean, with `tools/` included.
+- **Left for later**, not blocking the release:
+  - the watchlist's discovery and status page, and the observer's loop, which are still in `tools/`;
+  - the Studio server's routers and the four big UI files;
+  - merging the two job queues, and `core/retry.ts`;
+  - tests for the worker, render, Whisper and the judge.
+
 ## Where it stands
 
 **Healthy.**
