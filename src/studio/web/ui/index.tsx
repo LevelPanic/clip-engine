@@ -134,8 +134,12 @@ export function Field({ label, aside, hint, children }: { label: React.ReactNode
 
 // ---------- Selectable rows ----------
 
-/** A row the keyboard can reach: Enter or Space does what a click does. For rows that hold their own links or buttons (a <button> cannot). */
-export function useRowKeys(onActivate: () => void) {
+/**
+ * A row the keyboard can reach: Enter or Space does what a click does. For rows that hold their own links
+ * or buttons (a <button> cannot). The key stops at the row, so a page's own shortcut for it (Enter to
+ * edit, Space to play) does not fire as well.
+ */
+export function rowKeys(onActivate: () => void) {
   return {
     role: 'button' as const,
     tabIndex: 0,
@@ -143,6 +147,7 @@ export function useRowKeys(onActivate: () => void) {
       if (e.target !== e.currentTarget) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        e.stopPropagation();
         onActivate();
       }
     },

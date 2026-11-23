@@ -83,3 +83,10 @@ a.item:hover { background: var(--panel2); text-decoration: none; }
 .gap-1 { gap: var(--s-2); }
 .gap-3 { gap: var(--s-6); }
 .pad { padding: var(--s-7); }
+.row.top { align-items: flex-start; }
+.mb-1 { margin-bottom: var(--s-2); }
+.mt-5 { margin-top: var(--s-8); }
+.pad-sm { padding: var(--s-6); }
+.media-9x16 { aspect-ratio: 9 / 16; }
+.media-frame { border-radius: var(--r-xl); overflow: hidden; background: var(--media-bg); }
+.gap-2 { gap: var(--s-5); }

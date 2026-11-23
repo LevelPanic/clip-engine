@@ -7,6 +7,8 @@ import { ClipComposition } from '../../composition/ClipComposition';
 import { durationInFrames, WIDTH, HEIGHT, type ClipProps } from '../../composition/props';
 import { defaultCaptions, defaultFraming, type Candidate, type SignalsFile, type VideoMeta, type Word, type Project } from '../../core/schemas';
 import { fmtTime, parseTime, FPS } from '../../core/time';
+import { SIGNAL_COLORS } from './ui/tokens';
+import { Button, Callout, Chip, Nav, PageState, ShortcutLegend, rowKeys } from './ui';
 
 interface VideoData {
   meta: VideoMeta;
@@ -35,17 +37,7 @@ interface ScanPass {
 
 const verdictOrder = (v: Candidate['verdict']) => (v === 'post' ? 0 : v === 'skip' ? 2 : 1);
 
-export const SIGNAL_COLORS: Record<string, string> = {
-  comments: '#60a5fa',
-  chat: '#22d3ee',
-  clips: '#e879f9',
-  laughter: '#facc15',
-  teaser: '#f472b6',
-  heatmap: '#34d399',
-  audio: '#f87171',
-  speech: '#a78bfa',
-  title: '#fb923c',
-};
+export { SIGNAL_COLORS };
 
 export function VideoPage({ videoId }: { videoId: string }) {
   const [d, setD] = useState<VideoData | null>(null);
@@ -117,7 +109,7 @@ export function VideoPage({ videoId }: { videoId: string }) {
     load();
   };
 
-  // keyboard: ↑/↓ choose, Enter make/open, S skip
+  // keyboard: ↑/↓ choose, Enter or E edit (make the clip first), ⇧E export, X tick, S skip
   const keyRef = useRef<(e: KeyboardEvent) => void>(() => {});
   keyRef.current = (e) => {
     if (isTyping(e) || !cands.length) return;
@@ -131,8 +123,12 @@ export function VideoPage({ videoId }: { videoId: string }) {
     } else if (e.key === 'Enter' && cur) {
       if (cur.clipId) go(`#/clip/${cur.clipId}`);
       else void make(cur);
-    } else if ((e.key === 'e' || e.key === 'E') && cur && cur.status !== 'skipped') {
+    } else if (e.key === 'E' && e.shiftKey && cur && cur.status !== 'skipped') {
       void exportCands([cur.id]);
+    } else if (e.key === 'e' && cur && cur.status !== 'skipped') {
+      // E opens the editor here as on the review page; ⇧E exports
+      if (cur.clipId) go(`#/clip/${cur.clipId}`);
+      else void make(cur);
     } else if ((e.key === 'x' || e.key === 'X') && cur && cur.status !== 'skipped') {
       toggle(cur.id);
     } else if ((e.key === 's' || e.key === 'S') && cur) {
@@ -145,21 +141,38 @@ export function VideoPage({ videoId }: { videoId: string }) {
     return () => window.removeEventListener('keydown', on);
   }, []);
 
-  if (err) return <div className="page">✖ {err}</div>;
-  if (!d) return <div className="page muted">Loading…</div>;
+  if (err)
+    return (
+      <div className="page wide">
+        <Nav current="video" />
+        <PageState kind="error">{err}</PageState>
+      </div>
+    );
+  if (!d)
+    return (
+      <div className="page wide">
+        <Nav current="video" />
+        <PageState kind="loading" />
+      </div>
+    );
   const { meta, signals } = d;
 
   return (
-    <div className="page" style={{ maxWidth: 1320 }}>
-      <div className="row" style={{ marginBottom: 6 }}>
-        <a href="#/">← Library</a>
-      </div>
-      <div className="row" style={{ alignItems: 'flex-start' }}>
+    <div className="page wide">
+      <Nav current="video" />
+      <div className="row top">
         <div className="grow">
           <h1>{meta.title}</h1>
           <div className="muted">
             {meta.channel} · {fmtTime(meta.durationMs, 0)}
-            {meta.live ? <span className="chip on" style={{ marginLeft: 6, borderColor: 'var(--bad)' }}>● live, growing</span> : null} ·{' '}
+            {meta.live ? (
+              <>
+                {' '}
+                <Chip on tone="bad">
+                  ● live, growing
+                </Chip>
+              </>
+            ) : null} ·{' '}
             <a href={meta.url} target="_blank" rel="noreferrer">
               {meta.platform === 'twitch' ? 'Twitch' : 'YouTube'}
             </a>{' '}
@@ -169,32 +182,32 @@ export function VideoPage({ videoId }: { videoId: string }) {
       </div>
 
       {d.footage.stillImage && (
-        <div className="card warn" style={{ padding: 12, marginTop: 14 }}>
+        <Callout tone="warn" className="mt-4 warn">
           ⚠ This upload is a still image (an audio-only podcast with cover art), so shorts from it will be static art with captions. Look for the
           episode's video version, or plan an audiogram-style edit.
-        </div>
+        </Callout>
       )}
       {(meta.platform === 'twitch' || d.scan.passes.length > 0) && <ScanPanel videoId={videoId} meta={meta} scan={d.scan} jobs={d.jobs} />}
 
       {signals && (
-        <div className="card" style={{ padding: 12, marginTop: 14 }}>
-          <div className="row" style={{ marginBottom: 6, flexWrap: 'wrap' }}>
+        <div className="card pad-sm mt-4">
+          <div className="row wrap mb-1">
             {Object.entries(signals.available).filter(([k]) => (meta.platform === 'twitch' ? !['comments', 'heatmap', 'teaser'].includes(k) : !['chat', 'clips'].includes(k))).map(([k, on]) => (
               <span key={k} className={`chip ${on ? 'on' : ''}`} title={on ? 'signal found' : 'not available for this video'}>
-                <span className="dot" style={{ background: on ? SIGNAL_COLORS[k] : '#444' }} />
+                <span className="dot" style={{ background: on ? SIGNAL_COLORS[k] : 'var(--line-strong)' }} />
                 {k}
               </span>
             ))}
             <span className="grow" />
-            <span className="muted" style={{ fontSize: 11 }}>
-              <span style={{ color: '#ef4444' }}>■</span> sponsor/intro · boxes = candidates
+            <span className="muted tiny">
+              <span className="bad">■</span> sponsor/intro · boxes = candidates
             </span>
           </div>
           <SignalStrip signals={signals} meta={meta} candidates={cands} selected={sel} onSelect={setSel} scanned={meta.platform === 'twitch' ? d.scan.passes.map((p) => ({ startMs: p.fromMs, endMs: p.toMs })) : undefined} />
         </div>
       )}
 
-      <div className="row" style={{ marginTop: 16, flexWrap: 'wrap' }}>
+      <div className="row wrap mt-5">
         <span className="muted">{checked.size ? `${checked.size} selected` : 'Tick the good ones, or use the buttons on each card'}</span>
         <button onClick={() => setChecked(new Set(cands.filter((c) => c.status !== 'skipped' && c.verdict === 'post').map((c) => c.id)))}>
           Select posts ({cands.filter((c) => c.status !== 'skipped' && c.verdict === 'post').length})
@@ -202,24 +215,26 @@ export function VideoPage({ videoId }: { videoId: string }) {
         <button onClick={() => setChecked(new Set(cands.filter((c) => c.status !== 'skipped' && (c.virality ?? c.score) >= 70).map((c) => c.id)))}>Select score ≥ 70</button>
         {checked.size > 0 && <button onClick={() => setChecked(new Set())}>Clear</button>}
         <span className="grow" />
-        <span className="muted">export</span>
-        <select value={exportStyle} onChange={(e) => setExportStyle(e.target.value)} style={{ width: 210 }}>
+        <label className="inline-field">
+          export
+          <select value={exportStyle} onChange={(e) => setExportStyle(e.target.value)} style={{ width: 210 }}>
           <option value="none">as is (captions + framing)</option>
           {STYLES.map((st) => (
             <option key={st.key} value={st.key}>
               with style: {st.label}
             </option>
           ))}
-        </select>
-        <button className="primary" disabled={busy || !checked.size} onClick={() => void exportCands([...checked])}>
+          </select>
+        </label>
+        <Button variant="primary" disabled={busy || !checked.size} onClick={() => void exportCands([...checked])}>
           Export {checked.size || ''} selected
-        </button>
+        </Button>
       </div>
 
-      <div className="video-layout" style={{ marginTop: 10 }}>
+      <div className="video-layout mt-3">
         <div className="card">
           {!cands.length && (
-            <div className="empty">
+            <div className="page-state">
               {meta.platform === 'twitch' ? (
                 <>
                   No candidates yet. Scan a range above (it judges the moments into candidates when the claude CLI is logged in), or run{' '}
@@ -237,6 +252,8 @@ export function VideoPage({ videoId }: { videoId: string }) {
               key={c.id}
               className={`cand ${c.id === sel ? 'sel' : ''} ${c.status === 'skipped' ? 'skipped' : ''}`}
               onClick={() => setSel(c.id)}
+              aria-current={c.id === sel || undefined}
+              {...rowKeys(() => (c.id === sel && c.status !== 'skipped' ? (c.clipId ? go(`#/clip/${c.clipId}`) : void make(c)) : setSel(c.id)))}
             >
               <div className="row">
                 <input
@@ -246,19 +263,16 @@ export function VideoPage({ videoId }: { videoId: string }) {
                   onClick={(e) => e.stopPropagation()}
                   onChange={() => toggle(c.id)}
                   title="Select for bulk export"
+                  aria-label={`Select ${c.title} for bulk export`}
                 />
                 <div
-                  className="score"
                   title={`quality ${c.score}${c.virality !== undefined ? ` · virality ${c.virality}` : ''}${c.convergence !== undefined ? ` · signal ${Math.round(c.convergence * 100)}%` : ''}`}
-                  style={{
-                    color: (c.virality ?? c.score) >= 80 ? 'var(--good)' : (c.virality ?? c.score) >= 60 ? 'var(--text)' : 'var(--muted)',
-                  }}
+                  className={`score ${(c.virality ?? c.score) >= 80 ? 'good' : (c.virality ?? c.score) >= 60 ? '' : 'muted'}`}
                 >
                   {c.virality ?? c.score}
                 </div>
                 {c.verdict && (
                   <span
-                    className="chip"
                     title={
                       c.verdict === 'post'
                         ? 'Clears the trust bar: a stranger stops, understands it and gets the payoff'
@@ -266,7 +280,7 @@ export function VideoPage({ videoId }: { videoId: string }) {
                           ? 'Good hook, missing payoff: find a longer cut that lands it'
                           : 'Not worth the audience’s time'
                     }
-                    style={{ color: c.verdict === 'post' ? 'var(--good)' : c.verdict === 'recut' ? '#fbbf24' : 'var(--muted)' }}
+                    className={`chip ${c.verdict === 'post' ? 'good' : c.verdict === 'recut' ? 'amber' : 'muted'}`}
                   >
                     {c.verdict}
                   </span>
@@ -279,7 +293,7 @@ export function VideoPage({ videoId }: { videoId: string }) {
                   </div>
                 </div>
               </div>
-              <div className="row" style={{ marginTop: 6, flexWrap: 'wrap' }}>
+              <div className="row wrap mt-1">
                 <ClipState info={d.clips?.[c.id]} />
                 <span className="grow" />
                 <button className="primary" disabled={busy || c.status === 'skipped'} onClick={(e) => (e.stopPropagation(), c.clipId ? go(`#/clip/${c.clipId}`) : void make(c))} title="Open it in the editor">
@@ -295,7 +309,7 @@ export function VideoPage({ videoId }: { videoId: string }) {
               <div className="hook">“{c.hook}”</div>
               <div className="reason">{c.reason}</div>
               {(c.scores || c.convergence !== undefined) && (
-                <div className="row" style={{ flexWrap: 'wrap', marginTop: 6 }}>
+                <div className="row wrap mt-1">
                   {c.scores && (
                     <span className="chip" title="Virality funnel: stop · hold · share · standalone · payoff">
                       stop {c.scores.stop} · hold {c.scores.hold} · share {c.scores.share} · alone {c.scores.standalone} · payoff {c.scores.payoff}
@@ -309,10 +323,10 @@ export function VideoPage({ videoId }: { videoId: string }) {
                   )}
                 </div>
               )}
-              <div className="row" style={{ flexWrap: 'wrap', marginTop: 6 }}>
+              <div className="row wrap mt-1">
                 {Object.entries(c.signals).map(([k, v]) => (
                   <span key={k} className="chip on">
-                    <span className="dot" style={{ background: SIGNAL_COLORS[k] }} />
+                    <span className="dot" style={{ background: SIGNAL_COLORS[k] ?? 'var(--muted)' }} />
                     {k} {v.toFixed(2)}
                   </span>
                 ))}
@@ -336,8 +350,16 @@ export function VideoPage({ videoId }: { videoId: string }) {
 
         <div className="preview-pane">
           {cur && <Preview key={cur.id} videoId={videoId} c={cur} meta={meta} />}
-          <div className="muted" style={{ marginTop: 10, fontSize: 12 }}>
-            <kbd>↑</kbd> <kbd>↓</kbd> choose · <kbd>Enter</kbd> edit · <kbd>E</kbd> export · <kbd>X</kbd> tick · <kbd>S</kbd> skip
+          <div className="mt-3">
+            <ShortcutLegend
+              keys={[
+                ['↑ ↓', 'choose'],
+                ['E', 'edit (or Enter)'],
+                ['⇧E', 'export'],
+                ['X', 'tick'],
+                ['S', 'skip'],
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -405,12 +427,12 @@ function Preview({ videoId, c, meta }: { videoId: string; c: Candidate; meta: Vi
 
   if (!props)
     return (
-      <div className="card empty" style={{ aspectRatio: '9/16' }}>
+      <div className="card page-state media-9x16">
         {!checked ? 'Loading…' : job?.state === 'failed' ? `Footage download failed: ${job.error?.split('\n')[0]}` : `Fetching this candidate's footage${job?.progress ? ` (${job.progress})` : '…'}`}
       </div>
     );
   return (
-    <div style={{ borderRadius: 10, overflow: 'hidden', background: '#000' }}>
+    <div className="media-frame">
       <Player
         ref={ref}
         component={ClipComposition}
@@ -467,17 +489,17 @@ function SignalStrip({
         if (hit) onSelect(hit.id);
       }}
     >
-      {scanned && <rect x={0} y={0} width={W} height={H} fill="rgba(0,0,0,0.35)" />}
+      {scanned && <rect x={0} y={0} width={W} height={H} fill="var(--dim)" />}
       {scanned?.map((r, i) => (
-        <rect key={`s${i}`} x={x(r.startMs)} y={0} width={Math.max(1, x(r.endMs) - x(r.startMs))} height={H} fill="rgba(124,92,255,0.10)">
+        <rect key={`s${i}`} x={x(r.startMs)} y={0} width={Math.max(1, x(r.endMs) - x(r.startMs))} height={H} fill="var(--accent-tint-soft)">
           <title>scanned {fmtTime(r.startMs, 0)}–{fmtTime(r.endMs, 0)}</title>
         </rect>
       ))}
       {signals.excluded.map((e, i) => (
-        <rect key={i} x={x(e.startMs)} y={0} width={Math.max(1, x(e.endMs) - x(e.startMs))} height={H} fill="rgba(239,68,68,0.22)" />
+        <rect key={i} x={x(e.startMs)} y={0} width={Math.max(1, x(e.endMs) - x(e.startMs))} height={H} fill="var(--bad-tint)" />
       ))}
       {meta.chapters.map((c, i) => (
-        <line key={i} x1={x(c.startMs)} x2={x(c.startMs)} y1={0} y2={H - 26} stroke="#2a2f3a" strokeWidth={1}>
+        <line key={i} x1={x(c.startMs)} x2={x(c.startMs)} y1={0} y2={H - 26} stroke="var(--line)" strokeWidth={1}>
           <title>{c.title}</title>
         </line>
       ))}
@@ -489,7 +511,7 @@ function SignalStrip({
         </g>
       ))}
       {signals.seeds.map((s) => (
-        <rect key={s.id} x={x(s.startMs)} y={H - 26} width={x(s.endMs) - x(s.startMs)} height={22} fill="none" stroke="#3a4150" strokeDasharray="3 2" />
+        <rect key={s.id} x={x(s.startMs)} y={H - 26} width={x(s.endMs) - x(s.startMs)} height={22} fill="none" stroke="var(--line-strong)" strokeDasharray="3 2" />
       ))}
       {candidates.map((c) => (
         <rect
@@ -499,7 +521,7 @@ function SignalStrip({
           width={Math.max(3, x(c.endMs) - x(c.startMs))}
           height={20}
           rx={3}
-          fill={c.id === selected ? '#7c5cff' : c.status === 'made' ? '#22c55e' : c.status === 'skipped' ? '#3a3f4b' : '#8a92a6'}
+          fill={c.id === selected ? 'var(--accent)' : c.status === 'made' ? 'var(--good)' : c.status === 'skipped' ? 'var(--line-strong)' : 'var(--muted)'}
         >
           <title>
             {c.id} {fmtTime(c.startMs)} {c.title}
@@ -519,7 +541,7 @@ function ClipState({ info }: { info?: VideoData['clips'][string] }) {
     return <span className="chip on">{r.state === 'queued' ? `${r.kind === 'render' ? 'export' : verb[r.kind] ?? r.kind} queued` : `${verb[r.kind] ?? r.kind}${r.progress ? ` · ${r.progress}` : '…'}`}</span>;
   if (r?.state === 'failed') return <span className="chip warn" title={r.error ?? ''}>{r.kind === 'render' ? 'export' : verb[r.kind] ?? r.kind} failed</span>;
   return (
-    <span className="row" style={{ gap: 4 }}>
+    <span className="row gap-1">
       {info.exportedAt && (
         <a className="chip on" href={`/media/exports/${info.clipId}.mp4?t=${encodeURIComponent(info.exportedAt)}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
           ▶ MP4
@@ -574,8 +596,8 @@ function ScanPanel({ videoId, meta, scan, jobs }: { videoId: string; meta: Video
   // a watcher mid-pass holds the scan lock; a second scan would only fail
   const busy = !!running || (!!w && scan.watchAlive && (w.state === 'scanning' || w.state === 'judging'));
   return (
-    <div className="card" style={{ padding: 12, marginTop: 14 }}>
-      <div className="row" style={{ flexWrap: 'wrap', gap: 10 }}>
+    <div className="card pad-sm mt-4">
+      <div className="row wrap gap-2">
         <strong>Stream scan</strong>
         <span className="muted">
           {merged.length ? `scanned ${merged.map((r) => `${fmtTime(r.startMs, 0)}–${fmtTime(r.endMs, 0)}`).join(', ')}` : 'not scanned yet'}
@@ -590,13 +612,13 @@ function ScanPanel({ videoId, meta, scan, jobs }: { videoId: string; meta: Video
         <span className="grow" />
         {running && <span className="chip on">{running.kind === 'judge' ? 'judging…' : `scanning${running.progress ? ` · ${running.progress}` : '…'}`}</span>}
       </div>
-      {last?.notes.length ? <div className="warn" style={{ marginTop: 6, fontSize: 12 }}>⚠ {last.notes.join(' · ')}</div> : null}
+      {last?.notes.length ? <div className="warn small mt-1">⚠ {last.notes.join(' · ')}</div> : null}
       {scan.judgeError && !running ? (
-        <div className="warn" style={{ marginTop: 6, fontSize: 12 }}>
+        <div className="warn small mt-1">
           ⚠ The last pass was scanned but not judged: {scan.judgeError}
         </div>
       ) : null}
-      <div className="row" style={{ marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
+      <div className="row wrap mt-3">
         <button className="primary" disabled={busy || !scan.passes.length} onClick={() => void start({ cont: true })} title="Scan from where the last pass stopped up to now (2 min overlap), then judge it into candidates">
           Scan new part
         </button>
@@ -608,12 +630,16 @@ function ScanPanel({ videoId, meta, scan, jobs }: { videoId: string; meta: Video
         </button>
         <span className="grow" />
         {meta.login && (
-          <span className="muted" style={{ fontSize: 12 }} title="Scans every 15 minutes until the stream ends, judging each pass">
+          <span className="muted small" title="Scans every 15 minutes until the stream ends, judging each pass">
             follow it live: <code>./clip watch {meta.login}</code>
           </span>
         )}
       </div>
-      {msg && <div className="warn" style={{ marginTop: 6 }}>{msg}</div>}
+      {msg && (
+        <div className="warn mt-1" role="status">
+          {msg}
+        </div>
+      )}
     </div>
   );
 }

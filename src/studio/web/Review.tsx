@@ -5,7 +5,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, go, isTyping, soundOn, useDebounced, useEvents, useStore } from './api';
 import { SIGNAL_COLORS } from './ui/tokens';
-import { Button, Callout, Chip, Field, Nav, PageState, ShortcutLegend, Tabs, useRowKeys } from './ui';
+import { Button, Callout, Chip, Field, Nav, PageState, ShortcutLegend, Tabs, rowKeys } from './ui';
 import { REJECT_REASONS, type Candidate, type Post, type RejectReason, type Review as ReviewState } from '../../core/schemas';
 import { postBody } from '../../core/post';
 import { CopyButton } from './Inspector';
@@ -611,7 +611,7 @@ export function Review({ clipId }: { clipId?: string } = {}) {
 
 /** One clip in the list: a click or Enter selects it. */
 function ReviewRow({ i, selected, tab, onSelect }: { i: Item; selected: boolean; tab: Tab; onSelect: () => void }) {
-  const keys = useRowKeys(onSelect);
+  const keys = rowKeys(onSelect);
   const adult = tab === 'review' ? i.qa?.adult?.detected : (i.review.adult ?? (i.review.status === 'approved' && !i.published && i.qa?.adult?.detected));
   return (
     <div className={`cand compact ${selected ? 'sel' : ''}`} onClick={onSelect} aria-current={selected || undefined} {...keys}>
