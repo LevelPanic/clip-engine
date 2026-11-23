@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import express from 'express';
+import { fileURLToPath } from 'node:url';
 import { paths, listDirs, readJsonIf, writeJson } from '../core/paths';
 import { ProjectSchema, type Project, type VideoMeta, type SignalsFile, type Transcript } from '../core/schemas';
 import { loadProject, saveProject, listClips, listPresets, presetFromProject, presetFile, loadPreset, applyPreset, suggestedPost } from '../project';
@@ -109,6 +110,15 @@ async function waveform(videoId: string, fromMs: number, toMs: number) {
 
 // ---------- server ----------
 
+/** A video with no thumbnail anywhere gets this. */
+const NO_PICTURE = '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#1c2029"/><text x="160" y="97" fill="#8a92a6" font-family="-apple-system, sans-serif" font-size="22" text-anchor="middle">no picture</text></svg>';
+
+/** The node_modules folder the Studio's packages come from (resolved, so a worktree finds the main checkout's). */
+const packagesDir = () => {
+  const p = fileURLToPath(import.meta.resolve('react'));
+  return p.slice(0, p.lastIndexOf('node_modules') + 'node_modules'.length);
+};
+
 export async function startStudio(port: number) {
   generateMarkerIndex();
   const app = express();
@@ -125,6 +135,37 @@ export async function startStudio(port: number) {
       clearInterval(ping);
       clients.delete(res);
     });
+  });
+
+  // a video's thumbnail: YouTube's own image, or the one yt-dlp recorded (Twitch); read once, then cached.
+  // (The library used to ask YouTube for every id, and a Twitch id got a 404 and a grey placeholder.)
+  const thumbnails = new Map<string, string | null>();
+  app.get('/api/videos/:id/thumbnail', async (req, res) => {
+    const id = String(req.params.id);
+    if (!thumbnails.has(id)) {
+      let url: string | null = null;
+      if (!id.startsWith('tw-')) url = `https://i.ytimg.com/vi/${encodeURIComponent(id)}/mqdefault.jpg`;
+      else {
+        try {
+          const info = readJsonIf<{ thumbnail?: string }>(paths.videoFile(id, 'info.json'));
+          url = info?.thumbnail?.replace('%{width}', '320').replace('%{height}', '180') ?? null;
+        } catch {
+          url = null;
+        }
+        // most streams the watchlist found have no thumbnail on record: ask Twitch once
+        if (!url) {
+          const { twitchApi } = await import('../ingest/twitch');
+          url = await twitchApi()
+            .thumbnail(id.slice(3))
+            .catch(() => null);
+        }
+      }
+      thumbnails.set(id, url);
+    }
+    const url = thumbnails.get(id);
+    // no picture anywhere: a neutral box (the panel2 and muted tokens), so the page logs no failed load
+    if (!url) return void res.type('image/svg+xml').set('Cache-Control', 'max-age=3600').send(NO_PICTURE);
+    res.redirect(302, url);
   });
 
   // videos
@@ -534,7 +575,8 @@ export async function startStudio(port: number) {
     root: path.join(paths.root, 'src', 'studio', 'web'),
     appType: 'spa',
     plugins: [react()],
-    server: { middlewareMode: true, hmr: { server }, fs: { allow: [paths.root] } },
+    // the project, and the folder its packages resolve from (outside the project in a git worktree)
+    server: { middlewareMode: true, hmr: { server }, fs: { allow: [paths.root, packagesDir()] } },
     logLevel: 'warn',
   });
   app.use(vite.middlewares);

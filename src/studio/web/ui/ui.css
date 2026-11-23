@@ -1,0 +1,85 @@
+/* The ui/ components' styles (ui/index.tsx). Tokens only (tokens.css). */
+
+/* ---------- layout ---------- */
+.stack { display: flex; flex-direction: column; }
+.row.wrap, .stack.wrap { flex-wrap: wrap; }
+.page.wide { max-width: 1320px; }
+.page.medium { max-width: 1240px; }
+
+/* ---------- the nav bar on every page but the editor ---------- */
+.nav { display: flex; align-items: center; gap: var(--s-7); margin-bottom: var(--s-6); font-size: var(--fs-base); }
+.nav .brand { font-weight: 700; color: var(--text); }
+.nav a { color: var(--muted); }
+.nav a[aria-current='page'] { color: var(--text); font-weight: 600; }
+.nav a:hover { color: var(--text); text-decoration: none; }
+
+/* ---------- the editor's top bar ---------- */
+.topbar { display: flex; align-items: center; gap: var(--s-5); padding: 0 var(--s-6); border-bottom: 1px solid var(--line); background: var(--panel); position: relative; z-index: var(--z-bar); }
+.topbar .title { font-weight: 600; font-size: var(--fs-lg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- tabs ---------- */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--s-4); margin: var(--s-5) 0 var(--s-7); }
+.tabs [role='tab'][aria-selected='true'] { background: var(--accent-strong); border-color: var(--accent-strong); color: white; font-weight: 600; }
+
+/* ---------- chips and badges ---------- */
+.chip.tone-good { border-color: var(--good); color: var(--good); }
+.chip.tone-warn { border-color: var(--warn); color: var(--warn); }
+.chip.tone-bad { border-color: var(--bad); color: var(--text); }
+.chip.tone-accent { border-color: var(--accent); color: var(--text); }
+.chip.small { padding: 0 5px; font-size: var(--fs-sm); }
+a.chip:hover { text-decoration: none; color: var(--text); }
+
+/* ---------- callouts ---------- */
+.callout { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: var(--s-5) var(--s-6); }
+.callout.tone-warn { border-color: var(--warn); }
+.callout.tone-bad { border-color: var(--bad); }
+.callout.tone-accent { border-color: var(--accent); background: var(--accent-tint-soft); }
+.callout .callout-title { font-weight: 600; margin-bottom: var(--s-1); }
+.callout.tone-warn .callout-title { color: var(--warn); }
+.callout.tone-bad .callout-title { color: var(--bad-text); }
+
+/* ---------- fields ---------- */
+.field { margin-bottom: var(--s-5); }
+.field label { display: flex; justify-content: space-between; font-size: var(--fs-md); color: var(--muted); margin-bottom: 3px; }
+.field .hint { font-size: var(--fs-sm); color: var(--muted); margin-top: var(--s-1); }
+.check { display: inline-flex; align-items: center; gap: var(--s-3); cursor: pointer; }
+.inline-field { display: inline-flex; align-items: center; gap: var(--s-3); color: var(--muted); }
+
+/* ---------- list rows ---------- */
+.list .item.compact { padding: var(--s-3) var(--s-7); }
+a.item { color: inherit; text-decoration: none; }
+a.item:hover { background: var(--panel2); text-decoration: none; }
+[role='button'].cand:focus-visible, [role='button'].item:focus-visible { box-shadow: inset 0 0 0 2px var(--accent2); border-radius: 0; }
+.thumb { width: 96px; height: 54px; border-radius: var(--r-md); object-fit: cover; background: var(--panel2); flex: none; }
+.thumb.empty-thumb { display: grid; place-items: center; color: var(--muted); font-size: var(--fs-xs); }
+
+/* ---------- text ---------- */
+.strong { font-weight: 600; }
+.small { font-size: var(--fs-md); }
+.tiny { font-size: var(--fs-sm); }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pre-wrap { white-space: pre-wrap; }
+.good { color: var(--good); }
+.bad { color: var(--bad); }
+.amber { color: var(--amber); }
+
+/* ---------- page states ---------- */
+.page-state { padding: var(--s-9); text-align: center; color: var(--muted); }
+.page-state.error { color: var(--bad-text); }
+.page-state .retry { margin-left: var(--s-4); }
+
+/* ---------- shortcut legends ---------- */
+.legend { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-6); font-size: var(--fs-md); color: var(--muted); }
+.legend span { white-space: nowrap; }
+.legend kbd { margin-right: 3px; }
+
+/* ---------- space helpers (a gap on the token scale) ---------- */
+.mt-1 { margin-top: var(--s-2); }
+.mt-2 { margin-top: var(--s-4); }
+.mt-3 { margin-top: var(--s-5); }
+.mt-4 { margin-top: var(--s-7); }
+.mb-2 { margin-bottom: var(--s-4); }
+.mb-3 { margin-bottom: var(--s-5); }
+.gap-1 { gap: var(--s-2); }
+.gap-3 { gap: var(--s-6); }
+.pad { padding: var(--s-7); }

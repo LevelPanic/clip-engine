@@ -1,0 +1,90 @@
+/* The Studio's design tokens: every colour, size, space, radius, shadow and layer the UI uses.
+   styles.css and the ui/ components read these; a page never writes a raw colour or size.
+   Colours that canvas and SVG code need as values (the signal colours) are in tokens.ts. */
+:root {
+  color-scheme: dark;
+
+  /* surfaces, darkest first */
+  --bg: #0e1014;
+  --panel: #161921;
+  --panel2: #1c2029;
+  --hover: #222734;
+  --surface-sel: #1d2130;
+  --media-bg: #000;
+  --dim: rgba(0, 0, 0, 0.45);
+
+  /* lines */
+  --line-soft: #1d212a;
+  --line: #272c37;
+  --tick: #2c3240;
+  --line-strong: #3a4150;
+  --line-field: #5f6779; /* 3:1 or more against the field and the panel (WCAG 1.4.11) */
+
+  /* text */
+  --text: #e7e9ee;
+  --text-2: #cfd3dc;
+  --muted: #8a92a6; /* 5.2:1 or more on every surface */
+
+  /* the accent */
+  --accent: #7c5cff;
+  --accent2: #9d85ff; /* links and accent text: 6:1 on the surfaces */
+  --accent-strong: #7354f7; /* a filled button: white on it is 4.8:1 */
+  --accent-strong-hover: #6546ea;
+  --accent-tint: rgba(124, 92, 255, 0.18);
+  --accent-tint-soft: rgba(124, 92, 255, 0.1);
+  --accent-deep: #3b2f80;
+  --proposal-bg: #2a2140;
+
+  /* states */
+  --good: #22c55e;
+  --good-tint: #1e3a2a;
+  --good-text: #9be3b5;
+  --warn: #f5b84a;
+  --amber: #fbbf24;
+  --bad: #ef4444;
+  --bad-tint: rgba(239, 68, 68, 0.22);
+  --bad-text: #ffb4b4;
+  --playhead: #ff4d6d;
+
+  /* type */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --fs-xs: 10px;
+  --fs-sm: 11px;
+  --fs-md: 12px;
+  --fs-base: 13px;
+  --fs-lg: 14px;
+  --fs-xl: 16px;
+  --fs-h1: 20px;
+
+  /* space */
+  --s-1: 2px;
+  --s-2: 4px;
+  --s-3: 6px;
+  --s-4: 8px;
+  --s-5: 10px;
+  --s-6: 12px;
+  --s-7: 14px;
+  --s-8: 16px;
+  --s-9: 24px;
+
+  /* radius */
+  --r-xs: 3px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 10px;
+  --r-pill: 999px;
+  --radius: var(--r-lg);
+
+  /* shadow and focus */
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-media: 0 6px 30px rgba(0, 0, 0, 0.5);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent2);
+
+  /* layers */
+  --z-timeline-items: 4;
+  --z-menu: 50;
+  --z-bar: 100;
+  --z-toast: 100;
+}

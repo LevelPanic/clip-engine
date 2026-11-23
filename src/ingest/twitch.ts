@@ -61,6 +61,8 @@ export interface ViewerClip {
 
 export interface TwitchApi {
   video(vodId: string): Promise<TwitchVideo | null>;
+  /** The broadcast's preview picture (320×180), or null. */
+  thumbnail(vodId: string): Promise<string | null>;
   mutedSegments(vodId: string): Promise<{ startMs: number; endMs: number }[]>;
   chat(vodId: string, fromMs: number, toMs: number, onProgress?: (s: string) => void): Promise<{ messages: ChatMessage[]; disabled: boolean }>;
   clips(login: string, period: 'LAST_DAY' | 'LAST_WEEK' | 'LAST_MONTH' | 'ALL_TIME'): Promise<ViewerClip[]>;
@@ -121,6 +123,12 @@ export function twitchApi(fetchImpl: Fetch = fetch as unknown as Fetch): TwitchA
   });
 
   return {
+    async thumbnail(vodId) {
+      const d = await query<{ video: { previewThumbnailURL?: string | null } | null }>(`{ video(id: "${vodId}") { previewThumbnailURL(width: 320, height: 180) } }`);
+      const url = d?.video?.previewThumbnailURL;
+      // a broadcast with no picture yet gets Twitch's grey "404_processing" placeholder: treat it as none
+      return url && !/404_processing/.test(url) ? url : null;
+    },
     async video(vodId) {
       const d = await query<{ video: GqlVideo | null }>(
         `{ video(id: "${vodId}") { id title lengthSeconds createdAt status broadcastType viewCount owner { login displayName } game { name } } }`,

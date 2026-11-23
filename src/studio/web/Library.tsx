@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { STYLES } from '../../edit/styles';
 import { api, useDebounced, useEvents, footageLabel, type Footage, type SlimJob } from './api';
 import { fmtTime } from '../../core/time';
+import { Button, Chip, Field, Nav, PageState, Thumb } from './ui';
 
 interface VideoRow {
   id: string;
@@ -25,10 +26,12 @@ interface ClipRow {
 
 export function Library() {
   const [videos, setVideos] = useState<VideoRow[] | null>(null);
-  const [clips, setClips] = useState<ClipRow[]>([]);
+  const [clips, setClips] = useState<ClipRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const load = useCallback(() => {
-    api<VideoRow[]>('/api/videos').then(setVideos);
-    api<ClipRow[]>('/api/clips').then((c) => setClips(c.sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1))));
+    const fail = (e: Error) => setError(e.message.split('\n')[0]);
+    api<VideoRow[]>('/api/videos').then((v) => (setVideos(v), setError(null)), fail);
+    api<ClipRow[]>('/api/clips').then((c) => setClips(c.sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1))), fail);
   }, []);
   useEffect(load, [load]);
   const reload = useDebounced(load, 1500);
@@ -38,17 +41,20 @@ export function Library() {
 
   return (
     <div className="page">
-      <div className="row">
-        <h1 className="grow">Clip Studio</h1>
-        <a href="#/review">Review queue →</a>
-        <a href="#/jobs">Jobs →</a>
-      </div>
+      <Nav current="library" />
+      <h1>Library</h1>
       <div className="muted">Review candidates, edit clips, export 9:16 shorts.</div>
+      {error && (
+        <PageState kind="error" onRetry={load}>
+          Could not load the library: {error}
+        </PageState>
+      )}
 
       <NewBatch />
 
       <h2>Videos</h2>
       <div className="card list">
+        {!videos && !error && <PageState kind="loading" />}
         {videos && !videos.length && (
           <div className="empty">
             No videos yet. In Claude Code, run the skill:
@@ -57,33 +63,34 @@ export function Library() {
           </div>
         )}
         {videos?.map((v) => (
-          <a key={v.id} className="item" href={`#/video/${v.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <img src={`https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`} alt="" width={96} height={54} style={{ borderRadius: 6, objectFit: 'cover' }} />
+          <a key={v.id} className="item" href={`#/video/${v.id}`}>
+            <Thumb videoId={v.id} />
             <div className="grow">
-              <div style={{ fontWeight: 600 }}>{v.title}</div>
+              <div className="strong">{v.title}</div>
               <div className="muted">
                 {v.channel} · {fmtTime(v.durationMs, 0)} · {footageLabel(v.footage, v.jobs)}
               </div>
             </div>
-            <span className="chip on">{v.candidates} candidates</span>
-            <span className="chip">{v.made} clips</span>
+            <Chip on>{v.candidates} candidates</Chip>
+            <Chip>{v.made} clips</Chip>
           </a>
         ))}
       </div>
 
       <h2>Clips</h2>
       <div className="card list">
-        {!clips.length && <div className="empty">No clips yet. Open a video and press “Make clip” on a candidate.</div>}
-        {clips.map((c) => (
-          <a key={c.id} className="item" href={`#/clip/${c.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+        {!clips && !error && <PageState kind="loading" />}
+        {clips && !clips.length && <PageState kind="empty">No clips yet. Open a video and press “Make clip” on a candidate.</PageState>}
+        {clips?.map((c) => (
+          <a key={c.id} className="item" href={`#/clip/${c.id}`}>
             <div className="grow">
-              <div style={{ fontWeight: 600 }}>{c.title}</div>
+              <div className="strong">{c.title}</div>
               <div className="muted mono">
                 {c.id} · {fmtTime(c.segment.startMs)}–{fmtTime(c.segment.endMs)} · {((c.segment.endMs - c.segment.startMs) / 1000).toFixed(1)} s ·{' '}
                 {c.markers} markers
               </div>
             </div>
-            {c.exported ? <span className="chip on">exported</span> : <span className="chip">not exported</span>}
+            {c.exported ? <Chip on>exported</Chip> : <Chip>not exported</Chip>}
           </a>
         ))}
       </div>
@@ -118,13 +125,15 @@ function NewBatch() {
   return (
     <>
       <h2>New batch</h2>
-      <div className="card" style={{ padding: 14 }}>
-        <textarea rows={2} value={inputs} onChange={(e) => setInputs(e.target.value)} placeholder="Paste YouTube links (one per line) or a channel/playlist URL" />
-        <div className="row" style={{ marginTop: 8, flexWrap: 'wrap' }}>
-          <label className="row muted">
+      <div className="card pad">
+        <Field label="Links">
+          <textarea rows={2} value={inputs} onChange={(e) => setInputs(e.target.value)} placeholder="Paste YouTube links (one per line) or a channel/playlist URL" />
+        </Field>
+        <div className="row wrap">
+          <label className="inline-field">
             clips per video <input type="number" min={1} max={20} value={perVideo} onChange={(e) => setPerVideo(Number(e.target.value))} style={{ width: 60 }} />
           </label>
-          <label className="row muted">
+          <label className="inline-field">
             lens
             <select value={lens} onChange={(e) => setLens(e.target.value)} style={{ width: 170 }}>
               {(lenses.length ? lenses : [lens]).map((l) => (
@@ -132,7 +141,7 @@ function NewBatch() {
               ))}
             </select>
           </label>
-          <label className="row muted" title={STYLES.find((st) => st.key === style)?.description}>
+          <label className="inline-field" title={STYLES.find((st) => st.key === style)?.description}>
             edit style
             <select value={style} onChange={(e) => setStyle(e.target.value)} style={{ width: 150 }}>
               {STYLES.map((st) => (
@@ -142,18 +151,22 @@ function NewBatch() {
               ))}
             </select>
           </label>
-          <label className="row muted">
+          <label className="inline-field">
             videos per channel <input type="number" min={1} max={50} value={limit} onChange={(e) => setLimit(Number(e.target.value))} style={{ width: 60 }} />
           </label>
-          <label className="row muted">
+          <label className="inline-field check">
             <input type="checkbox" checked={reframe} onChange={(e) => setReframe(e.target.checked)} /> face-tracking crop
           </label>
           <span className="grow" />
-          <button className="primary" disabled={busy || !inputs.trim()} onClick={() => void start()}>
+          <Button variant="primary" disabled={busy || !inputs.trim()} onClick={() => void start()}>
             {busy ? 'Starting…' : 'Start batch'}
-          </button>
+          </Button>
         </div>
-        {msg && <div style={{ marginTop: 8 }} className={msg.startsWith('✖') ? 'warn' : 'muted'}>{msg}</div>}
+        {msg && (
+          <div className={`mt-2 ${msg.startsWith('✖') ? 'warn' : 'muted'}`} role="status">
+            {msg}
+          </div>
+        )}
       </div>
     </>
   );
