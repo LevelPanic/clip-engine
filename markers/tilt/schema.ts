@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineMarker } from '../../src/markers/define';
 
-// The frame rotates a few degrees (reports/meme-edits-2026-11-22.md: 27% of top clip Shorts, most often
+// The frame rotates a few degrees (docs/research/meme-edits-2026-11-22.md: 27% of top clip Shorts, most often
 // together with a snap zoom on a shout, alternating sides). It is scaled up just enough that no corner ever
 // shows (`tiltCover`).
 export default defineMarker({

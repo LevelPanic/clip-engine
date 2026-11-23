@@ -1,4 +1,4 @@
-// The watchlist's job queue (reports/stream-pipeline-spec-2026-11-19.md, sections 7 and 8), in the
+// The watchlist's job queue (docs/research/stream-pipeline-spec-2026-11-19.md, sections 7 and 8), in the
 // tracker (library/tracking.sqlite) instead of a JSON file with one writer.
 //   - Dedupe: a unique index on (kind, video, moment) among queued and running jobs, so a race can
 //     never insert a second job for the same thing.

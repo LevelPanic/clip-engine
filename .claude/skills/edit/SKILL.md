@@ -87,7 +87,7 @@ the camera band, a website cut to its middle half), so the choice is no longer a
 Both editors write **proposed** markers (dashed in the Studio, not rendered until accepted) and print
 notes (lines starting `→`) for things that are not a marker.
 
-- **Meme editor** (`editor:meme`): the vocabulary measured on 175 top clip Shorts (`reports/meme-edits-2026-11-22.md`).
+- **Meme editor** (`editor:meme`): the vocabulary measured on 175 top clip Shorts (`docs/research/meme-edits-2026-11-22.md`).
   - **The open:** a premise box (`text` `box`: black on white strips, one emoji) that leaves 0.3 s before the hit. On a silent open (no word for 0.8 s), a zoom-out reveal (`zoom` `direction: out`).
   - **The reactions:** a snap zoom on up to 3 reactions 5 s apart, with a `tilt` (±6°, alternating) when the reaction is a shout. An emoji and a flash on the first.
   - **Beats:** one `tint` beat (green on a win word, pink on affection), and a `counter` when "three, two, one" is said.
@@ -177,7 +177,7 @@ or exclaimed phrase turned yellow as a whole. That is what the top streamer-clip
 unedited. Talk clips get **commentary** (sentence-case italic, a line at a time), countdowns and
 compilations **comic** (each phrase its own colour), calm clips **native**. `./clip subtitles` picks
 street or commentary; change it in the Studio or with `./clip set <clip> captions.style=<look>`. The
-research behind this is `reports/edits-research-2026-11-18.md`.
+research behind this is `docs/research/edits-research-2026-11-18.md`.
 
 The best clip channels also write what the transcript cannot. Do it where it helps, never more than
 three times a clip, and only what the frame shows:

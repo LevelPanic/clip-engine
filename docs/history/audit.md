@@ -11,7 +11,7 @@ clip's offset really points); researched what a virality expert and a meme exper
 (`agents/research.md`, with sources); then fixed what was wrong, ran the three experts on a real
 30-minute segment, and fixed what they tripped over.
 
-**Result in one paragraph:** the roles in PROCESS.md existed mostly as names. Three of them (the queue
+**Result in one paragraph:** the roles in docs/pipeline.md existed mostly as names. Three of them (the queue
 experts) had no definition at all, the lenses described a scoring rubric the engine no longer used, the
 queue checkers often pointed 10–20 seconds after the moment and counted classifier noise, the editors
 placed effects at fixed fractions of the clip, the subtitle engine turned captions off on ordinary
@@ -30,14 +30,14 @@ Severity: **A** = produced wrong clips or lost work; **B** = made agents unrelia
 
 | # | Sev | Finding | Evidence | Status |
 |---|---|---|---|---|
-| 1 | B | **The three queue experts had no definition.** PROCESS.md described a meme, a virality and a clip-worthiness expert; nothing in `.claude/` defined them. Each run depended on whatever brief the session improvised. | No `.claude/agents/`; no skill for the queue stage. | **Fixed.** `.claude/agents/{meme,virality,story}-expert.md`, a shared protocol (`agents/queue-expert.md`) and a coordinator skill (`/queue-check`). |
+| 1 | B | **The three queue experts had no definition.** docs/pipeline.md described a meme, a virality and a clip-worthiness expert; nothing in `.claude/` defined them. Each run depended on whatever brief the session improvised. | No `.claude/agents/`; no skill for the queue stage. | **Fixed.** `.claude/agents/{meme,virality,story}-expert.md`, a shared protocol (`agents/queue-expert.md`) and a coordinator skill (`/queue-check`). |
 | 2 | B | **No shared vocabulary.** The curator's ledger used niches like "IRL sports fail" and "talk / clip-story" that no other stage knew; chat moods were five small regexes in one file and a different lexicon in another. | `library/tw-2926144284/curation.json`; `queues.ts` vs `chatAnalysis.ts`. | **Fixed.** `src/core/vocabulary.ts` (archetypes, share triggers, reject grounds, risk flags, niches, drop grounds), printed by `./clip vocab` and enforced by the ledgers; `agents/vocabulary.md` for the rest. |
 | 3 | B | **Hand-offs were unchecked.** Experts returned prose. The curator hand-wrote JSON and then ran `candidates skip` separately. Nothing verified an expert had looked at a frame, or that a drop had a reason. | `/clip-curator` step 6–7 (old). | **Fixed.** `./clip queue-review` and `./clip curate` validate and write both ledgers. A confirm must cite a frame; a drop must name a ground. |
 | 4 | B | **Queue ids changed between runs** (`meme-3` was "third group found in this range"), so nothing could refer to a queue reliably. | `queues.ts` (old) `id: \`${kind}-${out.length + 1}\``. | **Fixed.** Ids are the kind and the moment's time (`meme@1:46:25`) and resolve within ±15 s. |
 | 5 | B | **The extractor was told to do something the validator forbids:** "if a queue has no transcript/quote, still extract it". Every candidate needed a quote found in the transcript, so a scream, a fall or a face could not be added at all. Those are most of what a meme is. | `/clip-extractor` step 4 (old) vs `quoteFound` in `src/candidates/index.ts`. | **Fixed.** A `visual` candidate needs no quote but must have a witness inside it (a reaction heard, a chat spike, a viewer clip). The anti-invention rule is kept: evidence replaces the quote, it does not waive it. |
 | 6 | B | **The extractor ran `clip windows` before anything was transcribed.** Streams are transcribed only around the top seeds, so most queue regions had no words when windows were scored. | Skill step order (old); `scan/index.ts` `MAX_TRANSCRIBED_SEEDS`. | **Fixed.** `clip queues --transcribe` fills the listed regions once; windows print the exact command when a region still has no words; wordless regions get windows cut around the moment. |
-| 7 | B | **`/edit` ignored half the edit stage.** PROCESS.md listed the meme editor, the expert editor and the subtitle expert; the skill only knew `autoedit`. | `.claude/skills/edit/SKILL.md` (old). | **Fixed.** `/edit` now runs trim → layout → editors as proposals → check each → captions → render → QA, with an edit-device table. |
-| 8 | B | **Two parallel processes with no rule for which to use** (`/clip` seeds → judge, and queues → extractor → curator). | PROCESS.md vs `/clip`. | **Fixed.** `/clip` is the quick pass; the four stage skills are the full process; both say so. |
+| 7 | B | **`/edit` ignored half the edit stage.** docs/pipeline.md listed the meme editor, the expert editor and the subtitle expert; the skill only knew `autoedit`. | `.claude/skills/edit/SKILL.md` (old). | **Fixed.** `/edit` now runs trim → layout → editors as proposals → check each → captions → render → QA, with an edit-device table. |
+| 8 | B | **Two parallel processes with no rule for which to use** (`/clip` seeds → judge, and queues → extractor → curator). | docs/pipeline.md vs `/clip`. | **Fixed.** `/clip` is the quick pass; the four stage skills are the full process; both say so. |
 
 ### Docs that contradicted the engine
 
@@ -89,7 +89,7 @@ Severity: **A** = produced wrong clips or lost work; **B** = made agents unrelia
 | 32 | A | **A prank is rendered and titled as fact.** `tw-2926144284-c01`, "Lacy buys a BMW X6M on impulse and Ron loses it". At 1:38:39 he says "you guys believe that I actually bought a car… I tricked you guys… I don't actually want a new car". Chat was already typing "Ai" and "LEEKED". Nothing in the old process read past the clip or could read that chat. | `./clip transcript tw-2926144284 --from 1:38:10 --to 1:39:20`. | **Process fixed, clip not touched.** Experts read on two minutes when chat is ironic or doubtful; "told as fact" is a named failure mode; the queue now warns that chatters call it fake, staged or AI. In the trial both finished experts found the prank on their own. **The clip itself is your call** (retitle as a prank, or drop). It is rendered, not submitted and not posted. |
 | 33 | A | **The same clip shows an order-confirmation page with an order number** two seconds in, while chat types "DONT SHOW THE NUMBER", **and a slur in the on-screen chat** at 0:18 ("Retarded purchase"; this stream burns chat into the frame). Nothing looked at what was on the monitor or in the overlay. | Frames at 1:35:42 and 1:35:58 (from the local section). | **Process fixed, clip not touched.** `privacy` and `slur` are risk flags the experts raise from frames; flags reach QA automatically as `risk:` warnings; candidates warn when chat typed a slur during the clip; `/edit` checks the first frames. The order number is probably part of the fake page, but that is for you to judge. |
 | 34 | B | **Risk detection was eight words** (`tos|strike|banned|ban|nude|sex|dildo|penis`). | `TOS` regex (old). | **Improved.** Six categories on chat, clip titles and speech, plus the experts' flags from frames. Still word lists: a person decides. |
-| 35 | B | **"Export as is" at volume is what platforms penalise.** YouTube excludes unedited clips and re-uploads from Shorts revenue and has an "inauthentic content" rule for templated mass production; TikTok and Instagram demote reposts with nothing added. | Official pages in `agents/research.md` §7. | **Noted in PROCESS.md.** Not a code issue. Worth a decision about how much edit every posted clip gets. |
+| 35 | B | **"Export as is" at volume is what platforms penalise.** YouTube excludes unedited clips and re-uploads from Shorts revenue and has an "inauthentic content" rule for templated mass production; TikTok and Instagram demote reposts with nothing added. | Official pages in `agents/research.md` §7. | **Noted in docs/pipeline.md.** Not a code issue. Worth a decision about how much edit every posted clip gets. |
 
 ### Concurrency
 
@@ -212,7 +212,7 @@ The earlier run's one clip from this half hour is the first row, titled as a rea
 
 - `src/scan/queues.ts`, `src/edit/editors.ts`, `src/ingest/frames.ts`
 - `.claude/skills/clip-extractor`, `clip-curator`, `edit`, `subtitle-expert`
-- `PROCESS.md`, `test/queues.test.ts`, `test/editors.test.ts`
+- `docs/pipeline.md`, `test/queues.test.ts`, `test/editors.test.ts`
 
 **Changed**
 
@@ -334,7 +334,7 @@ not depend on anyone remembering.
 | **A creator who says no is not clipped again.** | `doNotClip`: scanning, clip-making, the YouTube upload and the TikTok upload all refuse. `--force` does not override it. | `optedOut`; `runPass`, `projectFromCandidate`, `publishYoutube`, `uploadTikTokInbox` |
 | **The curator knows what the channel is for.** | A clip that only works by making the creator look bad, or is mostly someone else's programme, is `review`. | `.claude/skills/clip-curator/SKILL.md` |
 
-**What it does not solve** is in `PROCESS.md` ("Automated clipper: what it does not solve"): a credit
+**What it does not solve** is in `docs/pipeline.md` ("Automated clipper: what it does not solve"): a credit
 is not permission; the platforms' rules on reused content apply to a channel that says it is
 automated exactly as they apply to one that does not; a link in a Shorts description is not
 clickable, so the on-screen credit is the pointer that works (`agents/research.md`, item 45); and the
@@ -545,7 +545,7 @@ the edit was not.
   kept candidate.
 - The publish gate, captions-over-game-subtitles, the Lacy `c01` prank, the waiting Lacy/CaseOh
   candidates, the CaseOh review clips, the channel's About/contact, and the permission questions
-  are untouched. They remain the user's decisions (HANDOVER.md, "Open decisions").
+  are untouched. They remain the user's decisions (docs/history/handover.md, "Open decisions").
 - The live fix and the framing fix have offline tests. `npm run test:e2e` passes 3/3 after the
   change (Twitch API, a real scan pass, a section's real start), but its scan uses an ended
   broadcast, so it does not exercise `--live-from-start` on a live VOD.

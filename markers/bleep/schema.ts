@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineMarker } from '../../src/markers/define';
 
-// The bleep (reports/censorship-review-2026-11-22.md, B2): the clip's own sound is silenced for the
+// The bleep (docs/research/censorship-review-2026-11-22.md, B2): the clip's own sound is silenced for the
 // span, and a tone plays over it unless it is a plain mute. `clip censor` places one over each slur said
 // and each f-word in the open, from the transcript's word times. A word under a bleep is not "said" for
 // the never-post and careful checks (src/qa/adult.ts → wordsThatPlay).

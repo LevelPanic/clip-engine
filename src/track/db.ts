@@ -265,16 +265,6 @@ export function upsertMoments(videoId: string, ms: RankedMoment[], viewerClips?:
   }
 }
 
-/** Fold a stream's duplicate waiting moments into the row that has their seconds (also done on every re-rank). */
-export function coverDuplicates(videoId: string): number {
-  const d = trackingDb();
-  const rows = (d.prepare('SELECT * FROM moments WHERE video_id = ?').all(videoId) as Record<string, unknown>[]).map(toMoment);
-  const dups = duplicatesOf(rows);
-  const at = now();
-  for (const dup of dups) d.prepare("UPDATE moments SET status = 'covered', covered_by = ?, note = ?, updated_at = ? WHERE video_id = ? AND moment_id = ?").run(dup.by, dup.why, at, videoId, dup.momentId);
-  return dups.length;
-}
-
 export function setMomentStatus(videoId: string, momentId: string, status: MomentStatus, o: { note?: string; clipIds?: string[] } = {}) {
   const d = trackingDb();
   d.prepare('UPDATE moments SET status = ?, note = COALESCE(?, note), clip_ids = COALESCE(?, clip_ids), updated_at = ? WHERE video_id = ? AND moment_id = ?').run(

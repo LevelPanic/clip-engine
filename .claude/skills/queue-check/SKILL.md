@@ -77,7 +77,7 @@ anything in `src/`. A queue id is the moment's time; an edit that moves a queue 
 makes an expert's verdict fail to save. Wait for all three before touching anything.
 
 **What it costs.** The historical Sonnet measurement was 24 turns for 15 queues (about $1.40 for the
-three experts, `AUDIT.md`, section 6). On DeepSeek V4.1 Flash the same tokens cost about $0.05; the
+three experts, `docs/history/audit.md`, section 6). On DeepSeek V4.1 Flash the same tokens cost about $0.05; the
 constraint is now **turns and context**, not dollars. An expert works in batches of four queues from
 one dossier call (`agents/queue-expert.md`, "Budget"). For a range, default to **one agent per kind
 for the whole range**, not one per 30 minutes; split only when the context or a segment's content

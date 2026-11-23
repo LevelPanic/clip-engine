@@ -41,8 +41,4 @@ export function fmtTime(ms: number, decimals: 0 | 1 | 2 = 1): string {
 export const msToFrames = (ms: number, fps = FPS) => Math.round((ms * fps) / 1000);
 export const framesToMs = (frames: number, fps = FPS) => Math.round((frames * 1000) / fps);
 
-/** Snap a millisecond value onto the frame grid that starts at `originMs`. */
-export const snapToFrame = (ms: number, originMs: number, fps = FPS) =>
-  originMs + framesToMs(msToFrames(ms - originMs, fps), fps);
-
 export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));

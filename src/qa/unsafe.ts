@@ -1,5 +1,5 @@
 // Never posted, whatever the review said. A short list, from what got this channel's videos removed
-// (reports/censorship-review-2026-11-22.md): nudity the 18+ check is sure of, a slur said in the clip, a
+// (docs/research/censorship-review-2026-11-22.md): nudity the 18+ check is sure of, a slur said in the clip, a
 // moment the queue experts flagged for a minor, and a title that sells the clip on sex. It is enforced
 // where the credit is: the publishers refuse it, --force or not, and the upload scheduler sets it aside.
 // QA does not hold an approval back (user, 2026-11-22); this list does. 18+ does not make any of it
@@ -106,7 +106,7 @@ export async function recheckUnsafe(clipId: string): Promise<UnsafeCheck | null>
 
 export const neverPostText = (clipId: string, reasons: UnsafeReason[]) => `${clipId} is never posted (src/qa/unsafe.ts): ${reasons.map((r) => r.why).join('; ')}`;
 
-// ── The careful period (channel.json → careful; reports/censorship-review-2026-11-22.md, C5) ──
+// ── The careful period (channel.json → careful; docs/research/censorship-review-2026-11-22.md, C5) ──
 // After YouTube removed two videos, only the cleanest approvals go up for two weeks. The rest are not
 // refused: the scheduler holds them (`deferred`) and they go up by themselves once the period ends. What
 // a reviewer must judge from the picture (the creator on screen and reacting, not a cutscene) is on the

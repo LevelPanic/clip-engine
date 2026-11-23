@@ -6,14 +6,14 @@ what state things are in, how the pipeline was actually run, what broke, and wha
 
 > **Model update (2026-11-14, user):** the Sonnet instructions and measurements in this file are
 > historical. The active process uses the session or DeepSeek V4.1 Flash agents with measured briefs;
-> see `AUDIT.md` section 10 and `agents/README.md` → “Which model runs what”.
+> see `docs/history/audit.md` section 10 and `agents/README.md` → “Which model runs what”.
 
 ## Start here
 
 1. Run `npm run typecheck` and `npm test` (192 tests, about 2 s). Both passed when this was written, and `npm run test:e2e` passed 3 of 3 the same day.
-2. Read `SCOPE.md` → "The idea", then → Roadmap → "Where we left off" and "On the plate". `AUDIT.md` sections 6, 7 and 8 are the detail behind this file; sections 1–5 are the audit behind those.
+2. Read `SCOPE.md` → "The idea", then → Roadmap → "Where we left off" and "On the plate". `docs/history/audit.md` sections 6, 7 and 8 are the detail behind this file; sections 1–5 are the audit behind those.
 3. Do not commit, post, publish or upload anything unless the user asks. The repository has no commits at all, by the user's choice so far.
-4. Keep `SCOPE.md` → "Where we left off" current as you work, and write what a run found into `AUDIT.md`.
+4. Keep `SCOPE.md` → "Where we left off" current as you work, and write what a run found into `docs/history/audit.md`.
 
 ## The user
 
@@ -38,18 +38,18 @@ A stream goes through seven stages. The engine does everything that can be compu
 
 ## What happened, in order
 
-**12 Nov: audit of the agents and the process** (`AUDIT.md` 1–5). The roles in `PROCESS.md` existed mostly as names. Found and fixed:
+**12 Nov: audit of the agents and the process** (`docs/history/audit.md` 1–5). The roles in `docs/pipeline.md` existed mostly as names. Found and fixed:
 - The queue checker pointed at the aftermath of a moment: it looked 8 s back from a chat spike, and chat trails a moment by a median of 17.5 s (measured, 43 cases). It also counted raw audio-classifier events, 84% of which are noise. Rewritten (`src/scan/queues.ts`): moment time, witnesses, a gate per kind, coverage ("unknown is not quiet").
 - The three experts had no definition. Now: `.claude/agents/*.md`, a shared protocol (`agents/queue-expert.md`), a checked vocabulary (`src/core/vocabulary.ts`, `./clip vocab`), and two checked ledgers (verdicts, curation).
 - The editors placed effects at fixed fractions of a clip, overwrote the reviewer's note and turned captions back on; the subtitle engine turned captions off on spoken clips. Rewritten.
 - The lens files stated other weights than the code. Docs that state engine numbers are now tested (`test/lenses.test.ts`).
 - First trial, on Lacy `tw-2926144284` 1:30:00–2:00:00: 5 moments where the earlier run had 1. It also showed that the existing clip `c01` is a prank titled as a real purchase.
 
-**14 Nov: the delegated roles moved to Sonnet 5.5** (`AUDIT.md` 6). Read from the run logs, the trial's three experts took 269 turns and 323 stills for 20 queues (about $46 at API list prices), one command per turn. Changes: a one-call dossier (`./clip queues --dossier`), the protocol rewritten around it (batches of four, a written order of decisions, a budget and a stop), `model: claude-sonnet-5-5` on the experts, and evidence the CLI checks (a cited frame must be a still that was fetched; a quoted line must be in the transcript). Re-run on the same half hour on Sonnet: 24 turns, 79 stills, about $1.10, the same verdict as the trial on 14 of 15 queues and on 16 of 16 after two fixes, and four of its five moments.
+**14 Nov: the delegated roles moved to Sonnet 5.5** (`docs/history/audit.md` 6). Read from the run logs, the trial's three experts took 269 turns and 323 stills for 20 queues (about $46 at API list prices), one command per turn. Changes: a one-call dossier (`./clip queues --dossier`), the protocol rewritten around it (batches of four, a written order of decisions, a budget and a stop), `model: claude-sonnet-5-5` on the experts, and evidence the CLI checks (a cited frame must be a still that was fetched; a quoted line must be in the transcript). Re-run on the same half hour on Sonnet: 24 turns, 79 stills, about $1.10, the same verdict as the trial on 14 of 15 queues and on 16 of 16 after two fixes, and four of its five moments.
 
-**14 Nov: the channel became an automated clipper** (`AUDIT.md` 7). Built in: a `credit` marker on every new clip (`🎥 twitch.tv/<login>`, on the seam of a split layout); a credit block under every post (creator's channel, source at the clip's first second, stream title and chapter, a line saying the channel is automated and not affiliated); `channel.json` for the channel's own words and a `doNotClip` list; QA and both publishers refuse an export that was not rendered with the credit, even with `--force`.
+**14 Nov: the channel became an automated clipper** (`docs/history/audit.md` 7). Built in: a `credit` marker on every new clip (`🎥 twitch.tv/<login>`, on the seam of a split layout); a credit block under every post (creator's channel, source at the clip's first second, stream title and chapter, a line saying the channel is automated and not affiliated); `channel.json` for the channel's own words and a `doNotClip` list; QA and both publishers refuse an export that was not rendered with the credit, even with `--force`.
 
-**14 Nov: the whole process on a fresh stream** (`AUDIT.md` 8). CaseOh `tw-2927311587`, two half hours, everything delegated on Sonnet: 11 runs, 94 turns, about $4. Three clips went to the review queue. The run found and fixed: `frame` lines that described the wrong second (stills now carry their time under the picture), a watch-along segment that made 54 queues from an awards show's crowd, false "nobody judged" alarms, a title that named the wrong person, text over the creator's face in the split layout.
+**14 Nov: the whole process on a fresh stream** (`docs/history/audit.md` 8). CaseOh `tw-2927311587`, two half hours, everything delegated on Sonnet: 11 runs, 94 turns, about $4. Three clips went to the review queue. The run found and fixed: `frame` lines that described the wrong second (stills now carry their time under the picture), a watch-along segment that made 54 queues from an awards show's crowd, false "nobody judged" alarms, a title that named the wrong person, text over the creator's face in the split layout.
 
 **14 Nov: a second fresh-stream session was started and stopped by the user.** It got as far as scanning ohnePixel `tw-2928608594`, 1:00:00–2:00:00. The scan finished cleanly. Nothing was judged.
 
@@ -59,7 +59,7 @@ A stream goes through seven stages. The engine does everything that can be compu
 - **New modules:** `src/core/vocabulary.ts`, `lock.ts`, `risk.ts`, `channel.ts`; `src/scan/review.ts`, `dossier.ts`; `src/curate/index.ts`; `markers/credit/`; `tools/agent-runs.py`.
 - **Rewritten:** `src/scan/queues.ts`, `src/edit/editors.ts`, `src/ingest/frames.ts`.
 - **Changed:** chat lexicon and reaction detector, window scoring, the candidate validator (visual candidates, score checks, risk and doubt warnings), post text (`creditBlock`, the expert's context line as the caption, the creator's name in titles), the composition (`fill: 'clip'` markers, `seam` in `ClipContext`), the render report (`credit`), QA and both publishers.
-- **Agents and docs:** `.claude/agents/` (three experts), `.claude/skills/` (`queue-check` new; `clip-extractor`, `clip-curator`, `edit`, `subtitle-expert` rewritten; the first two are `context: fork` on Sonnet), `agents/` (README, protocol, vocabulary, research), `PROCESS.md`, `AUDIT.md`, `SCOPE.md`, `CONTEXT.md`, `CLAUDE.md`.
+- **Agents and docs:** `.claude/agents/` (three experts), `.claude/skills/` (`queue-check` new; `clip-extractor`, `clip-curator`, `edit`, `subtitle-expert` rewritten; the first two are `context: fork` on Sonnet), `agents/` (README, protocol, vocabulary, research), `docs/pipeline.md`, `docs/history/audit.md`, `SCOPE.md`, `docs/history/context.md`, `CLAUDE.md`.
 - **Tests:** 99 before the audit, 192 now. New suites: `queues`, `editors`, `candidates`, `ledgers`, `lenses` (doc-sync), `dossier`, `credit`.
 
 ## State of the data
@@ -73,7 +73,7 @@ A stream goes through seven stages. The engine does everything that can be compu
 - **Review queue:** 17 clips. 3 are the credited CaseOh clips. 14 are older and have no credit.
 - **All exports:** 49 MP4s, 3 rendered with the credit. The other 46 cannot be published as they are, and by the user's decision they are not being re-rendered.
 - **`channel.json`:** the channel's own name, the default disclosure and removal lines, `creditOnScreen: true`, `doNotClip: []`.
-- **Posted today:** nothing. The last upload batch is in `CONTEXT.md` (12 Nov, five clips, before the credit existed).
+- **Posted today:** nothing. The last upload batch is in `docs/history/context.md` (12 Nov, five clips, before the credit existed).
 - **Studio:** `./clip open` at http://localhost:4400. It was running when this was written.
 
 ## How the pipeline was run
@@ -92,7 +92,7 @@ This is the sequence that worked on CaseOh. `/queue-check`, `/clip-extractor`, `
 10. **Edit, one agent per clip.** Brief: follow `.claude/skills/edit/SKILL.md` for the clip, steps 1 to 6 and 8 only; do not render or submit; the creator's name; leave the `credit` marker.
 11. **Render yourself, with the sandbox disabled:** `./clip render <clip>`. Read QA. Pull a frame from the export and look at it (`ffmpeg -ss 1 -i exports/<clip>.mp4 -frames:v 1 -vf scale=432:-2 <scratch>/frame.jpg`). Check the title and the hook line against a frame or a line: are they true, and do they name the creator?
 12. **Submit:** `./clip review <clip> submit`.
-13. **Measure and write it down:** `python3 tools/agent-runs.py --hours 3`, a section in `AUDIT.md`, `SCOPE.md` → "Where we left off".
+13. **Measure and write it down:** `python3 tools/agent-runs.py --hours 3`, a section in `docs/history/audit.md`, `SCOPE.md` → "Where we left off".
 
 What it cost on CaseOh: experts 8 to 12 turns and $0.50 to $0.70 each; extractor 9 turns; curator 4; edit 9 or 10 a clip; about an hour of wall-clock with scans and renders.
 
@@ -120,7 +120,7 @@ What it cost on CaseOh: experts 8 to 12 turns and $0.50 to $0.70 each; extractor
 4. **Candidates waiting:** Lacy `c08`, `c09`, `c11`, `c12`; CaseOh `c01` (mostly the awards show's picture), `c04` (flagged `violence`), `c03`, `c05` (small).
 5. **The three CaseOh clips in the review queue:** nobody has watched them. Frames were checked, not audio or playback.
 6. **The channel's own words:** a real contact for removal requests, and the About text.
-7. **Permission and platform rules** (`PROCESS.md`, "Automated clipper: what it does not solve"): a credit is not permission, and the TikTok integration's own terms say the uploader has the rights to what is uploaded.
+7. **Permission and platform rules** (`docs/pipeline.md`, "Automated clipper: what it does not solve"): a credit is not permission, and the TikTok integration's own terms say the uploader has the rights to what is uploaded.
 
 ## Not proven
 
@@ -146,5 +146,5 @@ Run the whole pipeline on the stream that is scanned and waiting: ohnePixel `tw-
 
 **Run update (2026-11-14):** this run has now been done. The stream was still live; the run used
 `--live-from-start` to read the scanned hour, produced 27 verdicts and 2 candidates (both `review`),
-and dry-rendered `c02` without submitting it. See `AUDIT.md` section 9 for what happened, what it
+and dry-rendered `c02` without submitting it. See `docs/history/audit.md` section 9 for what happened, what it
 cost and the checklist answers; `SCOPE.md` → "Where we left off" has the current state.

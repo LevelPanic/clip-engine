@@ -368,15 +368,6 @@ export async function uploadYoutube(
   }
 }
 
-/** Parse `exports/<clip>.txt`: first line title, the rest description, hashtags become tags. */
-export function parsePostText(text: string): { title: string; description: string; tags: string[] } {
-  const lines = text.replace(/\r\n/g, '\n').trim().split('\n');
-  const title = (lines.shift() ?? '').trim();
-  const description = lines.join('\n').trim();
-  const tags = [...description.matchAll(/#([\p{L}\p{N}_]+)/gu)].map((m) => m[1]);
-  return { title, description, tags };
-}
-
 /** Refuse to publish a recut/skip or a QA failure unless the caller explicitly forces it. */
 export function publishBlocked(p: Project, cand: Candidate | undefined, qa: QaReport | undefined, force: boolean): string | null {
   if (force) return null;

@@ -2,7 +2,7 @@
 // Studio, QA (how wide a page may get) and the subtitle engine (which look a clip gets).
 //
 // Studied on the top streamer-clip Shorts of 2025–26 (SpeedUniverse 9.1M, Jynxzi 8.5M, Kai Cenat
-// Shorts, ClipsTycoon, MoreCaseOh, xQc Clips; reports/edits-research-2026-11-18.md). What they share:
+// Shorts, ClipsTycoon, MoreCaseOh, xQc Clips; docs/research/edits-research-2026-11-18.md). What they share:
 // short phrases, not a running transcript; a heavy italic with a thick outline in the middle of the
 // picture; a whole phrase turned yellow when it is the beat, not every word lit up in turn; and often
 // no captions at all. The old default (`bold`: Montserrat 900 caps, every spoken word turning yellow)

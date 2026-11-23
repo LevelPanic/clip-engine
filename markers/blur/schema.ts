@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineMarker } from '../../src/markers/define';
 
-// Hide part of the picture (reports/censorship-review-2026-11-22.md, B3): incidental nudity in the
+// Hide part of the picture (docs/research/censorship-review-2026-11-22.md, B3): incidental nudity in the
 // background, a slur in an on-screen chat, a bystander's face, a document. Not a fix for a clip whose
 // subject is the nude body: a blurred shower scene is still a shower-scene clip (cut those, or drop them).
 // The box is in the 9:16 frame's own coordinates, so it is placed on what the viewer sees, under the

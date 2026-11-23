@@ -1,7 +1,7 @@
 # The agents
 
 Who does what between a stream and a posted clip, what each one reads and writes, and where one hands
-over to the next. `PROCESS.md` is the pipeline in order; this file is the cast and the contracts.
+over to the next. `docs/pipeline.md` is the pipeline in order; this file is the cast and the contracts.
 
 ## The cast
 
@@ -56,7 +56,7 @@ Three tiers. Work goes to the cheapest one that does it reliably.
 **Measured on the Fable/Sonnet process (historical).** These are a quality floor and a turn budget,
 not the active model. On DeepSeek V4.1 Flash the same token counts cost about $0.05 at list prices;
 the target for a 30-minute segment is **one agent per kind**, about 8–12 turns, measured on the next
-run. `AUDIT.md`, section 6, has the detail.
+run. `docs/history/audit.md`, section 6, has the detail.
 
 | | Model | How it worked | Queues | Turns | Stills read | Cost |
 |---|---|---|---|---|---|---|
@@ -72,7 +72,7 @@ model is the other 3.6. The DeepSeek move is a cost and speed decision, not a qu
 dossier and the CLI checks are what make a smaller model reliable, and they are unchanged.
 
 **To change the model:** edit `model:` in the three expert files and the two skills. `npm test` fails
-when they disagree or when this section names another model. The measurements in `AUDIT.md` (section
+when they disagree or when this section names another model. The measurements in `docs/history/audit.md` (section
 6) are for the model named here; run that calibration again before trusting another one.
 
 ## The hand-overs

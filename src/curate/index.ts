@@ -30,7 +30,6 @@ export const CurationInputSchema = z.object({
   /** What the editor should fix before it is posted: "trim the 8 s of dark room at the head". */
   fixes: z.array(z.string()).default([]),
 });
-export type CurationInput = z.input<typeof CurationInputSchema>;
 
 export interface CurationDecision {
   candidateId: string;

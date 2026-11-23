@@ -1,4 +1,4 @@
-// Change 3 of reports/censorship-review-2026-11-22.md (user, 2026-11-22): captions mask strong swears
+// Change 3 of docs/research/censorship-review-2026-11-22.md (user, 2026-11-22): captions mask strong swears
 // and slurs by default (B1), QA measures swearing (A4), a bleep marker mutes the clip's sound over a word
 // and `clip censor` places it (B2), and a blur marker hides part of the picture (B3). A word under a
 // bleep is not said, so it no longer trips the never-post slur rule or the careful period's open f-word.

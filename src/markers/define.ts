@@ -184,11 +184,6 @@ export function framingAt(keys: (FramingKey & { atMs: number })[], base: { mode:
   return { mode, cropX: x };
 }
 
-/** cropX at a source moment (kept for callers that only care about the crop position). */
-export function cropAt(keys: (FramingKey & { atMs: number })[], base: number, src: number): number {
-  return framingAt(keys, { mode: 'crop', cropX: base }, src).cropX;
-}
-
 /** A stretch of the edited timeline where an audio marker sets the level of the clip's own sound. */
 export interface GainSpan {
   tStart: number;

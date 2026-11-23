@@ -13,7 +13,7 @@ Run everything from the project root. The CLI is `./clip`.
 **A Twitch link** (twitch.tv/videos/…, a channel, a clip, or a library id starting `tw-`), or a range or `--continue` on any video: follow **Streams** below instead of steps 1–2, then continue at step 3.
 
 **Two ways to work a stream.** This skill is the quick pass: one judge reads the strongest seeds of a
-scanned range and proposes its best candidates. The full process in `PROCESS.md` puts three experts on
+scanned range and proposes its best candidates. The full process in `docs/pipeline.md` puts three experts on
 every segment and then extracts, curates and edits: `/queue-check` → `/clip-extractor` →
 `/clip-curator` → `/edit`. Use the full process when the user asks for it, or for a whole stream; use
 this one for "a few clips from the last 15 minutes" and for YouTube videos.

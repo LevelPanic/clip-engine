@@ -99,7 +99,6 @@ export const FramingSchema = z.object({
   split: SplitLayoutSchema.default(() => defaultSplitLayout()), // split mode's boxes (always present after parsing)
 });
 export type Framing = z.infer<typeof FramingSchema>;
-export type FramingMode = Framing['mode'];
 
 /**
  * Why a clip was turned down, one tap each on the review page. Kept apart from the note so the
@@ -321,7 +320,6 @@ export interface SponsorSegment {
 }
 
 export type SignalName = 'comments' | 'chat' | 'clips' | 'laughter' | 'audio' | 'teaser' | 'heatmap' | 'speech' | 'title';
-export const SIGNAL_NAMES: SignalName[] = ['comments', 'chat', 'clips', 'laughter', 'audio', 'teaser', 'heatmap', 'speech', 'title'];
 
 export interface Seed {
   id: string;

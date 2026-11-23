@@ -37,5 +37,3 @@ export function subtractRanges(want: Range[], have: Range[]): Range[] {
 export function covers(have: Range[], r: Range, slackMs = 0): boolean {
   return subtractRanges([{ startMs: r.startMs + slackMs, endMs: r.endMs - slackMs }], have).length === 0;
 }
-
-export const rangeMs = (rs: Range[]) => mergeRanges(rs).reduce((a, r) => a + r.endMs - r.startMs, 0);

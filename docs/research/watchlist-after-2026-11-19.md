@@ -3,7 +3,7 @@
 What the unattended clipper does now, what was wrong with it, and what was built to fix it, from the
 user's report ("the last few clips were really bad … IShowSpeed was the same video over different subs …
 the list I made isn't really working") through the four build steps of
-`reports/stream-pipeline-spec-2026-11-19.md`. The spec says what was planned and why; this says what is
+`docs/research/stream-pipeline-spec-2026-11-19.md`. The spec says what was planned and why; this says what is
 in the code, where, and what was measured. Nothing is committed.
 
 ---

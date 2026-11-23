@@ -1,4 +1,4 @@
-// The chat line for a chat card (reports/meme-edits-2026-11-22.md: 9% of top clip Shorts show a viewer's
+// The chat line for a chat card (docs/research/meme-edits-2026-11-22.md: 9% of top clip Shorts show a viewer's
 // message big, a "Greenland is crazy"). We have every stream's chat replay, so the meme editor can pick the
 // line chat actually said about the moment instead of writing one. Pure.
 //

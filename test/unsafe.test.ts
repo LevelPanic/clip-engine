@@ -1,4 +1,4 @@
-// The never-post list and the two gates in front of it (reports/censorship-review-2026-11-22.md):
+// The never-post list and the two gates in front of it (docs/research/censorship-review-2026-11-22.md):
 // A1 nudity, a slur said, a minor and a sexual title are never uploaded (src/qa/unsafe.ts); A2 a moment
 // flagged sexual, slur or minor is dropped at curation, not handed to the editor (src/curate,
 // src/pipeline/full.ts); A3 the ranker skips moments the community marked as sexual (src/scan/rank.ts).

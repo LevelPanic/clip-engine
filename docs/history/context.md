@@ -5,12 +5,12 @@
 English Twitch/YouTube stream → full-VOD queue review → clip extraction → 9:16 edit → editor passes →
 subtitle expert → user review → scheduled YouTube posts.
 
-The end-to-end pipeline is in **PROCESS.md** (TL;DR: stream → segments → 3 queue checkers → 3 experts give
+The end-to-end pipeline is in **docs/pipeline.md** (TL;DR: stream → segments → 3 queue checkers → 3 experts give
 verdicts → extract/rank → curate → trim, 9:16 + meme/expert edits → subtitle expert → render/QA → review → schedule).
 
 ## Agent audit — 2026-11-12 (later the same day)
 
-The agents, the hand-offs and the engines behind them were audited and reworked. **`AUDIT.md`** has every
+The agents, the hand-offs and the engines behind them were audited and reworked. **`docs/history/audit.md`** has every
 finding, what was fixed and what is still open; `agents/README.md` has the cast and contracts.
 
 - The three queue experts are now defined (`.claude/agents/`: `meme-expert`, `virality-expert`, `story-expert`),
@@ -25,7 +25,7 @@ finding, what was fixed and what is still open; `agents/README.md` has the cast 
 - A trial of the three experts on `tw-2926144284` 1:30:00–2:00:00 wrote `library/tw-2926144284/queue-review.json`:
   5 confirmed moments (the earlier run had 1 in that half hour). Four are new and not extracted yet:
   `/clip-extractor tw-2926144284` is the next step. `./clip queue-review tw-2926144284` prints them.
-- The trial cost about 1.15M tokens for the half hour. AUDIT.md "Still open" lists ways to bring that down.
+- The trial cost about 1.15M tokens for the half hour. docs/history/audit.md "Still open" lists ways to bring that down.
 
 ## Current upload batch
 
@@ -72,7 +72,7 @@ Retry it after the daily limit resets (24h); use `./clip publish tw-2926145084-c
 - **YouTube scheduling:** private until `publishAt`; first upload +5 min, then +10, +15, … measured from the first upload
   in the batch. `--now` and `--publish-at` override.
 - **No commits.** The repo still has no commits; every file is untracked.
-- **The channel is an automated clipper (user, 2026-11-14).** It clips and promotes other creators' content and says so: the creator on screen for the whole clip, a credit under every post (channel, source at the clip's first second, stream title and game), a line saying the channel is automated and not affiliated. Neither publisher takes an export that was rendered without the credit. `SCOPE.md` → "The idea"; `AUDIT.md`, section 7.
+- **The channel is an automated clipper (user, 2026-11-14).** It clips and promotes other creators' content and says so: the creator on screen for the whole clip, a credit under every post (channel, source at the clip's first second, stream title and game), a line saying the channel is automated and not affiliated. Neither publisher takes an export that was rendered without the credit. `SCOPE.md` → "The idea"; `docs/history/audit.md`, section 7.
 - **Older clips are not retrofitted (user, 2026-11-14: "nah fresh").** The 14 clips in the review queue that were rendered before the credit existed stay as they are, and stay unposted: the channel posts fresh clips, made from now on. Do not offer to re-render them again. If one is wanted after all: `clip credit <clip>`, then `clip render <clip>`.
 
 ## TheBurntPeanut full-VOD test
@@ -134,10 +134,10 @@ Local copies: `legal/terms.html`, `legal/privacy.html`, `legal/index.html`. They
 
 ## Key files
 
-- `PROCESS.md` — the full production pipeline.
+- `docs/pipeline.md` — the full production pipeline.
 - `SCOPE.md` — roadmap, build notes, "Where we left off".
 - `CLAUDE.md` — how to work in the code, commands, queue/editor/subtitle rules.
-- `AUDIT.md` — the agent audit: findings, fixes, what is open.
+- `docs/history/audit.md` — the agent audit: findings, fixes, what is open.
 - `agents/` — cast and contracts, vocabulary, the experts' shared protocol, research sources.
 - `.claude/agents/` — the meme, virality and story experts.
 - `src/scan/queues.ts` — three queue checkers; `src/scan/review.ts` — the experts' verdict ledger.

@@ -554,7 +554,3 @@ export async function loadQueueData(videoId: string): Promise<QueueData> {
     excluded: sponsors.filter((s) => EXCLUDED_CATEGORIES.has(s.category)),
   };
 }
-
-export async function buildQueues(videoId: string, opts: { kind: QueueKind; fromMs?: number; toMs?: number; limit?: number }): Promise<Queue[]> {
-  return queuesFrom(await loadQueueData(videoId), opts);
-}

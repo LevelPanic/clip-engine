@@ -16,7 +16,7 @@ export const paths = {
   clip: (id: string) => path.join(DATA, 'clips', id),
   project: (id: string) => path.join(DATA, 'clips', id, 'project.json'),
   exports: path.join(DATA, 'exports'),
-  presets: path.join(ROOT, 'presets'),
+  presets: path.join(DATA, 'presets'),
   lenses: path.join(ROOT, 'lenses'),
   markers: path.join(ROOT, 'markers'),
   assets: path.join(ROOT, 'assets'),

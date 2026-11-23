@@ -95,5 +95,3 @@ export function sourceOf(id: string): SourceRef {
   if (tw) return twitch(tw[1]);
   return youtube(id);
 }
-
-export const platformOf = (id: string): Platform => sourceOf(id).platform;

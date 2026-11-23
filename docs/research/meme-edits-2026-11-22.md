@@ -302,7 +302,7 @@ Two styles both work: **plain** (IShowSpeed, Moist, about 4–11 edits) and **pu
 ## 8. The study set
 
 The videos, audio, contact sheets, automatic measures and Whisper words (1.3 GB in `.cache/edit-study/`) were deleted on
-2026-11-23 to free disk space. The study's results are kept in `reports/meme-edits-2026-11-22-data/` (under 1 MB):
+2026-11-23 to free disk space. The study's results are kept in `docs/research/meme-edits-2026-11-22-data/` (under 1 MB):
 
 | File | What it is |
 |---|---|

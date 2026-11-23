@@ -1,4 +1,4 @@
-// The coverage ledger (reports/stream-pipeline-spec-2026-11-19.md, section 5): for each stream and
+// The coverage ledger (docs/research/stream-pipeline-spec-2026-11-19.md, section 5): for each stream and
 // layer, which stretches of VOD time are queued, claimed by a running job, done, failed or skipped.
 // Dedupe is one rule, wanted − done − claimed − skipped, merged into what is queued. That covers a
 // live stream growing between checks (a queued first 40 minutes becomes the whole hour, same job), a

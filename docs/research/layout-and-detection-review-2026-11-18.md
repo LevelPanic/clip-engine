@@ -1,6 +1,6 @@
 # Layout and detection review — 2026-11-18
 
-A second opinion on `reports/layout-strategy.md`, plus a look at why weak moments reach review.
+A second opinion on `docs/research/layout-strategy.md`, plus a look at why weak moments reach review.
 
 **What this is based on:**
 
@@ -169,7 +169,7 @@ Clip ids are `tw-<vod>-cNN`. NickEh30 is `tw-2931365250`, Ludwig `tw-2931875711`
 
 **Known gap:** another player's face in the camera band passes the face check. Nickmercs c05 scored 0.65.
 
-**Verified on six test copies of rejected clips** (rendered, then deleted; before/after in `reports/layout-before-after-2026-11-18.png`):
+**Verified on six test copies of rejected clips** (rendered, then deleted; before/after in `docs/research/layout-before-after-2026-11-18.png`):
 
 - **xQc, Just Chatting:** split with the whole website under the cam. The face is in the camera band 97% of the clip.
 - **SypherPK's IRL coffee shop:** no facecam found over the whole clip, so it is blur-fit. It was wrongly split before.

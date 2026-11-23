@@ -1,7 +1,7 @@
 // Topics: besides the creators in channels.json, the watchlist follows games and categories that are
 // trending (topics.json: GTA 6, Fortnite, League of Legends…). Every check reads every topic's
 // most-watched English streams in its Twitch category and takes each topic's top 3 eligible streams
-// into the tracker (reports/stream-pipeline-spec-2026-11-19.md, section 4.2). The tracker decides what
+// into the tracker (docs/research/stream-pipeline-spec-2026-11-19.md, section 4.2). The tracker decides what
 // is clipped, moment by moment, after the listed creators.
 //
 // Nothing is done twice:

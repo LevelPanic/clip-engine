@@ -11,9 +11,9 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
 - **Example configs:** `channel.example.json`, `channels.example.json`, `client_secrets.example.json`.
 - **Missing creator list:** `src/core/creators.ts` (`loadCreators`) means no `channels.json` gives no creators, not a crash. It is tested in `test/creators.test.ts`.
 - **Personal data redacted:**
-  - from `CONTEXT.md`: an email, the TikTok open_id, Telegraph links, and upload links and titles
-  - links to the channel's uploads, from SCOPE.md and AUDIT.md
-  - upload video ids, from AUDIT.md, SCOPE.md and the censorship report
+  - from `docs/history/context.md`: an email, the TikTok open_id, Telegraph links, and upload links and titles
+  - links to the channel's uploads, from SCOPE.md and docs/history/audit.md
+  - upload video ids, from docs/history/audit.md, SCOPE.md and the censorship report
   - posted titles, from SCOPE.md and the censorship report
   - in the title tests, the inputs were swapped for made-up ones that test the same behaviour
 - **Channel name:** the default is now "Clip Engine", replacing the channel's real name. The operator's own `channel.json` still sets the real name.
@@ -22,7 +22,32 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
 - **Scan:** no emails, home paths, tokens, Telegraph links, or posted titles or video ids (all 76 logged uploads were checked).
 - **Tests:** 341 pass.
 
-**Waiting:** the noreply author email for the first commit.
+**Committed:** `c0dfb5e`, the first local commit (293 files). It is authored with the GitHub noreply address `28920092+LevelPanic@users.noreply.github.com`, set for this repo only. The author name comes from the global git config, and can be changed with `git commit --amend --reset-author` before the first push. Nothing has been pushed; there is no remote yet.
+
+**Phase 1 (2026-11-23, user: "Yes, start phase 1").** Docs and layout:
+- **Docs moved into `docs/`:**
+  - `PROCESS.md` → `docs/pipeline.md`.
+  - `AUDIT.md`, `HANDOVER.md` and `CONTEXT.md` → `docs/history/`.
+  - Every report → `docs/research/`. Their local-only data and images moved with them and stay ignored.
+  - 131 citations in 48 files were rewritten. No relative links needed it.
+- **SCOPE.md split:**
+  - It went from 825 lines to 238: the idea, the key decisions, the roadmap, a new current-state summary, the backlog and the open questions.
+  - The dated log moved to `docs/changelog.md`, newest first.
+  - The reference sections moved to `docs/architecture.md`.
+  - Checked line by line: nothing was lost.
+- **New docs:**
+  - `docs/architecture.md`: the flow and where each part lives, the design principles, and the known structural debt.
+  - `docs/operations.md`: the daemons table, how to start and stop each one, and CLAUDE.md's long operational sections word for word.
+- **README:** setup with the real requirements, the example configs and the logins; the real upload pace; the full review keys; a docs map; a "Use" section; the licence.
+- **CLAUDE.md:** 68 KB down to 49 KB.
+  - Its long operational bullets are now summaries that point to `docs/operations.md`.
+  - The layout map gains `src/track`, `pipeline`, `publish`, `cli`, `docs/` and the example files.
+  - The read-the-handover-first line is gone.
+- **Code:**
+  - The 11 dead exports and 4 unused types are removed, and so are the old JSON-queue importer and `src/demo`. `src/demo` is archived in `.cache/archive/`, with `demo-public/` and `tiktok-demo.mp4`.
+  - The watchlist's status page is written to `library/`.
+  - Presets live under the data folder.
+- **Checks:** typecheck is clean, 341 tests pass, and the personal-data and upload-trace scans of the tree are clean.
 
 ## Where it stands
 
@@ -34,9 +59,9 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
 **Not safe to commit yet.** The project has never been committed.
 - A commit today would hold **699 files / 102 MB**, 91 MB of it creator audio and frames in `tmp/` and `.qa-stills/`. With the ignores in phase 0 it is about **278 files / 4.8 MB**.
 - Personal data sits in files that would be committed:
-  - `CONTEXT.md`: the connected TikTok account's id, an email address, links to the channel's own uploads.
+  - `docs/history/context.md`: the connected TikTok account's id, an email address, links to the channel's own uploads.
   - `legal/*.html`: the contact email (4 files) and a surname.
-  - `reports/meme-edits-2026-11-22-data/BRIEF.md`: an absolute home path.
+  - `docs/research/meme-edits-2026-11-22-data/BRIEF.md`: an absolute home path.
   - `scheduled-preview.html`: links to scheduled uploads.
   - `channel.json`: the channel identity and the removal incident.
   - `channels.json`, `channels.md`: the creator target list.
@@ -89,7 +114,7 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
   - OAuth setup
   - OpenCode/DeepSeek for the agents
 - SCOPE.md is 825 lines, 74% of it session log.
-- HANDOVER.md is stale, yet CLAUDE.md says to read it first.
+- docs/history/handover.md is stale, yet CLAUDE.md says to read it first.
 
 ## Approach
 
@@ -104,13 +129,13 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
    - `tmp/`, `.qa/`, `.qa-stills/`, `demo-public/`, `presets/`
    - `/*-preview.html`, `/watchlist-status.html`, `*.mp4`
    - `*_secrets.json` with `!*.example.json`, `*-token.json`, `.env*`, `.claude/settings.local.json`
-   - `*.sqlite`, `reports/*-data/`
+   - `*.sqlite`, `docs/research/*-data/`
    - `channel.json`, `channels.json`, `channels.md`
 2. **Example configs:**
    - `channel.example.json`, `channels.example.json`, `client_secrets.example.json`. `topics.json` is generic and stays.
    - The code falls back to the example, or to an empty list, when the real file is missing (`tools/watchlist.ts:98`, `src/cli/more.ts:486`, `tools/classify-channels.ts`).
 3. **Personal data out:**
-   - `CONTEXT.md` is redacted or left out.
+   - `docs/history/context.md` is redacted or left out.
    - `legal/` stays out of the repo; it is already hosted.
    - The home path in BRIEF.md goes.
    - The preview pages are ignored.

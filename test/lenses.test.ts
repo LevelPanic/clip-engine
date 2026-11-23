@@ -90,7 +90,7 @@ test('every hyphenated term in the agent and skill files is one the CLI knows', 
   // (or one of a few names). A typo, or a ground an expert is told to use that the ledger would refuse, fails here.
   const known = new Set(Object.values(VOCABULARY).flatMap((v) => v.terms.map((t) => t.key)));
   const names = new Set(['meme-expert', 'virality-expert', 'story-expert', 'stream-moments', 'podcast-general', 'hot-takes', 'queue-check', 'clip-extractor', 'clip-curator', 'subtitle-expert', 'clip-engine', 'blur-fit', 'push-in', 'punch-in', 'self-contained', 'peak-first']);
-  const files = ['agents/vocabulary.md', 'agents/queue-expert.md', 'agents/README.md', 'PROCESS.md', ...['meme-expert', 'virality-expert', 'story-expert'].map((f) => `.claude/agents/${f}.md`), ...['queue-check', 'clip-extractor', 'clip-curator', 'edit', 'subtitle-expert', 'clip'].map((f) => `.claude/skills/${f}/SKILL.md`)];
+  const files = ['agents/vocabulary.md', 'agents/queue-expert.md', 'agents/README.md', 'docs/pipeline.md', ...['meme-expert', 'virality-expert', 'story-expert'].map((f) => `.claude/agents/${f}.md`), ...['queue-check', 'clip-extractor', 'clip-curator', 'edit', 'subtitle-expert', 'clip'].map((f) => `.claude/skills/${f}/SKILL.md`)];
   for (const f of files) {
     for (const m of read(f).matchAll(/`([a-z]+(?:-[a-z]+)+)`/g)) assert.ok(known.has(m[1]) || names.has(m[1]), `${f} uses \`${m[1]}\`, which \`clip vocab\` does not have`);
   }

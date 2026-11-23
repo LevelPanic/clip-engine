@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineMarker } from '../../src/markers/define';
 
-// Colour drains out of the picture (reports/meme-edits-2026-11-22.md: 14% of top clip Shorts), most often on a
+// Colour drains out of the picture (docs/research/meme-edits-2026-11-22.md: 14% of top clip Shorts), most often on a
 // fail ending with a freeze: the last frame holds and goes grey. A `filter` hook: the video only, so the
 // captions, the credit and any text stay in colour.
 export default defineMarker({

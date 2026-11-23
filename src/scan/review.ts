@@ -49,7 +49,6 @@ export const QueueVerdictInputSchema = z.object({
   confidence: z.number().min(0).max(1),
   reason: z.string().min(12, 'say why in a sentence'),
 });
-export type QueueVerdictInput = z.input<typeof QueueVerdictInputSchema>;
 
 export interface QueueVerdict {
   queueId: string;
@@ -109,7 +108,7 @@ export function expertFlags(videoId: string, r: { startMs: number; endMs: number
 }
 
 /**
- * The flags that keep a moment off this channel (reports/censorship-review-2026-11-22.md): `sexual`
+ * The flags that keep a moment off this channel (docs/research/censorship-review-2026-11-22.md): `sexual`
  * from two kinds of expert (one alone is often innuendo or a gag), any `slur`, any `minor`. As
  * "flag (experts)" lines; empty when there is none.
  */

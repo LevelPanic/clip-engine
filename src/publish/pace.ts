@@ -1,4 +1,4 @@
-// How fast the channel posts (reports/censorship-review-2026-11-22.md, C4; user, 2026-11-22). It had
+// How fast the channel posts (docs/research/censorship-review-2026-11-22.md, C4; user, 2026-11-22). It had
 // posted 26 in a day, in one title template, right after 62 refused upload calls, and YouTube's spam
 // policy names repetitive, mass-produced uploads. So: at most `perDay` uploads in any 24 hours, `everyMin`
 // apart, and never more than YouTube's own limit let through the last time it said no. A limit that

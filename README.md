@@ -7,10 +7,38 @@ Turn YouTube videos and Twitch streams into short-form clips for Shorts, TikTok 
 them (zooms, booms, captions, jump cuts, face-tracking crops), renders a 9:16 MP4, checks it, and lines
 it up for you to approve. It works one video at a time with Claude, or as a batch.
 
+## Setup
+
+**Requirements**
+- macOS (Apple Silicon was used for the measured baselines). The face and audio tools use Apple Vision and SoundAnalysis.
+- Xcode Command Line Tools (`xcode-select --install`). These supply `swiftc` for the Swift tools and the compiler whisper.cpp builds with.
+- Node 22.5 or later (`.nvmrc`) and ffmpeg.
+- [uv](https://docs.astral.sh/uv/):
+  - yt-dlp runs through `uvx`, always at the latest version.
+  - The face (InsightFace) and nudity (NudeNet) sidecars each set up their own Python 3.12 environment on first use.
+- Remotion downloads its Chrome Headless Shell on the first render.
+- The unattended agents (the watchlist's pipeline, change requests and `clip judge --provider opencode`) run through [OpenCode](https://opencode.ai) with `opencode-go/deepseek-v4.1-flash`. Change it with `CLIP_PIPELINE_MODEL`.
+- The interactive skills (`/clip`, `/edit` and the others) run in Claude Code.
+
+**Install**
+
+```bash
+git clone <this repo> && cd clip-engine
+npm ci
+cp channel.example.json channel.json      # your channel's name, disclosure line and do-not-clip list
+cp channels.example.json channels.json    # the creators the watchlist follows (optional)
+./clip --help
+```
+
+**Optional logins** (`docs/operations.md` → "Publishing" has the steps):
+- **YouTube uploads:** put a Google OAuth client in `client_secrets.json` (see `client_secrets.example.json`), then run `./clip auth youtube`.
+- **TikTok inbox uploads:** put the app's keys in `tiktok_secrets.json` (see `tiktok_secrets.example.json`), then run `./clip tiktok auth`.
+
+None of these files is committed: `.gitignore` keeps your configs, logins, footage and renders out of the repo.
+
 ## Quick start
 
 ```bash
-npm install
 ./clip studio            # http://localhost:4400
 ```
 
@@ -45,8 +73,20 @@ Or as a batch, unattended:
 ./clip batch-status
 ```
 
-Then review at http://localhost:4400/#/review: **A** approve, **R** reject (then **1–5** for why: boring, layout, cut, title, context), **C** request changes.
-The upload scheduler (`tools/upload-cron.ts --daemon`) posts one approved clip every 20 minutes (5–60 s, passing QA). When the YouTube login expires it holds the approvals until `./clip auth youtube`; a refused clip shows **Retry upload** in the Approved tab.
+Then review at http://localhost:4400/#/review:
+- **A** approves.
+- **R** rejects, then **1–5** for why: boring, layout, cut, title, context.
+- **C** requests changes. Write the change in the note first; the editor agent acts on it.
+- **U** sends a decided clip back to review.
+- **8** ticks 18+.
+
+The upload scheduler (`tools/upload-cron.ts --daemon`) uploads approvals to YouTube:
+- at most 8 in any 24 hours, 3 hours apart, each going live 5 minutes after it uploads;
+- it waits out YouTube's limits;
+- it holds approvals while the login is expired;
+- it never posts a clip without its creator credit, or one on the never-post list (nudity, a slur, a minor, a sexual title).
+
+`docs/operations.md` covers every daemon: what it does, how to start and stop it, and its log.
 
 The watchlist (`tools/watchlist.ts --daemon`) does this unattended for the creators in `channels.json` and the games in `topics.json`: it ranks each stream's moments from viewer clips and chat laughter and runs the full process on the best ones, one moment at a time, back to back. Streams you add with `clip track` go first, then the creators you listed, then the topics:
 
@@ -91,7 +131,7 @@ The watchlist (`tools/watchlist.ts --daemon`) does this unattended for the creat
 ## The full process on a stream
 
 `/clip` is the quick pass: one judge reads the strongest seeds. For a whole stream, the full process
-puts three experts on every 20–30 minute segment and checks every hand-off (see `PROCESS.md`, and
+puts three experts on every 20–30 minute segment and checks every hand-off (see `docs/pipeline.md`, and
 `agents/README.md` for who does what):
 
 ```
@@ -130,7 +170,7 @@ puts three experts on every 20–30 minute segment and checks every hand-off (se
 | `⌫` | delete the selected marker |
 | `⌘Z` / `⇧⌘Z` | undo / redo |
 | `↑` `↓` `Enter` `E` `X` `S` | on a video page: choose a candidate, edit it, export it, tick it, skip |
-| `A` `R` `C` `E` | in the review queue: approve, reject (then `1`–`5` for why, `R` again for none), changes, open in the editor |
+| `A` `R` `C` `U` `8` `E` | in the review queue: approve, reject (then `1`–`5` for why, `R` again for none), changes (needs a note), back to review, 18+, open in the editor (its **↩ Review** comes back to the same clip) |
 
 Click any caption word, in the transcript or on the timeline, to fix what the auto-captions misheard.
 The editor's top bar steps to the previous or next clip from the same video, and its `⋯` menu duplicates a clip (to try another edit) or deletes it.
@@ -187,10 +227,29 @@ npm test              # offline, about 1 s: logic plus a simulated live stream
 npm run test:e2e      # real Twitch, a few minutes
 ```
 
-## Requirements
+`clip batch`'s unattended judge runs Claude Code headless (`claude -p`). Log the CLI in once by running it and typing `/login`. Without it, batches stop after discovery: judge with `/clip` in a session, then run `./clip batch-continue`.
 
-- Node 22 or later, ffmpeg and [uv](https://docs.astral.sh/uv/). yt-dlp runs through `uvx`, always at the latest version.
-- macOS for the Swift tools (audio events, face tracking).
-- Remotion downloads its Chrome Headless Shell on the first render. Remotion's licence is free for individuals and companies of up to 3 people.
-- The unattended batch judge runs Claude Code headless (`claude -p`). Log the CLI in once by running it and typing `/login`.
-  - Without it, batches stop after discovery. Judge with `/clip` in a session, then run `./clip batch-continue`.
+## Docs
+
+| | |
+|---|---|
+| `CLAUDE.md` | how to work in the code: the module map, the rules the design depends on, testing, measured baselines |
+| `SCOPE.md` | the idea, the key decisions, where things stand and the backlog |
+| `docs/architecture.md` | how it fits together, and the reference material behind it (signals, sources, output spec) |
+| `docs/pipeline.md` | the full production process on a stream, stage by stage |
+| `docs/operations.md` | running the channel: the daemons, the upload scheduler, the review page, the watchlist, publishing |
+| `docs/changelog.md` | what was built, measured and decided, newest first |
+| `docs/research/` | the studies and reviews the rules cite |
+| `agents/`, `lenses/`, `markers/README.md` | the agents' contracts and vocabulary, the judge's rubrics, how to add a marker type |
+
+## Use
+
+The engine downloads public streams and videos and posts clips of them. The footage belongs to its creators. Every clip
+names its creator on screen and links back in its post, and `doNotClip` in `channel.json` keeps anyone who asks out of
+every step. A credit is not permission: the platforms' rules on reused content and each creator's wishes still apply,
+and following them is up to whoever runs it.
+
+## Licence
+
+MIT (`LICENSE`). The engine depends on software with its own terms: Remotion's licence (free for individuals and
+companies of up to 3 people) and InsightFace's model terms (non-commercial unless licensed). `THIRD_PARTY.md` has the list.

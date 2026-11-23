@@ -13,7 +13,7 @@
 //   npx tsx tools/watchlist.ts --daemon           # check, work, sleep, repeat
 //
 // State: library/watchlist-state.json. Jobs: the `watch_jobs` table in library/tracking.sqlite (src/track/jobs.ts).
-// Page: watchlist-status.html (creators, live status, seen, queue, review/upload counts).
+// Page: library/watchlist-status.html (creators, live status, seen, queue, review/upload counts).
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
@@ -87,8 +87,6 @@ type Job = WatchJob;
 
 const creators = loadCreators((why) => log(why));
 const stateFile = path.join(paths.library, 'watchlist-state.json');
-/** The old JSON queue: imported into the tracker's job table once, then renamed. */
-const queueFile = path.join(paths.library, 'watchlist-queue.json');
 const state: State = readJsonIf<State>(stateFile) ?? { updatedAt: new Date().toISOString(), creators: {} };
 const saveState = () => {
   state.updatedAt = new Date().toISOString();
@@ -673,26 +671,10 @@ function writePage() {
 <h2 style="margin-top:26px">Next moments</h2><table><thead><tr><th>Creator</th><th>Moment</th><th>Score</th><th>Why</th><th>Viewer clip</th></tr></thead><tbody>${nextRows}</tbody></table>
 <h2 style="margin-top:26px">Topics</h2><table><thead><tr><th>Topic</th><th>Twitch category</th><th>Last check</th><th>Big English streams</th><th>Top now</th><th>Last taken</th><th>Error</th></tr></thead><tbody>${topicRows}</tbody></table>
 <h2 style="margin-top:26px">Queue</h2><table><thead><tr><th>Job</th><th>Creator</th><th>Video</th><th>Status</th><th>Result</th></tr></thead><tbody>${q.map((j) => `<tr><td>${j.kind}${j.topic ? ` · ${j.topic}` : ''}</td><td>${j.creator}</td><td>${j.videoId}</td><td>${j.state}</td><td>${(j.result ?? j.error ?? '').slice(0, 300)}</td></tr>`).join('')}</tbody></table>`;
-  fs.writeFileSync(path.join(paths.root, 'watchlist-status.html'), html);
-}
-
-/** The old JSON queue, moved into the job table once (its running jobs come back queued), then renamed. */
-function importJsonQueue() {
-  type Old = { id: string; kind: Job['kind']; creator: string; topic?: string; tier?: number; videoId: string; momentId?: string; url?: string; fromMs?: number; toMs?: number; status: 'queued' | 'running' | 'done' | 'failed'; attempts?: number; interrupted?: number; error?: string; result?: string; createdAt: string; startedAt?: string; finishedAt?: string };
-  const old = readJsonIf<Old[]>(queueFile);
-  if (!old) return;
-  let n = 0;
-  for (const j of old) {
-    const state = j.status === 'running' ? 'queued' : j.status;
-    const ok = insertJob({ id: j.id, kind: j.kind, creator: j.creator, topic: j.topic, tier: j.tier ?? (j.topic ? 2 : 1), videoId: j.videoId, momentId: j.momentId, url: j.url, fromMs: j.fromMs, toMs: j.toMs, state, attempts: j.attempts ?? 0, interrupted: (j.interrupted ?? 0) + (j.status === 'running' ? 1 : 0), error: j.error, result: j.result, createdAt: j.createdAt, startedAt: state === 'done' || state === 'failed' ? j.startedAt : undefined, finishedAt: j.finishedAt });
-    if (ok) n++;
-  }
-  fs.renameSync(queueFile, `${queueFile}.imported`);
-  log(`moved ${n} jobs from ${path.basename(queueFile)} into the tracker's job table (the file is kept as .imported)`);
+  fs.writeFileSync(path.join(paths.library, 'watchlist-status.html'), html);
 }
 
 if (has('--daemon') && !DRY) {
-  importJsonQueue();
   // a job a stopped or crashed daemon left running goes back in line at its checkpoint (its worker's
   // pid is gone, or its lease ran out)
   for (const j of requeueStale(workerAlive)) log(`requeued ${j.kind} ${j.topic ? `[${j.topic}] ` : ''}${j.creator} ${j.videoId}${j.stage ? ` (resumes after ${j.stage})` : ''}: its worker stopped`);

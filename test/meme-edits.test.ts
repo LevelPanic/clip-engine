@@ -1,4 +1,4 @@
-// The meme-edit vocabulary from reports/meme-edits-2026-11-22.md (user, 2026-11-22: "Yes, build them"): the
+// The meme-edit vocabulary from docs/research/meme-edits-2026-11-22.md (user, 2026-11-22: "Yes, build them"): the
 // tilt, the zoom-out reveal, black and white (a `filter` hook), the counter and the pointer, the premise box
 // and chat card text looks, the caption repeat counter "X3", four new sounds, and the meme editor's rules
 // that place them on the words and reactions.

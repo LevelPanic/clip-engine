@@ -1,4 +1,4 @@
-// Facecam-only and game-only spans (reports/meme-edits-2026-11-22.md, rows 12: the facecam alone on the
+// Facecam-only and game-only spans (docs/research/meme-edits-2026-11-22.md, rows 12: the facecam alone on the
 // laugh in 21% of top clip Shorts, the stream alone in 16%; user, 2026-11-23: "yes, build them"). A `solo`
 // span marker frames only itself and goes back to the split; it needs a split to pick from. The geometry is
 // one function (soloGeometry) read by the Studio's CSS and the export's ffmpeg chain.

@@ -1,4 +1,4 @@
-// Swearing, measured (reports/censorship-review-2026-11-22.md, A4): 61 of 62 clips with the f-word were
+// Swearing, measured (docs/research/censorship-review-2026-11-22.md, A4): 61 of 62 clips with the f-word were
 // never warned about it. QA now says how much strong swearing is heard, whether any is in the open (the
 // careful period holds that), whether the captions show it unmasked, and whether the title swears. A
 // warning, never a failure: a swear is the reviewer's call, a slur said is the never-post list's.

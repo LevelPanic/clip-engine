@@ -81,7 +81,7 @@ Four clips in review were copied and rendered in the new looks, then the copies 
 - Ludwig in **commentary**.
 - MoistCr1tikal in **comic**.
 
-The frames are in `reports/caption-looks-before-after-2026-11-18.png`: the old renders are on the left, the new looks on the right. At full resolution, the street phrases have the same letter size as the 9.1M-view reference.
+The frames are in `docs/research/caption-looks-before-after-2026-11-18.png`: the old renders are on the left, the new looks on the right. At full resolution, the street phrases have the same letter size as the 9.1M-view reference.
 
 ## How to keep learning what works
 

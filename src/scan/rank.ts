@@ -67,7 +67,7 @@ export async function rankStream(link: string, chatHours: number, say: (s: strin
  * Moments the community marked as sexual (`sexualMoment`: a viewer clip titled for sex, or lewd chat over
  * it) are skipped with why. The viewer clips with the most views on GTA 6 streams were the nude shower,
  * the strip club and the bed scene, so ranking by views alone sent the watchlist to the clips YouTube
- * removed (reports/censorship-review-2026-11-22.md). Pure over the chat it is given.
+ * removed (docs/research/censorship-review-2026-11-22.md). Pure over the chat it is given.
  */
 export function skipSexual<T extends { titles: string[]; fromMs: number; toMs: number; skip?: string }>(moments: T[], chat?: { messages: [number, string, string][]; disabled?: boolean }): T[] {
   return moments.map((m) => {

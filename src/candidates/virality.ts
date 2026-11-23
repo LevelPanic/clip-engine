@@ -45,8 +45,6 @@ const WEIGHTS: Record<CandidateFormat, Weights> = {
   talk: { stop: 0.15, hold: 0.25, share: 0.25, standalone: 0.15, payoff: 0.2 },
 };
 
-/** Below any of these, the clip is capped instead of ranked as if the rest could save it. */
-export const VIRALITY_GATE = { stop: 6, standalone: 6, payoff: 5 } as const;
 const GATES: Record<CandidateFormat, { stop: number; standalone: number; payoff: number; delivery: number }> = {
   stream: { stop: 6, standalone: 6, payoff: 5, delivery: 6 },
   talk: { stop: 0, standalone: 5, payoff: 5, delivery: 4 },
@@ -161,10 +159,4 @@ export function rankCandidates<T extends RankableCandidate>(
     })
     .sort((a, b) => verdictOrder(a.verdict) - verdictOrder(b.verdict) || b.rankScore - a.rankScore || b.score - a.score)
     .map((c, i) => ({ ...c, rank: i + 1 }));
-}
-
-/** A short label for the Studio and the CLI. */
-export function rankLabel(virality: number | undefined, convergence: number, quality: number): string {
-  const v = virality ?? quality;
-  return `viral ${v} · signal ${Math.round(convergence * 100)}%`;
 }

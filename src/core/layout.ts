@@ -149,7 +149,7 @@ export const MAX_SOLO_ZOOM = 3.5;
 const SOLO_MIN_WIDTH = 0.5;
 
 /**
- * One picture of a split alone, for a span (reports/meme-edits-2026-11-22.md: the facecam alone on the
+ * One picture of a split alone, for a span (docs/research/meme-edits-2026-11-22.md: the facecam alone on the
  * laugh in 21% of top clip Shorts, the stream alone in 16%). Read by FramedVideo.tsx and the ffmpeg chain
  * (src/render/framing.ts), so the Studio and the export match.
  *   cam:  the cam box (with its headroom) enlarged up to MAX_SOLO_ZOOM, as wide as the canvas allows,

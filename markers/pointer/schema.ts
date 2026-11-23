@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineMarker } from '../../src/markers/define';
 
-// Point at something (reports/meme-edits-2026-11-22.md: an arrow, a circle, a label such as "0.1% CHANCE";
+// Point at something (docs/research/meme-edits-2026-11-22.md: an arrow, a circle, a label such as "0.1% CHANCE";
 // Nick Eh 30's clip channel uses it in most Shorts). x/y is the thing pointed at, in the 9:16 frame.
 export default defineMarker({
   type: 'pointer',

@@ -283,7 +283,7 @@ export function cuttableGaps(m: Pick<EditorMetrics, 'deadAirGaps' | 'durationMs'
 }
 const leftNote = (leftMs: number, m: Pick<EditorMetrics, 'durationS'>) => `left ${(leftMs / 1000).toFixed(1)} s of dead air: cutting it would take this ${m.durationS} s clip under 15 s. Extend the clip (\`clip trim\`) or keep the silence`;
 
-// ── The meme-edit vocabulary from reports/meme-edits-2026-11-22.md (175 top clip Shorts) ──
+// ── The meme-edit vocabulary from docs/research/meme-edits-2026-11-22.md (175 top clip Shorts) ──
 
 /** Words that end a clip on a loss: the fail ending gets a freeze and black and white. */
 const FAIL = /\b(died|dead|die|dying|lost|lose|losing|eliminated|wasted|failed|fail|game over|it'?s over|no{3,})\b/i;

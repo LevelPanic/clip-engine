@@ -29,7 +29,7 @@ const bare = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N}*]/gu, '');
 
 /**
  * A word or a phrase of up to three words said three or more times in a row is one caption: the phrase once,
- * with "X3" on its last word, shown until the last repeat ends ("SIT DOWN X3"; reports/meme-edits-2026-11-22.md).
+ * with "X3" on its last word, shown until the last repeat ends ("SIT DOWN X3"; docs/research/meme-edits-2026-11-22.md).
  * Pure; works on any list of timed words.
  */
 export function collapseRepeats<T extends { text: string; t0: number; t1: number }>(list: T[], min = 3): T[] {

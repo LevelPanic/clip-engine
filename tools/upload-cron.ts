@@ -2,7 +2,7 @@
 // The upload cron: take one approved clip the review DB has not picked, upload it private, schedule it
 // LEAD_MIN minutes later, and mark it picked/uploaded. At most UPLOADS_PER_DAY (8) in any 24 hours,
 // UPLOAD_MIN (180) minutes apart, and never more than YouTube's own limit let through the last time it
-// said no (src/publish/pace.ts; reports/censorship-review-2026-11-22.md, C4). While channel.json has a
+// said no (src/publish/pace.ts; docs/research/censorship-review-2026-11-22.md, C4). While channel.json has a
 // careful period, an approval with a sexual flag, an 18+ tick or an f-word in its first 3 s waits for
 // the period to end (`deferred`) and the next approval goes instead (C5).
 //
@@ -183,7 +183,7 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
     log(`already uploaded ${row.clipId} ${rec?.url ?? ''}`);
     return 'did';
   }
-  // The never-post list (src/qa/unsafe.ts; reports/censorship-review-2026-11-22.md) stops an approval:
+  // The never-post list (src/qa/unsafe.ts; docs/research/censorship-review-2026-11-22.md) stops an approval:
   // nudity, a slur said, a minor, a sexual title. Checked here, before an upload call is spent; the
   // publisher refuses it too. A title can be fixed in place, so that one is held until it is edited.
   const unsafe = await neverPost(row.clipId, { look: !DRY });

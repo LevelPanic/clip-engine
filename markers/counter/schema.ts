@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineMarker } from '../../src/markers/define';
 
-// A number on screen that changes as the clip plays (reports/meme-edits-2026-11-22.md: 14% of top clip
+// A number on screen that changes as the clip plays (docs/research/meme-edits-2026-11-22.md: 14% of top clip
 // Shorts): "3, 2, 1" over a countdown, a points tally, a "ROACH COUNTER", a stopwatch proving "2 SECONDS".
 export default defineMarker({
   type: 'counter',

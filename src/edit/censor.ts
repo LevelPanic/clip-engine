@@ -1,4 +1,4 @@
-// The censor pass (reports/censorship-review-2026-11-22.md, B2): a bleep over every slur said in the
+// The censor pass (docs/research/censorship-review-2026-11-22.md, B2): a bleep over every slur said in the
 // clip and over the f-words in its open, placed from the transcript's word times. A slur said is never
 // posted (src/qa/unsafe.ts) and an f-word in the first 3 s is held through the careful period; a bleep
 // clears both, because a word under it is not heard (wordsThatPlay). The captions mask the text by

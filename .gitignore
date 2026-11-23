@@ -40,9 +40,9 @@ demo-public/
 legal/
 
 # Raw data and creator stills behind a report (the reports' text is committed)
-reports/*-data/
-reports/*.png
-reports/*.jpg
+docs/research/*-data/
+docs/research/*.png
+docs/research/*.jpg
 
 # OS and editor
 .DS_Store

@@ -124,6 +124,5 @@ export const VOCABULARY = {
   niches: { title: 'Niches (where a clip belongs)', terms: NICHES },
   drops: { title: 'Drop grounds (the only reasons to drop a candidate)', terms: DROP_GROUNDS },
 } as const;
-export type VocabSection = keyof typeof VOCABULARY;
 
 export const keysOf = (terms: Term[]): [string, ...string[]] => terms.map((t) => t.key) as [string, ...string[]];

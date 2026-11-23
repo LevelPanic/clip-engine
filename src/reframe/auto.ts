@@ -256,11 +256,6 @@ function analyse(result: FaceResult) {
   return { subjects, cuts };
 }
 
-/** Per sample: who the camera should follow and where they are (smoothed). */
-export function pickSubjects(result: FaceResult): SubjectSample[] {
-  return analyse(result).subjects;
-}
-
 /**
  * Crop keyframes for a 9:16 window over the source: the first at the start of the range, then one per camera move.
  * cropX uses Framing's convention (position of the window across the free horizontal space).

@@ -284,7 +284,7 @@ export function passCandidates(added: string[], candidates: { id: string; status
 export function pickForEdit(ids: string[], decisions: Pick<CurationDecision, 'candidateId' | 'decision' | 'fit' | 'reason'>[], made: Set<string>, maxKeep: number, risky: Map<string, string[]> = new Map()): { id: string; concern?: string }[] {
   // a risky moment (sexual, a slur, a minor: `riskyCandidates`) goes to the editor only as a keep that
   // says how the cut leaves the risk out; never as the fallback "review" pick, which is how the nude
-  // shower clip reached the editor and the channel (reports/censorship-review-2026-11-22.md)
+  // shower clip reached the editor and the channel (docs/research/censorship-review-2026-11-22.md)
   const mine = decisions
     .filter((d) => ids.includes(d.candidateId) && !made.has(d.candidateId))
     .filter((d) => !risky.has(d.candidateId) || (d.decision === 'keep' && AVOIDS.test(d.reason)))

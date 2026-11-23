@@ -19,7 +19,7 @@ export const ChannelSchema = z.object({
   /**
    * A careful period: until this date the upload scheduler posts only the cleanest approvals and holds
    * the rest until it ends (`carefulReasons`, src/qa/unsafe.ts). Set after YouTube removed two videos
-   * (reports/censorship-review-2026-11-22.md, C5). Remove it, or move the date, to end it sooner or later.
+   * (docs/research/censorship-review-2026-11-22.md, C5). Remove it, or move the date, to end it sooner or later.
    */
   careful: z.object({ until: z.string(), why: z.string().optional() }).optional(),
 });

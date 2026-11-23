@@ -1,4 +1,4 @@
-// Change 2 of reports/censorship-review-2026-11-22.md (user, 2026-11-22): the uploader posts at most 8 in
+// Change 2 of docs/research/censorship-review-2026-11-22.md (user, 2026-11-22): the uploader posts at most 8 in
 // any 24 hours, 3 hours apart, never more than YouTube's limit let through the last time it said no, and
 // waits a limit out to when it lifts instead of trying every hour (C4, src/publish/pace.ts). While
 // channel.json has a careful period, an approval with a sexual flag, an 18+ tick or an f-word in its

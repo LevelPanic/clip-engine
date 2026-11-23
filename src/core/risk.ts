@@ -63,7 +63,7 @@ export function chatSlurs(messages: [number, string, string][], startMs: number,
   return { count, people: people.size, firstMs };
 }
 
-// Strong swearing (reports/censorship-review-2026-11-22.md, B1 and A4). YouTube's advertiser guidelines
+// Strong swearing (docs/research/censorship-review-2026-11-22.md, B1 and A4). YouTube's advertiser guidelines
 // treat the f-word as strong profanity, worst in the opening seconds, and its vulgar-language policy reads
 // what is written on screen. Mild words (damn, hell, ass, crap) are left alone. Each pattern is a whole
 // word, so "Scunthorpe", "shiitake" and "Dickens" are not hits.

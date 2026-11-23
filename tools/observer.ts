@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-// The observer (reports/stream-pipeline-spec-2026-11-19.md, section 6.1): the cheap pass over every
+// The observer (docs/research/stream-pipeline-spec-2026-11-19.md, section 6.1): the cheap pass over every
 // minute of every tracked Twitch stream, apart from the expensive clip pass so it never waits behind a
 // 20-minute clip job. For each stream it reads chat range by range up to the live edge, keeps the viewer
 // clips fresh, and ranks the stream's moments into the tracker (`tools/watchlist.ts` then clips the best
