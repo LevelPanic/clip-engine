@@ -14,6 +14,7 @@ import { TYPES, TYPE_MAP, newMarkerId, sortMarkers, patchMarker } from './types'
 import { framingKeys, framingAt } from '../../markers/define';
 import { acceptProposals } from '../../core/proposals';
 import { captionText } from '../../composition/Captions';
+import { Chip, ShortcutLegend } from './ui';
 
 interface ClipData {
   project: Project;
@@ -553,10 +554,10 @@ export function Editor({ clipId }: { clipId: string }) {
   return (
     <div className="editor">
       <div className="topbar">
-        <a href={`#/video/${project.videoId}`} title="Back to the candidates">
-          ←
+        <a className="back" href={`#/video/${project.videoId}`} title="Back to this video's candidates">
+          ← Candidates
         </a>
-        <a className="chip" href={`#/review/${clipId}`} title="Back to the review page, on this clip">
+        <a className="back" href={`#/review/${clipId}`} title="Back to the review page, on this clip">
           ↩ Review
         </a>
         <ClipNav clipId={clipId} siblings={data.siblings} />
@@ -564,13 +565,13 @@ export function Editor({ clipId }: { clipId: string }) {
           {project.title}
         </div>
         <span className="save-state">{saveState === 'saved' ? 'saved' : saveState === 'saving' ? 'saving…' : saveState === 'unsaved' ? 'editing…' : '⚠ not saved'}</span>
-        <button className="ghost" title="Undo (⌘Z)" onClick={() => undoRedo('undo')}>
+        <button className="ghost" title="Undo (⌘Z)" aria-label="Undo" onClick={() => undoRedo('undo')}>
           ↶
         </button>
-        <button className="ghost" title="Redo (⇧⌘Z)" onClick={() => undoRedo('redo')}>
+        <button className="ghost" title="Redo (⇧⌘Z)" aria-label="Redo" onClick={() => undoRedo('redo')}>
           ↷
         </button>
-        <label className="row muted" style={{ gap: 4 }}>
+        <label className="check muted">
           <input type="checkbox" checked={safeZone} onChange={(e) => setSafeZone(e.target.checked)} /> safe zone
         </label>
         <ClipMenu onDuplicate={() => void duplicate()} onDelete={() => void remove()} />
@@ -578,7 +579,8 @@ export function Editor({ clipId }: { clipId: string }) {
           value={project.review?.status ?? 'editing'}
           onChange={(e) => void setReviewStatus(e.target.value)}
           title="Review status: send it to the review queue, or approve it yourself"
-          style={{ width: 'auto' }}
+          aria-label="Review status"
+          className="auto-width"
         >
           <option value="editing">editing</option>
           <option value="review">in review</option>
@@ -595,16 +597,14 @@ export function Editor({ clipId }: { clipId: string }) {
           <div className="section">
             <h3>Markers</h3>
             {TYPES.map((t, i) => (
-              <div key={t.type} className={`palette-item ${i === paletteIdx ? 'sel' : ''}`} onClick={() => setPaletteIdx(i)} title={t.description}>
-                {i < 9 ? <kbd>{i + 1}</kbd> : <span style={{ width: 14 }} />}
+              <button type="button" key={t.type} className={`palette-item ${i === paletteIdx ? 'sel' : ''}`} aria-pressed={i === paletteIdx} onClick={() => setPaletteIdx(i)} title={t.description}>
+                {i < 9 ? <kbd>{i + 1}</kbd> : <span className="kbd-space" />}
                 <span className="swatch" style={{ background: t.color }} />
                 <span className="grow">{t.label}</span>
-                <span className="muted" style={{ fontSize: 11 }}>
-                  {t.kind}
-                </span>
-              </div>
+                <span className="muted tiny">{t.kind}</span>
+              </button>
             ))}
-            <button style={{ width: '100%', marginTop: 8 }} onClick={() => addMarkerAt(playhead.get())}>
+            <button type="button" className="full-width mt-2" onClick={() => addMarkerAt(playhead.get())}>
               Drop {TYPES[paletteIdx]?.label} at playhead <kbd>M</kbd>
             </button>
           </div>
@@ -612,9 +612,20 @@ export function Editor({ clipId }: { clipId: string }) {
             <h3>Transcript</h3>
             <TranscriptPanel words={words} project={project} playhead={playhead} sel={sel} onWord={(w) => (setSel({ kind: 'word', i: w.i }), seek(w.startMs))} />
           </div>
-          <div className="section muted" style={{ fontSize: 12, lineHeight: 1.9 }}>
-            <kbd>space</kbd> play · <kbd>enter</kbd> play clip · <kbd>L</kbd> loop · <kbd>I</kbd>/<kbd>O</kbd> in/out · <kbd>M</kbd> drop marker · <kbd>1</kbd>–<kbd>9</kbd> type ·{' '}
-            <kbd>←</kbd>/<kbd>→</kbd> frame · <kbd>⌫</kbd> delete · <kbd>⌘Z</kbd> undo
+          <div className="section">
+            <ShortcutLegend
+              keys={[
+                ['space', 'play'],
+                ['enter', 'play clip'],
+                ['L', 'loop'],
+                ['I O', 'in / out'],
+                ['M', 'drop marker'],
+                ['1–9', 'type'],
+                ['← →', 'frame'],
+                ['⌫', 'delete'],
+                ['⌘Z', 'undo'],
+              ]}
+            />
           </div>
         </div>
 
@@ -640,14 +651,14 @@ export function Editor({ clipId }: { clipId: string }) {
             </div>
           )}
           <div className="transport">
-            <button onClick={() => playerRef.current?.toggle()} style={{ width: 70 }}>
+            <button type="button" className="w-play" onClick={() => playerRef.current?.toggle()}>
               {playing ? '❚❚ Pause' : '▶ Play'}
             </button>
             <button onClick={playClip} title="Play the clip from its in-point to its out-point (Enter)">
               ⏮ Play clip
             </button>
             <SoundButton playerRef={playerRef} />
-            <label className="row muted" style={{ gap: 4 }} title="Loop between the in- and out-points (L)">
+            <label className="check muted" title="Loop between the in- and out-points (L)">
               <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> loop
             </label>
             <TimeReadout store={playhead} tStore={playT} lengthMs={map?.durationMs ?? seg.endMs - seg.startMs} />
@@ -699,7 +710,7 @@ function TimeReadout({ store, tStore, lengthMs }: { store: Store<number>; tStore
   const t = useStore(tStore);
   return (
     <span className="mono muted">
-      <span style={{ color: 'var(--text)' }}>{fmtTime(t, 2)}</span> / {fmtTime(lengthMs, 1)} edited · source {fmtTime(ms, 2)}
+      <span className="text-strong">{fmtTime(t, 2)}</span> / {fmtTime(lengthMs, 1)} edited · source {fmtTime(ms, 2)}
     </span>
   );
 }
@@ -796,10 +807,10 @@ function QaChip({ qa, job, exp }: { qa: ClipData['qa']; job: SlimJob | null; exp
   if (stale) return null;
   const tip = qa.issues.map((i) => `${i.level === 'fail' ? '✖' : '⚠'} ${i.check}: ${i.detail}`).join('\n');
   return (
-    <span className="chip on" style={{ borderColor: qa.passed ? 'var(--good)' : 'var(--bad)' }} title={tip || 'No issues'}>
+    <Chip on tone={qa.passed ? 'good' : 'bad'} title={tip || 'No issues'}>
       QA {qa.passed ? '✓' : '✖'}
       {qa.issues.length ? ` · ${qa.issues.length} note${qa.issues.length > 1 ? 's' : ''}` : ''}
-    </span>
+    </Chip>
   );
 }
 
@@ -810,14 +821,14 @@ function ClipNav({ clipId, siblings }: { clipId: string; siblings: ClipData['sib
   const prev = siblings[i - 1];
   const next = siblings[i + 1];
   return (
-    <span className="row" style={{ gap: 2 }}>
-      <button className="ghost" disabled={!prev} title={prev ? `Previous clip: ${prev.title}` : undefined} onClick={() => prev && go(`#/clip/${prev.id}`)}>
+    <span className="row gap-0">
+      <button className="ghost" disabled={!prev} title={prev ? `Previous clip: ${prev.title}` : undefined} aria-label="Previous clip" onClick={() => prev && go(`#/clip/${prev.id}`)}>
         ‹
       </button>
-      <span className="muted mono" style={{ fontSize: 11 }}>
+      <span className="muted mono tiny">
         {i + 1}/{siblings.length}
       </span>
-      <button className="ghost" disabled={!next} title={next ? `Next clip: ${next.title}` : undefined} onClick={() => next && go(`#/clip/${next.id}`)}>
+      <button className="ghost" disabled={!next} title={next ? `Next clip: ${next.title}` : undefined} aria-label="Next clip" onClick={() => next && go(`#/clip/${next.id}`)}>
         ›
       </button>
     </span>
@@ -827,8 +838,8 @@ function ClipNav({ clipId, siblings }: { clipId: string; siblings: ClipData['sib
 function ClipMenu({ onDuplicate, onDelete }: { onDuplicate: () => void; onDelete: () => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <span style={{ position: 'relative' }}>
-      <button className="ghost" title="More" onClick={() => setOpen((v) => !v)}>
+    <span className="menu-anchor">
+      <button className="ghost" title="More" aria-label="More actions" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         ⋯
       </button>
       {open && (
@@ -857,7 +868,7 @@ function SoundButton({ playerRef }: { playerRef: React.RefObject<PlayerRef | nul
     else p.mute();
   }, [on, playerRef]);
   return (
-    <button onClick={() => soundOn.set(!on)} title="Sound on or off. Off each time the Studio loads." style={{ width: 44 }}>
+    <button type="button" className="w-sound" onClick={() => soundOn.set(!on)} title="Sound on or off. Off each time the Studio loads." aria-label={on ? 'Sound on' : 'Sound off'} aria-pressed={on}>
       {on ? '🔊' : '🔇'}
     </button>
   );

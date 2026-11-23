@@ -5,10 +5,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, go, isTyping, soundOn, useDebounced, useEvents, useStore } from './api';
 import { SIGNAL_COLORS } from './ui/tokens';
-import { Button, Callout, Chip, Field, Nav, PageState, ShortcutLegend, Tabs, rowKeys } from './ui';
+import { Button, Callout, Chip, CopyButton, Field, Nav, PageState, ShortcutLegend, Tabs, rowKeys } from './ui';
 import { REJECT_REASONS, type Candidate, type Post, type RejectReason, type Review as ReviewState } from '../../core/schemas';
 import { postBody } from '../../core/post';
-import { CopyButton } from './Inspector';
 import { fmtTime } from '../../core/time';
 
 interface Item {

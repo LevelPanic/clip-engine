@@ -108,7 +108,7 @@ exports/<clipId>.mp4    1080×1920
   - A approves, C asks for changes and R rejects with a reason. There is an 18+ check, and ↩ Back to review (U) undoes a decision.
   - The editor agent acts on change requests.
   - Seven change requests sent with only the editor's hand-over as the note are held until a note is written (2026-11-23).
-- **Release:** the project is being prepared as a public GitHub repo (`docs/release-plan.md`). Phases 0–2 (a safe first commit, docs and layout, architecture) are committed locally; phase 3, the Studio's design system, is next.
+- **Release:** the project is being prepared as a public GitHub repo (`docs/release-plan.md`). Phases 0–3 (a safe first commit, docs and layout, architecture, the Studio's design system) are committed locally; phase 4 (CI, a fresh-clone test, the push) is next.
 - **Disk:** about 7 GiB was free on 2026-11-23. The cleanup frees a stream's footage once none of its clips is waiting for review or upload.
 - **Standing decisions (user):**
   - English only.
@@ -133,7 +133,7 @@ In priority order. Each item says where to work and when it's done. Move an item
 **Release as a public GitHub repo (added 2026-11-23, user: "put live" as a public repo)**
 - **Where:** `docs/release-plan.md` (four audits: git safety, architecture, Studio design system, docs/layout). Phase 0 makes it safe to commit (ignores, example configs, personal data out, LICENSE, noreply author email); phase 1 docs and layout; phase 2 the import cycle, thin daemons, the CLI split, one config module; phase 3 the Studio's tokens and primitives; phase 4 CI, a fresh-clone test, then the push.
 - **Done when:** the repo is public, a fresh clone passes typecheck and tests with the example configs, and nothing personal or creator media is in its history.
-- **Status (2026-11-23):** phases 0–2 are done and committed locally: the safe first commit, then docs and layout, then architecture (layers with no import cycles, the CLI split, the daemons' decisions tested, one settings module, shared helpers). There is no remote yet. Next is phase 3, the Studio's design system. The release plan's Status section lists what changed.
+- **Status (2026-11-23):** phases 0–3 are done and committed locally: the safe first commit, docs and layout, architecture (layers with no import cycles, the CLI split, the daemons' decisions tested, one settings module, shared helpers), and the Studio's design system (tokens, components, keyboard and contrast fixes). There is no remote yet. Next is phase 4: CI, a fresh-clone test, and the push. The release plan's Status section lists what changed.
 
 **Next. The rest of the censorship review (added 2026-11-22)**
 - **Where:** `docs/research/censorship-review-2026-11-22.md`. All three of "The three changes to make first" are built (see "Where we left off").

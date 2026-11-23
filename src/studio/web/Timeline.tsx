@@ -7,6 +7,7 @@ import { markerRenderMs } from '../../markers/define';
 import { useStore, type Store } from './api';
 import { TYPES, TYPE_MAP, markerLabel, patchMarker } from './types';
 import { captionText } from '../../composition/Captions';
+import { WAVE_COLOR } from './ui/tokens';
 
 export type Selection = { kind: 'marker'; id: string } | { kind: 'word'; i: number } | null;
 
@@ -160,7 +161,7 @@ export function Timeline(props: Props) {
     const g = c.getContext('2d')!;
     g.clearRect(0, 0, c.width, c.height);
     if (!wave?.peaks.length) return;
-    g.fillStyle = '#4b5470';
+    g.fillStyle = WAVE_COLOR;
     const mid = c.height / 2;
     for (let px = 0; px < c.width; px++) {
       const a = view.startMs + ((px / dpr) / W) * span;

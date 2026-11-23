@@ -169,7 +169,7 @@ puts three experts on every 20–30 minute segment and checks every hand-off (se
 | `A` | accept the selected proposed marker |
 | `⌫` | delete the selected marker |
 | `⌘Z` / `⇧⌘Z` | undo / redo |
-| `↑` `↓` `Enter` `E` `X` `S` | on a video page: choose a candidate, edit it, export it, tick it, skip |
+| `↑` `↓` `E` (or `Enter`) `⇧E` `X` `S` | on a video page: choose a candidate, edit it, export it, tick it, skip |
 | `A` `R` `C` `U` `8` `E` | in the review queue: approve, reject (then `1`–`5` for why, `R` again for none), changes (needs a note), back to review, 18+, open in the editor (its **↩ Review** comes back to the same clip) |
 
 Click any caption word, in the transcript or on the timeline, to fix what the auto-captions misheard.

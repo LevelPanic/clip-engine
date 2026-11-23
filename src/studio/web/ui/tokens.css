@@ -45,6 +45,9 @@
   --bad-tint: rgba(239, 68, 68, 0.22);
   --bad-text: #ffb4b4;
   --playhead: #ff4d6d;
+  --info: #38bdf8; /* the split editor's game box */
+  --checker-a: #1d1d1d; /* the split editor's transparency checkerboard */
+  --checker-b: #2b2b2b;
 
   /* type */
   --font-ui: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;

@@ -90,3 +90,18 @@ a.item:hover { background: var(--panel2); text-decoration: none; }
 .media-9x16 { aspect-ratio: 9 / 16; }
 .media-frame { border-radius: var(--r-xl); overflow: hidden; background: var(--media-bg); }
 .gap-2 { gap: var(--s-5); }
+input.invalid, textarea.invalid { border-color: var(--bad); }
+.field-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+.field-head label { margin-bottom: 0; }
+button.small-button { padding: 0 var(--s-3); font-size: var(--fs-sm); }
+.topbar .back { color: var(--muted); white-space: nowrap; }
+.topbar .back:hover { color: var(--text); text-decoration: none; }
+.auto-width { width: auto; }
+.full-width { width: 100%; }
+.kbd-space { width: 14px; display: inline-block; }
+.gap-0 { gap: var(--s-1); }
+.menu-anchor { position: relative; }
+.w-play { width: 70px; }
+.w-sound { width: 44px; }
+.text-strong { color: var(--text); }
+.topbar .check { white-space: nowrap; }

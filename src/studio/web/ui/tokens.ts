@@ -13,3 +13,6 @@ export const SIGNAL_COLORS: Record<string, string> = {
   speech: '#a78bfa',
   title: '#fb923c',
 };
+
+/** The waveform under the timeline (canvas). */
+export const WAVE_COLOR = '#4b5470';

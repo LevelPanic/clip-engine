@@ -1,7 +1,7 @@
 // Right-hand panel: the selected marker's params (form generated from its zod schema),
 // a caption word fix, or the clip's settings (in/out, captions, framing, presets).
 import { CAPTION_LOOKS, CAPTION_LOOK_KEYS, type CaptionLookKey } from '../../core/captionLooks';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useId } from 'react';
 import type { Project, Word, CaptionSettings, Framing, FramingBox, Post, SplitLayout } from '../../core/schemas';
 import { postFor, postBody } from '../../core/post';
 import { fmtTime, parseTime } from '../../core/time';
@@ -10,10 +10,12 @@ import { api } from './api';
 import { acceptProposals, rejectProposals } from '../../core/proposals';
 import { STYLES } from '../../edit/styles';
 import type { Selection } from './Timeline';
+import { CopyButton } from './ui';
 
 type Update = (fn: (p: Project) => Project, key?: string) => void;
 
 export function TimeInput({ label, ms, onCommit }: { label: string; ms: number; onCommit: (ms: number) => void }) {
+  const id = useId();
   const [v, setV] = useState(fmtTime(ms, 2));
   const [bad, setBad] = useState(false);
   useEffect(() => setV(fmtTime(ms, 2)), [ms]);
@@ -28,12 +30,13 @@ export function TimeInput({ label, ms, onCommit }: { label: string; ms: number; 
   };
   return (
     <div className="field">
-      <label>{label}</label>
+      <label htmlFor={id}>{label}</label>
       <input
+        id={id}
         type="text"
-        className="mono"
+        className={`mono ${bad ? 'invalid' : ''}`}
+        aria-invalid={bad || undefined}
         value={v}
-        style={bad ? { borderColor: 'var(--bad)' } : undefined}
         onChange={(e) => setV(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => e.key === 'Enter' && (e.currentTarget as HTMLInputElement).blur()}
@@ -55,8 +58,9 @@ function ParamField({
   onChange: (v: unknown) => void;
   sfx: string[];
 }) {
+  const id = useId();
   const label = (
-    <label>
+    <label htmlFor={id}>
       <span>{name}</span>
       {typeof value === 'number' && <span className="mono">{Math.round(value * 1000) / 1000}</span>}
     </label>
@@ -64,30 +68,30 @@ function ParamField({
   let input: React.ReactNode;
   if (s.enum) {
     input = (
-      <select value={String(value)} onChange={(e) => onChange(e.target.value)}>
+      <select id={id} value={String(value)} onChange={(e) => onChange(e.target.value)}>
         {s.enum.map((o) => (
           <option key={o}>{o}</option>
         ))}
       </select>
     );
   } else if (s.type === 'boolean') {
-    input = <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} />;
+    input = <input id={id} type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} />;
   } else if (s.ui === 'color') {
     input = (
       <div className="row">
-        <input type="color" value={String(value)} onChange={(e) => onChange(e.target.value)} />
+        <input id={id} type="color" value={String(value)} onChange={(e) => onChange(e.target.value)} />
         <input type="text" className="mono" value={String(value)} onChange={(e) => onChange(e.target.value)} />
       </div>
     );
   } else if (s.ui === 'sfx') {
     input = (
       <div className="row">
-        <select value={String(value)} onChange={(e) => onChange(e.target.value)}>
+        <select id={id} value={String(value)} onChange={(e) => onChange(e.target.value)}>
           {[...new Set([String(value), ...sfx])].map((f) => (
             <option key={f}>{f}</option>
           ))}
         </select>
-        <button title="Listen" onClick={() => void new Audio(`/media/assets/sfx/${encodeURIComponent(String(value))}`).play()}>
+        <button title="Listen" aria-label={`Listen to ${String(value)}`} onClick={() => void new Audio(`/media/assets/sfx/${encodeURIComponent(String(value))}`).play()}>
           ▶
         </button>
       </div>
@@ -95,16 +99,16 @@ function ParamField({
   } else if ((s.type === 'number' || s.type === 'integer') && s.minimum !== undefined && s.maximum !== undefined) {
     const step = s.type === 'integer' ? 1 : (s.maximum - s.minimum) / 200;
     input = (
-      <input type="range" min={s.minimum} max={s.maximum} step={step} value={Number(value)} onChange={(e) => onChange(Number(e.target.value))} />
+      <input id={id} type="range" min={s.minimum} max={s.maximum} step={step} value={Number(value)} onChange={(e) => onChange(Number(e.target.value))} />
     );
   } else if (s.type === 'number' || s.type === 'integer') {
-    input = <input type="number" value={Number(value)} onChange={(e) => onChange(Number(e.target.value))} />;
+    input = <input id={id} type="number" value={Number(value)} onChange={(e) => onChange(Number(e.target.value))} />;
   } else {
     input =
       name === 'text' ? (
-        <textarea rows={2} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
+        <textarea id={id} rows={2} value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
       ) : (
-        <input type="text" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
+        <input id={id} type="text" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
       );
   }
   return (
@@ -153,17 +157,17 @@ function MarkerInspector({ project, update, setSel, sfx, markerId }: Parameters<
   return (
     <>
       <div className="section">
-        <div className="row" style={{ marginBottom: 8 }}>
+        <div className="row mb-2">
           <span className="swatch" style={{ background: t.color }} />
           <strong className="grow">{t.label}</strong>
           <span className="muted mono">{m.id}</span>
         </div>
-        <div className="muted" style={{ marginBottom: 10 }}>
+        <div className="muted mb-3">
           {t.description}
         </div>
         {m.proposed && (
           <div className="proposal">
-            <div style={{ marginBottom: 6 }}>Proposed{m.source ? ` by ${m.source}` : ''}. The preview shows it; the export skips it until you accept.</div>
+            <div className="mb-1">Proposed{m.source ? ` by ${m.source}` : ''}. The preview shows it; the export skips it until you accept.</div>
             <div className="row">
               <button className="primary" onClick={() => update((p) => acceptProposals(p, [m.id]))}>
                 Accept <kbd>A</kbd>
@@ -223,12 +227,13 @@ function WordInspector({ project, update, setSel, word }: Parameters<typeof Insp
   return (
     <div className="section">
       <h3>Caption word</h3>
-      <div className="muted mono" style={{ marginBottom: 8 }}>
+      <div className="muted mono mb-2">
         #{word.i} at {fmtTime(word.startMs, 2)} · captions heard “{word.text}”
       </div>
       <div className="field">
-        <label>Show as</label>
+        <label htmlFor="word-fix">Show as</label>
         <input
+          id="word-fix"
           type="text"
           autoFocus
           value={v}
@@ -301,7 +306,7 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
       {proposed.length > 0 && (
         <div className="section">
           <div className="proposal">
-            <div style={{ marginBottom: 6 }}>
+            <div className="mb-1">
               {proposed.length} proposed marker{proposed.length > 1 ? 's' : ''} (
               {[...new Set(proposed.map((m) => m.source ?? m.type))].join(', ')}). Dashed on the timeline; the export skips them until accepted.
             </div>
@@ -326,7 +331,7 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
           </select>
           <div className="hint">{STYLES.find((st) => st.key === styleKey)?.description}</div>
         </div>
-        <div className="row" style={{ flexWrap: 'wrap' }}>
+        <div className="row wrap">
           <button className="primary" onClick={() => void runAction('autoedit', { style: styleKey })} title="Fill in the style's edits as proposals; re-applying replaces the previous engine edits">
             Apply style
           </button>
@@ -338,8 +343,8 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
             Remove engine edits
           </button>
         </div>
-        <h3 style={{ marginTop: 12 }}>Quick effects at the playhead</h3>
-        <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
+        <h3 className="mt-3">Quick effects at the playhead</h3>
+        <div className="row wrap">
           {QUICK.map((q) => (
             <button key={q.label} title={q.title} onClick={() => onQuick(q.type, q.params())}>
               {q.label}
@@ -350,7 +355,7 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
 
       <div className="section">
         <h3>Engine</h3>
-        <div className="row" style={{ flexWrap: 'wrap' }}>
+        <div className="row wrap">
           <button onClick={() => void runAction('reframe')} title="Track faces; crop follows the speaker (as proposals). Select a span on the timeline to reframe just that part.">
             Auto-reframe
           </button>
@@ -358,14 +363,14 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
             Suggest cuts
           </button>
         </div>
-        {project.review?.note && <div className="warn" style={{ marginTop: 6 }}>Reviewer: {project.review.note}</div>}
+        {project.review?.note && <div className="warn mt-1">Reviewer: {project.review.note}</div>}
       </div>
 
       <div className="section">
         <h3>Clip</h3>
         <div className="field">
-          <label>Title</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => title !== project.title && update((p) => ({ ...p, title }))} />
+          <label htmlFor="clip-title">Title</label>
+          <input id="clip-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => title !== project.title && update((p) => ({ ...p, title }))} />
         </div>
         <div className="row">
           <div className="grow">
@@ -385,17 +390,23 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
       <div className="section">
         <h3>Captions</h3>
         <div className="field row">
-          <input type="checkbox" checked={c.enabled} onChange={(e) => setCap({ enabled: e.target.checked }, 'cap:enabled')} />
-          <span>Show captions</span>
+          <label className="check">
+            <input type="checkbox" checked={c.enabled} onChange={(e) => setCap({ enabled: e.target.checked }, 'cap:enabled')} />
+            Show captions
+          </label>
           <span className="grow" />
-          <input type="checkbox" checked={c.uppercase} onChange={(e) => setCap({ uppercase: e.target.checked }, 'cap:upper')} />
-          <span>CAPS</span>
-          <input type="checkbox" checked={c.censor !== false} onChange={(e) => setCap({ censor: e.target.checked }, 'cap:censor')} />
-          <span title="Mask strong swears (f***ing) and slurs in the captions. The audio needs a Bleep marker: ./clip censor">Mask swears</span>
+          <label className="check">
+            <input type="checkbox" checked={c.uppercase} onChange={(e) => setCap({ uppercase: e.target.checked }, 'cap:upper')} />
+            CAPS
+          </label>
+          <label className="check" title="Mask strong swears (f***ing) and slurs in the captions. The audio needs a Bleep marker: ./clip censor">
+            <input type="checkbox" checked={c.censor !== false} onChange={(e) => setCap({ censor: e.target.checked }, 'cap:censor')} />
+            Mask swears
+          </label>
         </div>
         <div className="field">
-          <label>Style</label>
-          <select
+          <label htmlFor="cap-style">Style</label>
+          <select id="cap-style"
             value={c.style}
             onChange={(e) => {
               // a look comes with its own case and size; the sliders below still adjust them
@@ -411,30 +422,32 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
           </select>
         </div>
         <div className="field">
-          <label>
+          <label htmlFor="cap-position">
             <span>Position</span>
             <span className="mono">{Math.round(c.position * 100)}%</span>
           </label>
-          <input type="range" min={0.1} max={0.95} step={0.01} value={c.position} onChange={(e) => setCap({ position: Number(e.target.value) }, 'cap:pos')} />
+          <input id="cap-position" type="range" min={0.1} max={0.95} step={0.01} value={c.position} onChange={(e) => setCap({ position: Number(e.target.value) }, 'cap:pos')} />
         </div>
         <div className="field">
-          <label>
+          <label htmlFor="cap-size">
             <span>Size</span>
             <span className="mono">{c.fontSize}px</span>
           </label>
-          <input type="range" min={30} max={160} step={1} value={c.fontSize} onChange={(e) => setCap({ fontSize: Number(e.target.value) }, 'cap:size')} />
+          <input id="cap-size" type="range" min={30} max={160} step={1} value={c.fontSize} onChange={(e) => setCap({ fontSize: Number(e.target.value) }, 'cap:size')} />
         </div>
         <div className="field">
-          <label>
+          <label htmlFor="cap-combine">
             <span>Words per page</span>
             <span className="mono">{c.combineMs} ms</span>
           </label>
-          <input type="range" min={0} max={2500} step={50} value={c.combineMs} onChange={(e) => setCap({ combineMs: Number(e.target.value) }, 'cap:combine')} />
+          <input id="cap-combine" type="range" min={0} max={2500} step={50} value={c.combineMs} onChange={(e) => setCap({ combineMs: Number(e.target.value) }, 'cap:combine')} />
           <div className="hint">Words closer together than this share a page. 0 = one word at a time.</div>
         </div>
         <div className="field row">
-          <span className="grow">Highlight</span>
-          <input type="color" value={c.highlightColor} onChange={(e) => setCap({ highlightColor: e.target.value }, 'cap:hl')} />
+          <label className="grow" htmlFor="cap-highlight">
+            Highlight
+          </label>
+          <input type="color" id="cap-highlight" value={c.highlightColor} onChange={(e) => setCap({ highlightColor: e.target.value }, 'cap:hl')} />
         </div>
         <div className="hint">
           {Object.keys(c.fixes).length} word fix{Object.keys(c.fixes).length === 1 ? '' : 'es'}. Click a word in the transcript or the caption lane to fix it.
@@ -444,7 +457,7 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
       <div className="section">
         <h3>Framing</h3>
         <div className="field">
-          <select value={f.mode} onChange={(e) => setFrame({ mode: e.target.value as Framing['mode'] }, 'frame:mode')}>
+          <select aria-label="Framing" value={f.mode} onChange={(e) => setFrame({ mode: e.target.value as Framing['mode'] }, 'frame:mode')}>
             <option value="blur">blur-fit: whole picture, blurred fill</option>
             <option value="crop">crop: fill the frame</option>
             <option value="split">split: facecam on top, gameplay below</option>
@@ -452,22 +465,22 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
         </div>
         {f.mode === 'crop' && (
           <div className="field">
-            <label>
+            <label htmlFor="frame-crop">
               <span>Crop position</span>
               <span className="mono">{Math.round(f.cropX * 100)}%</span>
             </label>
-            <input type="range" min={0} max={1} step={0.005} value={f.cropX} onChange={(e) => setFrame({ cropX: Number(e.target.value) }, 'frame:x')} />
+            <input id="frame-crop" type="range" min={0} max={1} step={0.005} value={f.cropX} onChange={(e) => setFrame({ cropX: Number(e.target.value) }, 'frame:x')} />
           </div>
         )}
         {f.mode === 'split' && (
           <>
             <SplitEditor split={f.split} onChange={(split, key) => setFrame({ split }, key)} />
             <div className="field">
-              <label>
+              <label htmlFor="frame-camshare">
                 <span>Facecam band</span>
                 <span className="mono">{Math.round(f.split.camShare * 100)}%</span>
               </label>
-              <input
+              <input id="frame-camshare"
                 type="range"
                 min={0.2}
                 max={0.6}
@@ -477,10 +490,10 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
               />
             </div>
             <div className="field">
-              <label>
+              <label htmlFor="frame-content">
                 <span>Under the cam</span>
               </label>
-              <select value={f.split.content ?? 'fill'} onChange={(e) => setFrame({ split: { ...f.split, content: e.target.value as 'fill' | 'fit' } }, 'frame:content')}>
+              <select id="frame-content" value={f.split.content ?? 'fill'} onChange={(e) => setFrame({ split: { ...f.split, content: e.target.value as 'fill' | 'fit' } }, 'frame:content')}>
                 <option value="fill">fill: crop the game to fill the band</option>
                 <option value="fit">whole frame: websites, menus, Just Chatting</option>
               </select>
@@ -493,11 +506,11 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
           </>
         )}
         <div className="field">
-          <label>
+          <label htmlFor="frame-zoom">
             <span>Zoom</span>
             <span className="mono">{f.zoom.toFixed(2)}×</span>
           </label>
-          <input type="range" min={1} max={3} step={0.01} value={f.zoom} onChange={(e) => setFrame({ zoom: Number(e.target.value) }, 'frame:zoom')} />
+          <input id="frame-zoom" type="range" min={1} max={3} step={0.01} value={f.zoom} onChange={(e) => setFrame({ zoom: Number(e.target.value) }, 'frame:zoom')} />
           <div className="hint">Extra zoom; in split it tightens both boxes around their centres.</div>
         </div>
       </div>
@@ -609,14 +622,14 @@ function SplitEditor({ split, onChange }: { split: SplitLayout; onChange: (s: Sp
           position: 'relative',
           width: '100%',
           aspectRatio: '16 / 9',
-          background: 'repeating-conic-gradient(#1d1d1d 0% 25%, #2b2b2b 0% 50%) 50% / 24px 24px',
+          background: 'repeating-conic-gradient(var(--checker-a) 0% 25%, var(--checker-b) 0% 50%) 50% / 24px 24px',
           borderRadius: 6,
           overflow: 'hidden',
           userSelect: 'none',
         }}
       >
-        {box('game', '#38bdf8')}
-        {box('cam', '#fbbf24')}
+        {box('game', 'var(--info)')}
+        {box('cam', 'var(--amber)')}
       </div>
       <div className="hint">Drag a box to move it, its corner to resize. Both are measured on the 16:9 source frame.</div>
     </div>
@@ -642,8 +655,8 @@ function PostSection({ project, update, suggestion }: { project: Project; update
       <PostField label="Title (YouTube Shorts)" value={project.post?.title} placeholder={sug.title} onCommit={(v) => set('title', v)} copy={post.title} />
       {sug.titles && sug.titles.length > 1 && (
         <div className="field">
-          <label>Title options</label>
-          <select value={post.title} onChange={(e) => set('title', e.target.value)}>
+          <label htmlFor="post-title-options">Title options</label>
+          <select id="post-title-options" value={post.title} onChange={(e) => set('title', e.target.value)}>
             {!sug.titles.includes(post.title) && <option value={post.title}>{post.title}</option>}
             {sug.titles.map((t, i) => (
               <option key={i} value={t}>
@@ -665,39 +678,22 @@ function PostSection({ project, update, suggestion }: { project: Project; update
 }
 
 function PostField({ label, value, placeholder, onCommit, copy, multiline }: { label: string; value?: string; placeholder: string; onCommit: (v: string) => void; copy: string; multiline?: boolean }) {
+  const id = useId();
   const [v, setV] = useState(value ?? '');
   useEffect(() => setV(value ?? ''), [value]);
   const commit = () => v !== (value ?? '') && onCommit(v);
   return (
     <div className="field">
-      <label>
-        <span>{label}</span>
-        <CopyButton text={copy} label="copy" small />
-      </label>
+      <div className="field-head">
+        <label htmlFor={id}>{label}</label>
+        <CopyButton text={copy} label={`copy ${label.toLowerCase()}`} small />
+      </div>
       {multiline ? (
-        <textarea rows={3} value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={commit} />
+        <textarea id={id} rows={3} value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={commit} />
       ) : (
-        <input type="text" value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={commit} />
+        <input id={id} type="text" value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={commit} />
       )}
     </div>
   );
 }
 
-export function CopyButton({ text, label, small }: { text: string; label: string; small?: boolean }) {
-  const [done, setDone] = useState(false);
-  return (
-    <button
-      className={small ? 'ghost' : undefined}
-      style={small ? { padding: '0 6px', fontSize: 11 } : undefined}
-      disabled={!text}
-      onClick={() =>
-        void navigator.clipboard.writeText(text).then(() => {
-          setDone(true);
-          window.setTimeout(() => setDone(false), 1200);
-        })
-      }
-    >
-      {done ? 'copied ✓' : label}
-    </button>
-  );
-}

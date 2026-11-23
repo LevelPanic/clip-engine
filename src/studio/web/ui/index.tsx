@@ -1,7 +1,7 @@
 // The Studio's UI components: one way to draw a button, a key hint, a chip, tabs, a nav bar, a page, a
 // callout, a field, a row you can select, and a loading/empty/error state. Styles are in ui.css and read
 // only the tokens in tokens.css. A page builds from these instead of inline styles and one-off classes.
-import React, { cloneElement, isValidElement, useId } from 'react';
+import React, { cloneElement, isValidElement, useId, useState } from 'react';
 
 type Tone = 'default' | 'good' | 'warn' | 'bad' | 'accent';
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
@@ -177,4 +177,26 @@ export function Thumb({ videoId }: { videoId: string }) {
   const [failed, setFailed] = React.useState(false);
   if (failed) return <span className="thumb empty-thumb">no picture</span>;
   return <img className="thumb" src={`/api/videos/${videoId}/thumbnail`} alt="" width={96} height={54} loading="lazy" onError={() => setFailed(true)} />;
+}
+
+// ---------- Copy ----------
+
+/** Copies text to the clipboard and says so for a moment. */
+export function CopyButton({ text, label, small }: { text: string; label: string; small?: boolean }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      className={cx(small && 'ghost small-button')}
+      disabled={!text}
+      onClick={() =>
+        void navigator.clipboard.writeText(text).then(() => {
+          setDone(true);
+          window.setTimeout(() => setDone(false), 1200);
+        })
+      }
+    >
+      {done ? 'copied ✓' : label}
+    </button>
+  );
 }

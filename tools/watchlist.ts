@@ -54,6 +54,14 @@ const AUTO_CLIPS = setting('AUTO_CLIPS');
 const NO_CLIPS = has('--no-clips');
 const DRY = has('--dry-run');
 const MAX_JOBS = (setting('MAX_JOBS') ?? Number(opt('--max', '2')));
+/** The Studio's design tokens, inlined into the status page (a standalone file: it cannot link the Studio's CSS). */
+const STUDIO_TOKENS = (() => {
+  try {
+    return fs.readFileSync(path.join(paths.root, 'src', 'studio', 'web', 'ui', 'tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  } catch {
+    return '';
+  }
+})();
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
 
 type Seen = {
@@ -626,7 +634,7 @@ function writePage() {
   const rows = Object.entries(state.creators)
     .map(([name, e]) => {
       const seen = Object.entries(e.seen);
-      const live = e.live?.isLive ? `<b style="color:#38d996">LIVE</b>` : 'offline';
+      const live = e.live?.isLive ? `<b style="color:var(--good)">LIVE</b>` : 'offline';
       const latest = seen.sort((a, b) => b[1].at.localeCompare(a[1].at))[0];
       return `<tr><td>${name}</td><td>${e.platform}</td><td>${e.content ?? ''}</td><td>${live}</td><td>${e.lastCheckedAt ?? ''}</td><td>${seen.length}</td><td>${latest ? `${latest[0]} · ${latest[1].status}` : ''}</td><td>${e.error ?? ''}</td></tr>`;
     })
@@ -647,7 +655,7 @@ function writePage() {
   };
   const streamRows = tracked
     .sort((a, b) => Number(b.live) - Number(a.live) || (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
-    .map((x) => `<tr><td>${x.creator}</td><td>${x.live ? '<b style="color:#38d996">LIVE</b>' : x.status}</td><td>${x.source.startsWith('topic:') ? x.source.slice(6) : 'creator'}</td><td>${fmtTime(x.durationMs, 0)}</td><td>${x.status === 'skipped' ? `skipped: ${x.skipReason ?? ''}` : tally(x.videoId) || 'not ranked yet'}</td><td>${x.title.replace(/</g, '&lt;').slice(0, 60)}</td></tr>`)
+    .map((x) => `<tr><td>${x.creator}</td><td>${x.live ? '<b style="color:var(--good)">LIVE</b>' : x.status}</td><td>${x.source.startsWith('topic:') ? x.source.slice(6) : 'creator'}</td><td>${fmtTime(x.durationMs, 0)}</td><td>${x.status === 'skipped' ? `skipped: ${x.skipReason ?? ''}` : tally(x.videoId) || 'not ranked yet'}</td><td>${x.title.replace(/</g, '&lt;').slice(0, 60)}</td></tr>`)
     .join('');
   const nextRows = nextMoments(8)
     .map((m) => `<tr><td>${tracked.find((x) => x.videoId === m.videoId)?.creator ?? m.videoId}</td><td>${m.momentId}</td><td>${Math.round(m.score).toLocaleString('en-US')}</td><td>${(m.why[0] ?? '').replace(/</g, '&lt;')}</td><td>${(m.titles[0] ?? '').replace(/</g, '&lt;').slice(0, 60)}</td></tr>`)
@@ -656,8 +664,8 @@ function writePage() {
   const count = (s: string) => reviews.filter((r) => r.status === s).length;
   const approvedUnpicked = reviews.filter((r) => r.status === 'approved' && r.picked === 0).length;
   const html = `<!doctype html><meta charset="utf-8"><title>Watchlist</title>
-<style>body{background:#0b0c10;color:#f4f4f7;font-family:Inter,system-ui,sans-serif;padding:28px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:9px;border-bottom:1px solid #282d3a}th{color:#9aa1b5;font-size:11px;text-transform:uppercase}.box{display:inline-block;margin:0 18px 12px 0;padding:10px 14px;border:1px solid #282d3a;border-radius:10px;background:#151821}code{color:#25f4ee}</style>
-<h1>Watchlist</h1><p style="color:#9aa1b5">Updated ${state.updatedAt}. Review at <code>http://localhost:4400/#/review</code>.</p>
+<style>${STUDIO_TOKENS}body{background:var(--bg);color:var(--text);font:var(--fs-base)/1.45 var(--font-ui);padding:28px}table{border-collapse:collapse;width:100%;font-size:var(--fs-base)}th,td{text-align:left;padding:var(--s-4);border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:var(--fs-sm);text-transform:uppercase}.box{display:inline-block;margin:0 18px var(--s-6) 0;padding:var(--s-5) var(--s-7);border:1px solid var(--line);border-radius:var(--r-xl);background:var(--panel)}code{color:var(--accent2)}h1,h2{font-weight:600}</style>
+<h1>Watchlist</h1><p style="color:var(--muted)">Updated ${state.updatedAt}. Review at <code>http://localhost:4400/#/review</code>.</p>
 <div><span class="box">Review <b>${count('review')}</b></span><span class="box">Approved, not picked <b>${approvedUnpicked}</b></span><span class="box">Rejected <b>${count('rejected')}</b></span><span class="box">Queue <b>${q.length}</b></span></div>
 <table><thead><tr><th>Creator</th><th>Platform</th><th>Content</th><th>Live</th><th>Last check</th><th>Seen</th><th>Latest</th><th>Error</th></tr></thead><tbody>${rows}</tbody></table>
 <h2 style="margin-top:26px">Streams</h2><table><thead><tr><th>Creator</th><th>State</th><th>From</th><th>Length</th><th>Moments</th><th>Title</th></tr></thead><tbody>${streamRows}</tbody></table>

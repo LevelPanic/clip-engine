@@ -76,6 +76,23 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
   - merging the two job queues, and `core/retry.ts`;
   - tests for the worker, render, Whisper and the judge.
 
+**Phase 3 (2026-11-23, user: "Yes, start phase 3").** The Studio's design system. Built in a worktree, checked on a second Studio (port 4401) against the live data, then merged.
+- **Tokens:** `src/studio/web/ui/tokens.css` (and `tokens.ts` for canvas and SVG). `styles.css` reads only tokens, and no page writes a raw colour; `test/studio-tokens.test.ts` keeps it that way.
+- **Components:** `ui/index.tsx` with Button, Kbd, ShortcutLegend, Chip, Tabs, Nav, TopBar, Page, Callout, Field, `rowKeys`, PageState, Thumb and CopyButton. Every page is on them.
+- **Inline styles:** 161 down to 42. What is left is computed from data: timeline positions, the split editor's boxes, signal colours, control widths.
+- **Accessibility:**
+  - a keyboard focus ring everywhere (it had been removed);
+  - the primary button at 4.8:1 (was 4.35:1) and darker, not lighter, on hover (was 2.9:1);
+  - field borders at 3:1 or more (were 1.36:1);
+  - 15 labels tied to their controls, and no button without a name;
+  - review and candidate rows, the marker palette and the upload log's links reachable from the keyboard.
+- **Keys:** E edits on every page; on the video page ⇧E exports (E exported there before). A row's Enter or Space no longer also fires the page's shortcut for the same key.
+- **One nav bar** replaces three back-link styles.
+- **Loading and error states:** Library and Jobs had none, so a failed fetch left a blank page.
+- **Thumbnails:** `/api/videos/:id/thumbnail` serves YouTube's image, the recorded one, Twitch's preview (asked once and cached), or a neutral picture. The 144 console 404s from Twitch rows are gone.
+- **The watchlist's status page** reads the Studio's tokens.
+- **Not done:** the Studio server's routers and splitting the biggest UI files into smaller components (phase 2's later list); transcript words are still mouse-only.
+
 ## Where it stands
 
 **Healthy.**

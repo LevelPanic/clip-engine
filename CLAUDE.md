@@ -90,7 +90,8 @@ src/render/        original 16:9 cut → per-clip facecam detection → ffmpeg f
 src/qa/            export checks (length, loudness, dead air, black frames, captions, content risk), the 18+ check (adult.ts), the never-post check and the careful period (unsafe.ts), swearing (language.ts)
 src/review/        review decisions, feedback log, performance import, stats (the learning loop)
 src/jobs/          the Studio's SQLite job queue (library/jobs.sqlite) and starting its worker (ensureWorker, LIMITS)
-src/studio/        server.ts (express + vite middleware + SSE + job polling) and web/ (React)
+src/studio/        server.ts (express + vite middleware + SSE + job polling) and web/ (React; web/ui/ is the design system:
+                   tokens.css and tokens.ts, and the components in index.tsx with their ui.css)
 src/track/         the watchlist's tracker (tracking.sqlite: streams, moments, coverage ledgers), its job queue (leases, fenced writes),
                    the observer's ledger, moment ranking (rank.ts), change requests (revise.ts), the ranker trial,
                    what a failed watchlist job becomes (runner.ts)
@@ -199,6 +200,11 @@ docs/              architecture, pipeline, operations, changelog, research/ (the
 - **Long work is a job.** Add a `JobKind` (`src/jobs/queue.ts`), a handler in `src/pipeline/handlers.ts` and a limit in `LIMITS` (`src/jobs/worker.ts`); batches chain through `src/pipeline/batch.ts`.
 - **Layers:** every `src/` folder has a place in `LAYERS` (`test/layers.test.ts`, lowest first: core, jobs, markers, project, composition, ingest, discover, scan, extract, candidates, review, curate, reframe, qa, edit, render, judge, track, pipeline, publish, studio, cli, tools). A file imports only from its own folder or one below; dynamic `import()` counts. The test fails on an import that goes up, which is what keeps the folders free of cycles: move the code down, or pass it in from above (the worker loop takes its handlers as an argument). A new folder needs a place in `LAYERS`.
 - **Files:** write JSON with `writeJson` (temp file + rename) so watchers never read half a file.
+- **The Studio's design system** (`src/studio/web/ui/`):
+  - **Colours and sizes:** every colour, type size, space, radius and shadow is a token in `tokens.css`. Colours a canvas or SVG needs as values (the signal colours, the waveform) are in `tokens.ts`. A page never writes a raw colour, and `test/studio-tokens.test.ts` fails on one, or on a `var(--x)` that `tokens.css` does not define.
+  - **Components** (`ui/index.tsx`): Button, Kbd, ShortcutLegend, Chip, Tabs, Nav (the bar on every page but the editor), TopBar, Page, Callout, Field (its label is tied to the control), `rowKeys`, PageState, Thumb, CopyButton. Build a page from these, not from inline styles. Inline styles are for values computed from data: positions, a signal's colour, a control's width.
+  - **Keyboard:** focus is always visible (`:focus-visible` ring). A clickable row uses `rowKeys`, which stops Enter and Space at the row so the page's own shortcut for the same key does not fire too. E means edit on every page; on the video page ⇧E exports.
+  - **Contrast:** the primary button is 4.8:1 and field borders are 3:1 or more; keep any new colour pair at WCAG AA.
 - **Settings:** read an environment variable only through `setting()` (`src/core/config.ts`), which parses it strictly (`15m` for a number is an error, not NaN). A new one goes in `SETTINGS` with its default and a line on what it does, and in the table in `docs/operations.md` → "Settings" (`test/config.test.ts` checks both and fails on a direct `process.env` read). `./clip config` prints the values in force.
 
 ## Testing
