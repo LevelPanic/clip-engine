@@ -154,3 +154,20 @@ canvas.wave { position: absolute; inset: 0; width: 100%; height: 100%; }
 .menu .danger { color: var(--bad); }
 
 ::placeholder { color: var(--muted); font-style: italic; }
+
+/* ---------- review ---------- */
+.review-layout { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 18px; align-items: start; }
+.review-video { width: 100%; aspect-ratio: 9 / 16; background: var(--media-bg); border-radius: var(--r-xl); display: block; }
+.review-card { padding: var(--s-8); }
+.review-title { font-weight: 700; font-size: var(--fs-xl); }
+.cand.compact { padding: var(--s-4) var(--s-6); }
+.adult-check { display: flex; align-items: flex-start; gap: var(--s-4); cursor: pointer; }
+.adult-check input { margin-top: 3px; }
+.field-label { font-size: var(--fs-md); color: var(--muted); margin-bottom: 3px; }
+.upload-log { padding: var(--s-3) var(--s-5); }
+.upload-log summary { cursor: pointer; }
+.upload-log table { width: 100%; margin-top: var(--s-3); border-collapse: collapse; }
+.upload-log td { white-space: nowrap; padding: 1px var(--s-4) 1px 0; vertical-align: top; }
+.upload-log td.wide { white-space: normal; width: 100%; }
+button.link { background: none; border: none; padding: 0; color: var(--accent2); cursor: pointer; }
+button.link:hover:not(:disabled) { background: none; text-decoration: underline; }

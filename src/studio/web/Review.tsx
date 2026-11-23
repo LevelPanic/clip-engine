@@ -4,7 +4,8 @@
 // check in QA (src/qa/adult.ts), 8 toggles it; the decision carries it, and every other tab shows it.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, go, isTyping, soundOn, useDebounced, useEvents, useStore } from './api';
-import { SIGNAL_COLORS } from './VideoPage';
+import { SIGNAL_COLORS } from './ui/tokens';
+import { Button, Callout, Chip, Field, Nav, PageState, ShortcutLegend, Tabs, useRowKeys } from './ui';
 import { REJECT_REASONS, type Candidate, type Post, type RejectReason, type Review as ReviewState } from '../../core/schemas';
 import { postBody } from '../../core/post';
 import { CopyButton } from './Inspector';
@@ -61,44 +62,32 @@ function adultText(i: Item): string {
 function AdultMark({ i }: { i: Item }) {
   // uploaded: what YouTube has, not what was asked
   if (i.published?.url) {
-    if (i.published.ageRestriction === 'applied')
-      return (
-        <span className="chip on" style={{ borderColor: 'var(--bad)' }}>
-          18+ ✓ age-restricted on YouTube
-        </span>
-      );
-    if (i.published.heldPrivate)
-      return (
-        <span className="chip on" style={{ borderColor: 'var(--bad)' }}>
-          18+ ✓ private on YouTube until it is age-restricted
-        </span>
-      );
+    if (i.published.ageRestriction === 'applied') return <Chip on tone="bad">18+ ✓ age-restricted on YouTube</Chip>;
+    if (i.published.heldPrivate) return <Chip on tone="bad">18+ ✓ private on YouTube until it is age-restricted</Chip>;
     if (i.review.adult || i.qa?.adult?.detected)
       return (
-        <span className="chip warn" style={{ borderColor: 'var(--bad)' }} title="the 18+ check found sexual content after it went up; YouTube Studio → Age restriction if it needs one">
+        <Chip tone="bad" title="the 18+ check found sexual content after it went up; YouTube Studio → Age restriction if it needs one">
           18+ ✗ went up without an age restriction (the 18+ check found sexual content)
-        </span>
+        </Chip>
       );
-    return <span className="chip">18+ ✗ not age-restricted</span>;
+    return <Chip>18+ ✗ not age-restricted</Chip>;
   }
   // decided before the 18+ check existed: the upload takes what the check found (src/publish/youtube.ts)
   const a = i.review.adult ?? (i.review.status === 'approved' ? i.qa?.adult?.detected : undefined);
   const before = i.review.adult === undefined;
-  if (a === undefined) return <span className="chip" title="decided before the 18+ check existed">18+ not set</span>;
+  if (a === undefined) return <Chip title="decided before the 18+ check existed">18+ not set</Chip>;
   if (before)
     return (
-      <span className="chip" style={a ? { borderColor: 'var(--bad)' } : undefined} title="approved before the 18+ check existed: the upload takes what the check found">
+      <Chip tone={a ? 'bad' : 'default'} title="approved before the 18+ check existed: the upload takes what the check found">
         {a ? '18+ ✓ age-restricted (from the 18+ check)' : '18+ ✗ not age-restricted (from the 18+ check)'}
-      </span>
+      </Chip>
     );
   return a ? (
-    <span className="chip on" style={{ borderColor: 'var(--bad)' }} title="uploads age-restricted on YouTube">
+    <Chip on tone="bad" title="uploads age-restricted on YouTube">
       18+ ✓ age-restricted
-    </span>
+    </Chip>
   ) : (
-    <span className="chip" title="uploads without an age restriction">
-      18+ ✗ not age-restricted
-    </span>
+    <Chip title="uploads without an age restriction">18+ ✗ not age-restricted</Chip>
   );
 }
 
@@ -304,38 +293,38 @@ export function Review({ clipId }: { clipId?: string } = {}) {
     return () => window.removeEventListener('keydown', on);
   }, []);
 
+  const keys: [string, string][] = [
+    ['A', 'approve'],
+    ...(tab === 'review' ? ([['8', '18+']] as [string, string][]) : []),
+    ['R', 'reject, then 1–5 why'],
+    ['C', 'changes'],
+    ...(canSendBack ? ([['U', 'back to review']] as [string, string][]) : []),
+    ['E', 'edit'],
+    ['↑ ↓', 'move'],
+    ['space', 'play'],
+  ];
+
   return (
-    <div className="page" style={{ maxWidth: 1240 }}>
-      <div className="row" style={{ marginBottom: 6 }}>
-        <a href="#/">← Library</a>
-      </div>
+    <div className="page medium">
+      <Nav current="review" />
       <h1>Review</h1>
-      <div className="row" style={{ margin: '10px 0 14px', flexWrap: 'wrap' }}>
-        {TABS.map((t) => (
-          <button key={t.key} className={tab === t.key ? 'primary' : ''} onClick={() => (setTab(t.key), setSel(null))}>
-            {t.label} ({(items ?? []).filter((i) => inTab(i, t.key)).length})
-          </button>
-        ))}
+      <div className="row wrap">
+        <Tabs label="Review tabs" tabs={TABS.map((t) => ({ ...t, count: (items ?? []).filter((i) => inTab(i, t.key)).length }))} value={tab} onChange={(k) => (setTab(k), setSel(null))} />
         <span className="grow" />
-        <span className="muted" style={{ fontSize: 12 }}>
-          <kbd>A</kbd> approve{tab === 'review' ? <> · <kbd>8</kbd> 18+</> : null} · <kbd>R</kbd> reject, then <kbd>1</kbd>–<kbd>5</kbd> why · <kbd>C</kbd> changes · <kbd>E</kbd> edit · <kbd>↑</kbd>
-          <kbd>↓</kbd> move · <kbd>space</kbd> play
-        </span>
+        <ShortcutLegend keys={keys} />
       </div>
       {tab === 'approved' && held && up && (
-        <div className="card" style={{ marginBottom: 12, padding: 10, borderColor: 'var(--bad)' }}>
-          <div className="warn">
-            <b>Uploads are on hold.</b> {holdText(up)}
-          </div>
-          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+        <Callout tone="bad" title="Uploads are on hold." className="mb-3">
+          <div className="warn">{holdText(up)}</div>
+          <div className="muted small mt-1">
             The scheduler stays on {line[0]} until it goes up and tries it again {retryText(held)}
             {held.retryEveryMin && held.nextTryAt ? ` (next at ${hhmm(held.nextTryAt)})` : ''}; the other {line.length - 1} approved clip{line.length === 2 ? '' : 's'} wait behind it, oldest approval first. Nothing is lost.
             {held.reason ? ` YouTube said: ${held.reason}` : ''}
           </div>
-        </div>
+        </Callout>
       )}
       {tab === 'approved' && (up?.status?.pace || up?.careful) && (
-        <div className="muted" style={{ marginBottom: 10, fontSize: 12 }}>
+        <div className="muted small mb-3">
           {up.status?.pace && (
             <div>
               Uploads: {paceText(up.status.pace)}. {up.status.pace.inDay} went up in the last 24 hours
@@ -358,21 +347,21 @@ export function Review({ clipId }: { clipId?: string } = {}) {
         </div>
       )}
       {(tab === 'approved' || tab === 'uploaded') && !!up?.log.length && (
-        <details className="card" style={{ marginBottom: 12, padding: '6px 10px' }}>
-          <summary className="muted" style={{ cursor: 'pointer', fontSize: 12 }}>
-            Upload log: the last {up.log.length} tries (all of them are kept in library/upload-log.jsonl)
-          </summary>
-          <table style={{ fontSize: 12, marginTop: 6, width: '100%' }}>
+        <details className="card upload-log mb-3">
+          <summary className="muted small">Upload log: the last {up.log.length} tries (all of them are kept in library/upload-log.jsonl)</summary>
+          <table className="small">
             <tbody>
               {up.log.map((t, k) => (
                 <tr key={k}>
-                  <td className="muted" style={{ whiteSpace: 'nowrap', paddingRight: 8 }}>{new Date(t.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                  <td style={{ whiteSpace: 'nowrap', paddingRight: 8 }}>
-                    <a onClick={() => setSel(t.clipId)} style={{ cursor: 'pointer' }}>{t.clipId}</a>
+                  <td className="muted">{new Date(t.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>
+                    <button type="button" className="link" onClick={() => setSel(t.clipId)}>
+                      {t.clipId}
+                    </button>
                   </td>
-                  <td className="muted" style={{ whiteSpace: 'nowrap', paddingRight: 8 }}>try {t.try}</td>
-                  <td className={t.outcome === 'uploaded' ? '' : 'warn'} style={{ whiteSpace: 'nowrap', paddingRight: 8 }}>{t.outcome}</td>
-                  <td className="muted">
+                  <td className="muted">try {t.try}</td>
+                  <td className={t.outcome === 'uploaded' ? '' : 'warn'}>{t.outcome}</td>
+                  <td className="muted wide">
                     {t.url ? (
                       <a href={t.url} target="_blank" rel="noreferrer">
                         {t.url}
@@ -387,14 +376,23 @@ export function Review({ clipId }: { clipId?: string } = {}) {
           </table>
         </details>
       )}
-      {items === null && <div className="card empty">{loadError ? `Could not load the review list (${loadError}). Trying again…` : 'Loading…'}</div>}
-      {items !== null && !list.length && <div className="card empty">Nothing here. Clips land in “To review” after `clip review &lt;clip&gt; submit` or a batch run.</div>}
+      {items === null && (
+        <div className="card">
+          <PageState kind={loadError ? 'error' : 'loading'}>{loadError ? `Could not load the review list (${loadError}). Trying again…` : undefined}</PageState>
+        </div>
+      )}
+      {items !== null && !list.length && (
+        <div className="card">
+          <PageState kind="empty">Nothing here. Clips land in “To review” after `clip review &lt;clip&gt; submit` or a batch run.</PageState>
+        </div>
+      )}
       {cur && (
-        <div className="video-layout" style={{ gridTemplateColumns: '380px minmax(0, 1fr)' }}>
+        <div className="review-layout">
           <div>
             {cur.exported ? (
               <video
                 ref={videoRef}
+                className="review-video"
                 muted={!sound}
                 onVolumeChange={(e) => soundOn.set(!e.currentTarget.muted && e.currentTarget.volume > 0)}
                 key={`${cur.id}-${stamp}`}
@@ -402,28 +400,27 @@ export function Review({ clipId }: { clipId?: string } = {}) {
                 controls
                 autoPlay
                 loop
-                style={{ width: '100%', aspectRatio: '9/16', background: '#000', borderRadius: 10 }}
               />
             ) : (
-              <div className="card empty" style={{ aspectRatio: '9/16' }}>
-                Not rendered yet.
+              <div className="card review-video">
+                <PageState kind="empty">Not rendered yet.</PageState>
               </div>
             )}
           </div>
           <div>
-            <div className="card" style={{ padding: 16 }}>
+            <div className="card review-card">
               <div className="row">
                 <div className="grow">
-                  <div style={{ fontWeight: 700, fontSize: 16 }}>{cur.title}</div>
+                  <div className="review-title">{cur.title}</div>
                   <div className="muted mono">
                     {cur.id} · {(cur.durationMs / 1000).toFixed(1)} s · {cur.markers} markers
                   </div>
                 </div>
-                <button onClick={() => go(`#/clip/${cur.id}`)}>
-                  Edit <kbd>E</kbd>
-                </button>
+                <Button kbd="E" onClick={() => go(`#/clip/${cur.id}`)}>
+                  Edit
+                </Button>
               </div>
-              <div className="row" style={{ marginTop: 10, flexWrap: 'wrap' }}>
+              <div className="row wrap mt-3">
                 {cur.exported && (
                   <a className="chip on" href={`/media/exports/${cur.id}.mp4?t=${stamp}`} download={`${cur.post.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || cur.id}.mp4`}>
                     ⬇ download MP4
@@ -432,16 +429,14 @@ export function Review({ clipId }: { clipId?: string } = {}) {
                 <CopyButton text={cur.post.title} label="copy title" />
                 <CopyButton text={postBody(cur.post)} label="copy caption + hashtags" />
               </div>
-              <div className="muted" style={{ marginTop: 6, whiteSpace: 'pre-wrap', fontSize: 12 }}>
-                {postBody(cur.post)}
-              </div>
+              <div className="muted small pre-wrap mt-1">{postBody(cur.post)}</div>
               {cur.qa && (
-                <div style={{ marginTop: 10 }}>
-                  <span className="chip on" style={{ borderColor: cur.qa.passed ? 'var(--good)' : 'var(--bad)' }}>
+                <div className="mt-3">
+                  <Chip on tone={cur.qa.passed ? 'good' : 'bad'}>
                     QA {cur.qa.passed ? 'passed' : 'failed'}
                     {cur.qa.loudnessLufs !== null ? ` · ${cur.qa.loudnessLufs.toFixed(1)} LUFS` : ''}
-                  </span>
-                  <ul style={{ marginTop: 6 }}>
+                  </Chip>
+                  <ul className="mt-1">
                     {cur.qa.issues.map((q, i) => (
                       <li key={i} className={q.level === 'fail' ? 'warn' : 'muted'}>
                         {q.check}: {q.detail}
@@ -451,22 +446,24 @@ export function Review({ clipId }: { clipId?: string } = {}) {
                 </div>
               )}
               {cur.review.status === 'approved' && !cur.published && cur.upload?.reason && (
-                <div className="card" style={{ marginTop: 10, padding: 10, borderColor: 'var(--bad)' }}>
+                <Callout tone="bad" className="mt-3">
                   <div className="warn">
                     {cur.upload.status === 'blocked-auth' || cur.upload.status === 'deferred' ? 'Waiting to upload:' : 'Not uploaded: the scheduler refused it.'} {cur.upload.reason}
                   </div>
-                  <div className="row" style={{ marginTop: 6, display: cur.upload.status === 'blocked-auth' ? 'none' : undefined }}>
-                    <button onClick={() => void api(`/api/clips/${cur.id}/retry-upload`, { body: {} }).then(load)} title="Put it back in the upload line; it is checked again">
-                      {cur.upload.status === 'deferred' ? 'Check again' : 'Retry upload'}
-                    </button>
-                    <span className="muted" style={{ fontSize: 12 }}>
-                      {cur.upload.status === 'deferred' ? 'After an edit and a new render that leaves it out; otherwise it waits for the end of the careful period.' : 'Fix what it says first (edit, render), or retry if that has changed.'}
-                    </span>
-                  </div>
-                </div>
+                  {cur.upload.status !== 'blocked-auth' && (
+                    <div className="row mt-1">
+                      <Button onClick={() => void api(`/api/clips/${cur.id}/retry-upload`, { body: {} }).then(load)} title="Put it back in the upload line; it is checked again">
+                        {cur.upload.status === 'deferred' ? 'Check again' : 'Retry upload'}
+                      </Button>
+                      <span className="muted small">
+                        {cur.upload.status === 'deferred' ? 'After an edit and a new render that leaves it out; otherwise it waits for the end of the careful period.' : 'Fix what it says first (edit, render), or retry if that has changed.'}
+                      </span>
+                    </div>
+                  )}
+                </Callout>
               )}
               {cur.review.status === 'approved' && !cur.published && !cur.upload?.reason && cur.upload?.status && (
-                <div className="muted" style={{ marginTop: 8 }}>
+                <div className="muted mt-2">
                   Upload:{' '}
                   {isCurrent(cur)
                     ? `next to go up; tried ${cur.upload.attempts} time${cur.upload.attempts === 1 ? '' : 's'}${cur.upload.lastAttemptAt ? `, last at ${hhmm(cur.upload.lastAttemptAt)}` : ''}${
@@ -480,7 +477,7 @@ export function Review({ clipId }: { clipId?: string } = {}) {
                 </div>
               )}
               {cur.published?.url && (
-                <div className="muted" style={{ marginTop: 8 }}>
+                <div className="muted mt-2">
                   Uploaded:{' '}
                   <a href={cur.published.url} target="_blank" rel="noreferrer">
                     {cur.published.url}
@@ -490,43 +487,38 @@ export function Review({ clipId }: { clipId?: string } = {}) {
                 </div>
               )}
               {cur.published?.heldPrivate && (
-                <div className="card" style={{ marginTop: 10, padding: 10, borderColor: 'var(--bad)' }}>
+                <Callout tone="bad" className="mt-3">
                   <div className="warn">Private on YouTube (18+): {cur.published.heldPrivate}.</div>
                   {cur.published.videoId && (
-                    <div className="muted" style={{ marginTop: 4, fontSize: 12 }}>
+                    <div className="muted small mt-1">
                       <a href={`https://studio.youtube.com/video/${cur.published.videoId}/edit`} target="_blank" rel="noreferrer">
                         Open it in YouTube Studio
                       </a>
                       : Show more → Age restriction → “Yes, restrict my video to viewers over 18”, save, then Visibility → Public.
                     </div>
                   )}
-                </div>
+                </Callout>
               )}
               {cur.candidate && (
                 <>
-                  <div className="hook" style={{ marginTop: 10, fontStyle: 'italic' }}>
-                    “{cur.candidate.hook}”
-                  </div>
-                  <div className="muted" style={{ marginTop: 4 }}>
-                    {cur.candidate.reason}
-                  </div>
-                  <div className="row" style={{ flexWrap: 'wrap', marginTop: 8 }}>
-                    <span className="chip on">
+                  <div className="hook mt-3">“{cur.candidate.hook}”</div>
+                  <div className="muted mt-1">{cur.candidate.reason}</div>
+                  <div className="row wrap mt-2">
+                    <Chip on>
                       quality {cur.candidate.score} · viral {cur.candidate.virality ?? '—'} · {cur.candidate.verdict ?? 'unscored'} · {cur.candidate.lens}
-                    </span>
-                    {cur.candidate.scores?.delivery !== undefined && <span className="chip">delivery {cur.candidate.scores.delivery}</span>}
+                    </Chip>
+                    {cur.candidate.scores?.delivery !== undefined && <Chip>delivery {cur.candidate.scores.delivery}</Chip>}
                     {Object.entries(cur.candidate.signals).map(([k, v]) => (
-                      <span key={k} className="chip on">
-                        <span className="dot" style={{ background: SIGNAL_COLORS[k] ?? '#888' }} />
+                      <Chip key={k} on dot={SIGNAL_COLORS[k] ?? 'var(--muted)'}>
                         {k} {v.toFixed(2)}
-                      </span>
+                      </Chip>
                     ))}
-                    <span className="chip">
+                    <Chip>
                       source {fmtTime(cur.candidate.startMs)}–{fmtTime(cur.candidate.endMs)}
-                    </span>
+                    </Chip>
                   </div>
                   {cur.candidate.warnings.length > 0 && (
-                    <ul style={{ marginTop: 8 }}>
+                    <ul className="mt-2">
                       {cur.candidate.warnings.map((w, i) => (
                         <li key={i} className="warn">
                           {w}
@@ -537,97 +529,108 @@ export function Review({ clipId }: { clipId?: string } = {}) {
                 </>
               )}
               {tab === 'review' && cur.review.note?.trim() && (
-                <div className="field" style={{ marginTop: 14 }}>
-                  <label>Hand-over</label>
-                  <div className="muted" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>
-                    {cur.review.note.trim()}
-                  </div>
+                <div className="field mt-4">
+                  <div className="field-label">Hand-over</div>
+                  <div className="muted pre-wrap">{cur.review.note.trim()}</div>
                 </div>
               )}
-              <div className="field" style={{ marginTop: 14 }}>
-                <label>Note (what to change, or why; Make changes needs one)</label>
-                <textarea ref={noteRef} rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. start on the question, drop the second boom" />
+              <div className="mt-4">
+                <Field label="Note (what to change, or why; Make changes needs one)">
+                  <textarea ref={noteRef} rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. start on the question, drop the second boom" />
+                </Field>
               </div>
               {tab === 'review' ? (
-                <label className="row" style={{ alignItems: 'flex-start', gap: 8, margin: '0 0 10px', cursor: 'pointer' }} title="Ticked: it uploads age-restricted (18+) on YouTube">
-                  <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} style={{ marginTop: 3 }} />
+                <label className="adult-check mb-3" title="Ticked: it uploads age-restricted (18+) on YouTube">
+                  <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} />
                   <span>
                     <b>18+</b> · upload age-restricted on YouTube <kbd>8</kbd>
-                    <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-                      {adultText(cur)}
-                    </div>
+                    <div className="muted small mt-1">{adultText(cur)}</div>
                   </span>
                 </label>
               ) : (
-                <div style={{ margin: '0 0 10px' }}>
+                <div className="mb-3">
                   <AdultMark i={cur} />
                 </div>
               )}
               {tab === 'review' && up?.careful && (
-                <div className="muted" style={{ fontSize: 12, margin: '0 0 8px' }} title={up.careful.why ?? undefined}>
+                <div className="muted small mb-2" title={up.careful.why ?? undefined}>
                   <b>Careful until {day(up.careful.until)}:</b> approve clips with the creator on screen and reacting, not a cutscene. A sexual flag, 18+ or an f-word in the first 3 s waits until then.
                 </div>
               )}
-              <div className="row">
-                <button className="primary" onClick={() => void decide('approved')}>
-                  Approve <kbd>A</kbd>
-                </button>
-                <button onClick={() => (note.trim() ? void decide('changes', note.trim()) : noteRef.current?.focus())} title="Needs a note (⌘↵ in the note box)">
-                  Make changes <kbd>C</kbd>
-                </button>
-                <button className={asking ? 'danger primary' : 'danger'} onClick={() => setAsking((a) => !a)}>
-                  Reject <kbd>R</kbd>
-                </button>
+              <div className="row wrap">
+                <Button variant="primary" kbd="A" onClick={() => void decide('approved')}>
+                  Approve
+                </Button>
+                <Button kbd="C" onClick={() => (note.trim() ? void decide('changes', note.trim()) : noteRef.current?.focus())} title="Needs a note (⌘↵ in the note box)">
+                  Make changes
+                </Button>
+                <Button className={asking ? 'danger primary' : 'danger'} kbd="R" aria-expanded={asking} onClick={() => setAsking((a) => !a)}>
+                  Reject
+                </Button>
                 {canSendBack && (
-                  <button
+                  <Button
+                    kbd="U"
                     onClick={() => void decide('review')}
                     title={tab === 'approved' ? 'Take the approval back: it leaves the upload line and waits in To review' : 'Undo this decision: the clip waits in To review again'}
                   >
-                    ↩ Back to review <kbd>U</kbd>
-                  </button>
+                    ↩ Back to review
+                  </Button>
                 )}
               </div>
               {asking && (
-                <div className="reject-why" style={{ marginTop: 10 }}>
-                  <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                <div className="mt-3" role="group" aria-label="Why reject it">
+                  <div className="muted small mb-2">
                     Why? One tap rejects. <kbd>R</kbd> again: no reason · <kbd>Esc</kbd> cancel
                   </div>
-                  <div className="row" style={{ flexWrap: 'wrap' }}>
+                  <div className="row wrap">
                     {REJECT_REASONS.map((r, i) => (
-                      <button key={r.key} className="danger" onClick={() => void decide('rejected', undefined, [r.key])}>
+                      <Button key={r.key} variant="danger" onClick={() => void decide('rejected', undefined, [r.key])}>
                         <kbd>{i + 1}</kbd> {r.label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
               )}
               {cur.review.reasons?.length ? (
-                <div className="muted" style={{ marginTop: 8 }}>
+                <div className="muted mt-2">
                   {cur.review.status === 'rejected' ? 'Rejected' : 'Sent back'}: {cur.review.reasons.map((k) => REJECT_REASONS.find((r) => r.key === k)?.label ?? k).join(', ')}
                 </div>
               ) : null}
             </div>
-            <div className="card list" style={{ marginTop: 14 }}>
+            <div className="card list mt-4" aria-label="Clips in this tab">
               {list.map((i) => (
-                <div key={i.id} className={`cand ${i.id === cur.id ? 'sel' : ''}`} onClick={() => setSel(i.id)} style={{ padding: '8px 12px' }}>
-                  <div className="row">
-                    <span className="grow">
-                      {i.review.status === 'approved' && !i.published && i.upload?.reason ? <span className="warn" title={`not uploaded: ${i.upload.reason}`}>⚠ </span> : null}
-                      {i.title}
-                    </span>
-                    {(tab === 'review' ? i.qa?.adult?.detected : (i.review.adult ?? (i.review.status === 'approved' && !i.published && i.qa?.adult?.detected))) && (
-                      <span className="chip" style={{ borderColor: 'var(--bad)', padding: '0 5px', fontSize: 11 }} title={tab === 'review' ? 'the 18+ check found sexual content' : 'uploads age-restricted'}>
-                        18+
-                      </span>
-                    )}
-                    <span className="muted mono">{(i.durationMs / 1000).toFixed(0)} s</span>
-                  </div>
-                </div>
+                <ReviewRow key={i.id} i={i} selected={i.id === cur.id} tab={tab} onSelect={() => setSel(i.id)} />
               ))}
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** One clip in the list: a click or Enter selects it. */
+function ReviewRow({ i, selected, tab, onSelect }: { i: Item; selected: boolean; tab: Tab; onSelect: () => void }) {
+  const keys = useRowKeys(onSelect);
+  const adult = tab === 'review' ? i.qa?.adult?.detected : (i.review.adult ?? (i.review.status === 'approved' && !i.published && i.qa?.adult?.detected));
+  return (
+    <div className={`cand compact ${selected ? 'sel' : ''}`} onClick={onSelect} aria-current={selected || undefined} {...keys}>
+      <div className="row">
+        <span className="grow">
+          {i.review.status === 'approved' && !i.published && i.upload?.reason ? (
+            <span className="warn" title={`not uploaded: ${i.upload.reason}`}>
+              ⚠{' '}
+            </span>
+          ) : null}
+          {i.title}
+        </span>
+        {adult && (
+          <Chip small tone="bad" title={tab === 'review' ? 'the 18+ check found sexual content' : 'uploads age-restricted'}>
+            18+
+          </Chip>
+        )}
+        <span className="muted mono">{(i.durationMs / 1000).toFixed(0)} s</span>
+      </div>
     </div>
   );
 }
