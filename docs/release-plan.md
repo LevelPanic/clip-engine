@@ -93,6 +93,14 @@ Sources: four read-only audits run in parallel (git and release safety, code arc
 - **The watchlist's status page** reads the Studio's tokens.
 - **Not done:** the Studio server's routers and splitting the biggest UI files into smaller components (phase 2's later list); transcript words are still mouse-only.
 
+**Phase 4 (2026-11-23, user: "Yes, start phase 4").** The release.
+- **CI:** `.github/workflows/ci.yml` runs typecheck and the offline tests on ubuntu-latest for every push and pull request. The tests need only Node: all 366 passed with nothing else on the PATH.
+- **Fresh clone:** a clone with none of the operator's configs or data installed cleanly (`npm ci`, 316 MB), typechecked, passed all 366 tests, ran `./clip --help` and `./clip config`, and served the Studio with every page in its empty state and no errors.
+- **History scan:** 15 commits and 528 files ever committed. There is no media but the 14 sound effects, and no emails, home paths, real name, channel name, tokens or keys. None of the 76 upload titles or 77 upload video ids appears.
+- **Author:** every commit is authored and committed as `LevelPanic` with the noreply email, and the repo's git config commits that way. The rewrite kept dates and contents.
+- **Sounds:** the user confirmed all 14 were made for the project.
+- **Published:** **https://github.com/LevelPanic/clip-engine**, public, `main` pushed. Pushing a workflow file needs the gh login's `workflow` scope (`gh auth refresh -h github.com -s workflow`).
+
 ## Where it stands
 
 **Healthy.**

@@ -1,5 +1,7 @@
 # Clip Engine
 
+[![CI](https://github.com/LevelPanic/clip-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/LevelPanic/clip-engine/actions/workflows/ci.yml)
+
 The engine behind an automated clip channel: it finds moments in public streams and videos, cuts them, and posts them with
 the creator named on screen and linked under every post, to send viewers to the source.
 

@@ -215,6 +215,7 @@ docs/              architecture, pipeline, operations, changelog, research/ (the
   - Doc-sync: `test/lenses.test.ts` checks the lens files and agent docs against the engine, that the delegated roles all name one model, and that the expert protocol describes the dossier the engine builds.
   - Integration with only the network faked: `test/scan.test.ts` runs passes over a **simulated live stream**. The broadcast grows between passes, chat has known moments, a pass comes too early, and the stream ends. The real planning, merging, spike detection, seed picking, windowed transcripts and scan.json run against it.
   - Tests import `test/helpers/sandbox.ts` first: it points `CLIP_DATA` at a temp folder so the real library/, clips/ and exports/ are never touched.
+- **CI** (`.github/workflows/ci.yml`) runs `npm run typecheck` and `npm test` on ubuntu-latest for every push to `main` and every pull request at https://github.com/LevelPanic/clip-engine. The offline tests need only Node; keep it that way, so a test that needs ffmpeg, Swift or the network belongs in `test/e2e/`.
 - **`npm run test:e2e` (real Twitch, a few minutes).** Checks every web API query the tool uses, then scans an 8-minute range of a recent ended broadcast with real yt-dlp, ffmpeg, the audio classifier and Whisper. Run it when touching Twitch or the scan path; Twitch can change its API without notice. `E2E_TWITCH_VOD=<number>` pins a broadcast.
 - **By hand, what tests can't see:**
   - The Studio in the browser pane: the candidates page, the editor, the stream scan panel.
