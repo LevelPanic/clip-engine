@@ -219,7 +219,7 @@ async function defaultDeps(): Promise<PassDeps> {
     audio: async (id, ranges, log) => {
       const { loadMeta } = await import('../ingest/ingest');
       if (loadMeta(id).platform !== 'twitch') return; // YouTube: the audio job covers the whole video
-      const { downloadAudioRanges } = await import('../jobs/downloads');
+      const { downloadAudioRanges } = await import('../ingest/downloads');
       const { analyzeAudioChunk } = await import('../ingest/audioEvents');
       const { listAudioChunks } = await import('../ingest/media');
       const { added } = await downloadAudioRanges(id, ranges, log);

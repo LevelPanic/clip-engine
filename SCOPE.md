@@ -207,7 +207,7 @@ In priority order. Each item says where to work and when it's done. Move an item
 
 **4. Kick sources**
 - yt-dlp has Kick VOD and clip extractors.
-- Add `kick` to `src/ingest/source.ts` (ids like `kick-<uuid>`), an ingest path like `ingestTwitch`, and formats in `src/jobs/downloads.ts`.
+- Add `kick` to `src/ingest/source.ts` (ids like `kick-<uuid>`), an ingest path like `ingestTwitch`, and formats in `src/ingest/downloads.ts`.
 - Chat replay on Kick needs its own (unofficial, Cloudflare-protected) API. Start without chat: audio, transcript and seeds only.
 - Check section alignment the same way as Twitch (`measureSectionStart`).
 

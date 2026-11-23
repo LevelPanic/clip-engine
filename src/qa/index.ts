@@ -3,7 +3,7 @@
 import path from 'node:path';
 import { paths, writeJson, readJsonIf } from '../core/paths';
 import { run } from '../core/proc';
-import { loadProject } from '../core/project';
+import { loadProject } from '../project';
 import { loadCandidates } from '../candidates';
 import { endingWarnings, hookWarnings } from './hook';
 import type { AdultCheck } from './adult';
@@ -107,7 +107,7 @@ export async function qaClip(clipId: string): Promise<QaReport> {
   if (isStillImage(p.videoId)) issues.push({ level: 'warn', check: 'footage', detail: 'the source is a still image (audio-only upload): this short is static art with captions' });
   // this channel posts other people's streams: an export that does not say whose it is does not go out
   const { loadChannel } = await import('../core/channel');
-  const { CREDIT } = await import('../core/project');
+  const { CREDIT } = await import('../project');
   const rendered = readJsonIf<{ credit?: boolean }>(path.join(paths.exports, `${clipId}.json`));
   const inProject = p.markers.some((m) => m.type === CREDIT && !m.proposed);
   // the render says whether the credit was in the picture; a credit added since is not in this file yet
@@ -143,7 +143,7 @@ export async function qaClip(clipId: string): Promise<QaReport> {
   try {
     const { wordsThatPlay } = await import('./adult');
     const { checkLanguage, languageWarnings } = await import('./language');
-    const { suggestedPost } = await import('../core/project');
+    const { suggestedPost } = await import('../project');
     const { postFor } = await import('../core/post');
     language = checkLanguage({ words: await wordsThatPlay(clipId), captions: p.captions, title: postFor(p.post, suggestedPost(p)).title });
     for (const w of languageWarnings(language)) issues.push({ level: 'warn', check: 'language', detail: w });

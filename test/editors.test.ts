@@ -8,7 +8,7 @@ import type { Candidate, Project, Word } from '../src/core/schemas';
 const { memeScore, expertScore, memeSuggestions, expertSuggestions, clipMetrics, hookText, applyEditorSuggestions, cuttableGaps } = await import('../src/edit/editors');
 const { defaultCaptions, defaultFraming } = await import('../src/core/schemas');
 const { paths, writeJson } = await import('../src/core/paths');
-const { saveProject, loadProject } = await import('../src/core/project');
+const { saveProject, loadProject } = await import('../src/project');
 type EditorMetrics = import('../src/edit/editors').EditorMetrics;
 
 const metrics = (over: Partial<EditorMetrics> = {}): EditorMetrics => ({
@@ -224,7 +224,7 @@ test('in a split layout the hook line goes under the seam, not across the creato
 
 
 test('clip intro rewrites the hook line in whatever style the look gave it, and never adds a second', async () => {
-  const { setIntro } = await import('../src/core/project');
+  const { setIntro } = await import('../src/edit/hook');
   // the editors put a street-style hook at the opening; an action line sits later in the clip
   saveProject(project('i1', { captions: { ...defaultCaptions(), style: 'street' }, markers: [
     { id: 'h1', type: 'text', startMs: 100_000, endMs: 102_600, params: { text: 'OLD HOOK', style: 'street', y: 0.436, fontSize: 78, animation: 'pop' }, source: 'editor:meme' },

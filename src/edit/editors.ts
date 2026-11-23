@@ -13,7 +13,7 @@
 // What the editors do NOT touch: captions (the subtitle expert owns them: `clip subtitles`) and the
 // review note (the reviewer's words). What they think about either goes into `notes`.
 import { paths, readJsonIf } from '../core/paths';
-import { loadProject, saveProject, newMarkerId } from '../core/project';
+import { loadProject, saveProject, newMarkerId } from '../project';
 import { loadCandidates } from '../candidates';
 import { loadQa } from '../qa';
 import { loadMarkerSchemas } from '../markers/registry-node';

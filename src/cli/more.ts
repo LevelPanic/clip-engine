@@ -701,7 +701,7 @@ export function registerMore(program: Command, action: Action) {
     .description('List clip projects')
     .action(
       action(async () => {
-        const { listClips, loadProject } = await import('../core/project');
+        const { listClips, loadProject } = await import('../project');
         const fs = await import('node:fs');
         const { paths } = await import('../core/paths');
         for (const id of listClips()) {
@@ -718,7 +718,7 @@ export function registerMore(program: Command, action: Action) {
     .description('Print a clip project as JSON')
     .action(
       action(async (clipId: string) => {
-        const { loadProject } = await import('../core/project');
+        const { loadProject } = await import('../project');
         console.log(JSON.stringify(loadProject(clipId), null, 2));
       }),
     );
@@ -730,7 +730,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--out <time>')
     .action(
       action(async (clipId: string, o: { in?: string; out?: string }) => {
-        const { loadProject, saveProject } = await import('../core/project');
+        const { loadProject, saveProject } = await import('../project');
         const p = loadProject(clipId);
         const seg = p.segments[0];
         const inMs = o.in ? parseTime(o.in, seg.startMs) : seg.startMs;
@@ -748,7 +748,7 @@ export function registerMore(program: Command, action: Action) {
     .description('Change clip settings, e.g. `clip set X captions.style=boxed framing.mode=crop framing.cropX=0.4 title="New"`')
     .action(
       action(async (clipId: string, assignments: string[]) => {
-        const { loadProject, saveProject } = await import('../core/project');
+        const { loadProject, saveProject } = await import('../project');
         const p = loadProject(clipId) as unknown as Record<string, unknown>;
         for (const a of assignments) {
           const i = a.indexOf('=');
@@ -773,7 +773,7 @@ export function registerMore(program: Command, action: Action) {
     .description('Correct a caption word by its index (#123) or time (14:50.2). Use "" to hide the word.')
     .action(
       action(async (clipId: string, word: string, text: string) => {
-        const { loadProject, saveProject } = await import('../core/project');
+        const { loadProject, saveProject } = await import('../project');
         const { loadTranscript } = await import('../ingest/ingest');
         const p = loadProject(clipId);
         let idx: number;
@@ -835,7 +835,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--remove', 'take the credit off this clip (QA then fails the export, unless channel.json turns the credit off)')
     .action(
       action(async (clipId: string, o: { text?: string; label?: string; remove?: boolean }) => {
-        const { setCredit, CREDIT } = await import('../core/project');
+        const { setCredit, CREDIT } = await import('../project');
         const p = await setCredit(clipId, o);
         const m = p.markers.find((x) => x.type === CREDIT);
         console.log(m ? `credit on ${clipId}: ${String(m.params.label ?? '🎥')} ${String(m.params.text)}` : `no credit on ${clipId}`);
@@ -848,7 +848,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--text <text>', 'the line; omit to print the current one')
     .action(
       action(async (clipId: string, o: { text?: string }) => {
-        const { setIntro } = await import('../core/project');
+        const { setIntro } = await import('../edit/hook');
         const r = await setIntro(clipId, o);
         const text = r.current ?? (r.marker ? String((r.marker.params as Record<string, unknown>).text) : undefined);
         console.log(text ? `intro on ${clipId}: ${text}` : `no intro on ${clipId}`);
@@ -880,7 +880,7 @@ export function registerMore(program: Command, action: Action) {
     .command('list <clipId>')
     .action(
       action(async (clipId: string) => {
-        const { loadProject } = await import('../core/project');
+        const { loadProject } = await import('../project');
         const p = loadProject(clipId);
         const inMs = p.segments[0].startMs;
         if (!p.markers.length) console.log('no markers');
@@ -900,7 +900,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--params <json>', 'parameters as JSON')
     .action(
       action(async (clipId: string, type: string, o: { at: string; to?: string; param?: string[]; params?: string }) => {
-        const { addMarker, loadProject } = await import('../core/project');
+        const { addMarker, loadProject } = await import('../project');
         const inMs = loadProject(clipId).segments[0].startMs;
         const { marker: m } = await addMarker(clipId, {
           type,
@@ -920,7 +920,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--params <json>')
     .action(
       action(async (clipId: string, id: string, o: { at?: string; to?: string; param?: string[]; params?: string }) => {
-        const { updateMarker, loadProject } = await import('../core/project');
+        const { updateMarker, loadProject } = await import('../project');
         const inMs = loadProject(clipId).segments[0].startMs;
         const { marker: m } = await updateMarker(clipId, id, {
           startMs: o.at ? parseTime(o.at, inMs) : undefined,
@@ -935,7 +935,7 @@ export function registerMore(program: Command, action: Action) {
     .command('rm <clipId> <markerId>')
     .action(
       action(async (clipId: string, id: string) => {
-        const { removeMarker } = await import('../core/project');
+        const { removeMarker } = await import('../project');
         removeMarker(clipId, id);
         console.log(`removed ${id}`);
       }),
@@ -958,7 +958,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--keep <ms>', 'breath kept at each side', '120')
     .action(
       action(async (clipId: string, o: { minGap: string; keep: string }) => {
-        const { loadProject, saveProject } = await import('../core/project');
+        const { loadProject, saveProject } = await import('../project');
         const { suggestSilenceCuts } = await import('../edit/suggest');
         const p = loadProject(clipId);
         const cuts = await suggestSilenceCuts(p, { minGapMs: Number(o.minGap), keepMs: Number(o.keep) });
@@ -1059,7 +1059,7 @@ export function registerMore(program: Command, action: Action) {
       action(async (clipId: string, o: { title?: string; caption?: string; hashtags?: string }) => {
         const fs = await import('node:fs');
         const path = await import('node:path');
-        const { loadProject, saveProject, suggestedPost } = await import('../core/project');
+        const { loadProject, saveProject, suggestedPost } = await import('../project');
         const { postFor, postFile } = await import('../core/post');
         const { paths } = await import('../core/paths');
         let p = loadProject(clipId);
@@ -1116,7 +1116,7 @@ export function registerMore(program: Command, action: Action) {
     .action(
       action(async (clipId: string, o: { accept?: boolean; from?: string; to?: string }) => {
         const { autoReframe } = await import('../reframe/apply');
-        const { loadProject } = await import('../core/project');
+        const { loadProject } = await import('../project');
         const inMs = loadProject(clipId).segments[0].startMs;
         const range = o.from || o.to ? { startMs: o.from ? parseTime(o.from, inMs) : inMs, endMs: o.to ? parseTime(o.to, inMs) : Infinity } : undefined;
         const r = await autoReframe(clipId, { accept: !!o.accept, range, log: console.log });
@@ -1132,7 +1132,7 @@ export function registerMore(program: Command, action: Action) {
     .action(
       action(async (clipId: string, o: { detector: string }) => {
         const { detectSplit } = await import('../reframe/split');
-        const { loadProject } = await import('../core/project');
+        const { loadProject } = await import('../project');
         const r = await detectSplit(clipId, { log: console.log, detector: o.detector as 'insightface' | 'vision' });
         if (!r.found) {
           console.log(`no stable facecam found (${r.reason ?? 'no face'}); framing unchanged`);
@@ -1150,7 +1150,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--reject', 'remove them instead')
     .action(
       action(async (clipId: string, ids: string[], o: { reject?: boolean }) => {
-        const { loadProject, saveProject } = await import('../core/project');
+        const { loadProject, saveProject } = await import('../project');
         const p = loadProject(clipId);
         const { acceptProposals, rejectProposals } = await import('../core/proposals');
         const n = p.markers.filter((m) => m.proposed && (!ids.length || ids.includes(m.id))).length;
@@ -1165,7 +1165,7 @@ export function registerMore(program: Command, action: Action) {
 
   preset.command('list').action(
     action(async () => {
-      const { listPresets } = await import('../core/project');
+      const { listPresets } = await import('../project');
       console.log(listPresets().join('\n') || '(no presets)');
     }),
   );
@@ -1175,7 +1175,7 @@ export function registerMore(program: Command, action: Action) {
     .description('Save markers (relative to the clip edges), caption style and framing')
     .action(
       action(async (clipId: string, name: string) => {
-        const { loadProject, presetFromProject, presetFile } = await import('../core/project');
+        const { loadProject, presetFromProject, presetFile } = await import('../project');
         const { writeJson } = await import('../core/paths');
         const pr = presetFromProject(loadProject(clipId), name);
         writeJson(presetFile(name), pr);
@@ -1188,7 +1188,7 @@ export function registerMore(program: Command, action: Action) {
     .option('--add', 'keep existing markers instead of replacing them')
     .action(
       action(async (name: string, clipId: string, o: { add?: boolean }) => {
-        const { loadProject, saveProject, loadPreset, applyPreset } = await import('../core/project');
+        const { loadProject, saveProject, loadPreset, applyPreset } = await import('../project');
         const p = await applyPreset(loadProject(clipId), loadPreset(name), o.add ? 'add' : 'replace');
         saveProject(p);
         console.log(`applied ${name} to ${clipId} (${p.markers.length} markers)`);
@@ -1214,7 +1214,7 @@ export function registerMore(program: Command, action: Action) {
           inputs: string[],
           o: { lens: string; perVideo: string; judge: string; autoedit: boolean; reframe?: boolean; style: string; render: boolean; limit: string },
         ) => {
-          const { startBatch } = await import('../jobs/batch');
+          const { startBatch } = await import('../pipeline/startBatch');
           const { STYLES } = await import('../edit/styles');
           if (!STYLES.some((st) => st.key === o.style)) throw new Error(`no style "${o.style}"; try ${STYLES.map((st) => st.key).join(', ')}`);
           const batch = { lens: o.lens, perVideo: Number(o.perVideo), judge: o.judge as 'claude' | 'none', autoedit: o.autoedit, reframe: !!o.reframe, style: o.style, render: o.render };
@@ -1231,7 +1231,7 @@ export function registerMore(program: Command, action: Action) {
     .action(
       action(async (batchId?: string) => {
         const { jobsDb, listJobs } = await import('../jobs/queue');
-        const { afterJudge } = await import('../jobs/pipeline');
+        const { afterJudge } = await import('../pipeline/batch');
         const { ensureWorker } = await import('../jobs/worker');
         const { loadCandidates } = await import('../candidates');
         const id = batchId ?? (jobsDb().prepare('SELECT id FROM batches ORDER BY createdAt DESC LIMIT 1').get() as { id: string } | undefined)?.id;

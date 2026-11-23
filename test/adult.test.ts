@@ -10,7 +10,7 @@ import type { Project } from '../src/core/schemas';
 
 const { adultScore, sexualWords, lewdChat, checkAdult, ADULT_POINTS } = await import('../src/qa/adult');
 const { defaultCaptions, defaultFraming } = await import('../src/core/schemas');
-const { saveProject } = await import('../src/core/project');
+const { saveProject } = await import('../src/project');
 const { writeJson, paths } = await import('../src/core/paths');
 
 const none = { explicit: [], suggestive: [], experts: [], lewdChatters: 0, stills: 12, exposed: [], revealing: 0 };

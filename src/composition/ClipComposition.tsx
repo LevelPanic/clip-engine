@@ -6,7 +6,7 @@ import { markerRenderMs, framingKeys, framingAt, filterAt, filterSpans, gainAt, 
 import { msToFrames } from '../core/time';
 import { spanToT, srcToT, tToSrc, type Piece, type TimeMap } from '../core/timeline';
 import type { Marker } from '../core/schemas';
-import { ClipContext, FONT } from './context';
+import { ClipContext, FONT } from '../markers/context';
 import { seamOf } from '../core/layout';
 import { FramedVideo } from './FramedVideo';
 import { Captions, captionTokens } from './Captions';

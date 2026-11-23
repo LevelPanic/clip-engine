@@ -6,7 +6,7 @@
 // lists the word-level fixes; the skill/agent checks the frames and has the final say.
 import { lookOf } from '../core/captionLooks';
 import { paths, readJsonIf } from '../core/paths';
-import { loadProject, saveProject } from '../core/project';
+import { loadProject, saveProject } from '../project';
 import { loadCandidates } from '../candidates';
 import { loadMeta } from '../ingest/ingest';
 import { CHAR_EM, CAPTION_WIDTH } from '../core/captionMetrics';

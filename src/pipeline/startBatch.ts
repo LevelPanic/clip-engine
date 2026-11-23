@@ -2,10 +2,10 @@
 // through the pipeline (see pipeline.ts). Used by `clip batch` and the Studio.
 import fs from 'node:fs';
 import { parseVideoId } from '../ingest/ingest';
-import { createBatch, enqueue } from './queue';
-import { ensureWorker } from './worker';
+import { createBatch, enqueue } from '../jobs/queue';
+import { ensureWorker } from '../jobs/worker';
 import { runOrThrow, YTDLP } from '../core/proc';
-import type { BatchOptions } from './pipeline';
+import type { BatchOptions } from './batch';
 
 export async function expandInputs(inputs: string[], limit = 5): Promise<string[]> {
   const urls: string[] = [];

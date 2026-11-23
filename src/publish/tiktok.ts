@@ -8,7 +8,7 @@ import http from 'node:http';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { paths, readJsonIf, writeJson } from '../core/paths';
-import { loadProject, suggestedPost } from '../core/project';
+import { loadProject, suggestedPost } from '../project';
 import { postFor, postBody } from '../core/post';
 import { doNotClipError, optedOutVideo, uncredited } from '../core/channel';
 import { loadCandidates } from '../candidates';

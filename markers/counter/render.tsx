@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import type { z } from 'zod';
 import { defineRender } from '../../src/markers/define';
-import { fontFamilyOf } from '../../src/composition/fonts';
+import { fontFamilyOf } from '../../src/markers/fonts';
 import schema, { counterAt } from './schema';
 
 type P = z.infer<typeof schema.params>;

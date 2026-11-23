@@ -7,7 +7,7 @@ import { run, YTDLP } from '../core/proc';
 import type { VideoMeta, Transcript, SponsorSegment } from '../core/schemas';
 import { transcriptFromJson3, renderTranscriptMd } from './transcript';
 import { vocabulary, applyVocabulary } from './vocab';
-import { listClips, loadProject, saveProject } from '../core/project';
+import { listClips, loadProject, saveProject } from '../project';
 import { fetchSponsorBlock } from './sponsorblock';
 import { fmtTime } from '../core/time';
 import { parseSource, sourceOf, type SourceRef } from './source';

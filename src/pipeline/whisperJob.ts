@@ -3,10 +3,10 @@
 // would point at the wrong words: refuse when the video already has clips unless forced.
 import fs from 'node:fs';
 import { paths, writeJson } from '../core/paths';
-import { listClips, loadProject } from '../core/project';
-import { loadMeta, loadSponsors } from './ingest';
-import { renderTranscriptMd } from './transcript';
-import { whisperTranscript } from './whisper';
+import { listClips, loadProject } from '../project';
+import { loadMeta, loadSponsors } from '../ingest/ingest';
+import { renderTranscriptMd } from '../ingest/transcript';
+import { whisperTranscript } from '../ingest/whisper';
 
 export async function useWhisper(videoId: string, opts: { model?: string; force?: boolean; log?: (s: string) => void } = {}) {
   const clips = listClips().filter((c) => loadProject(c).videoId === videoId);

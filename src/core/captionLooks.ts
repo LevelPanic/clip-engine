@@ -16,7 +16,7 @@ export type HighlightMode = 'word' | 'loud' | 'cycle' | 'none';
 export interface CaptionLook {
   key: CaptionLookKey;
   label: string;
-  /** Font family key, resolved in src/composition/fonts.ts. */
+  /** Font family key, resolved in src/markers/fonts.ts. */
   font: 'barlow' | 'montserrat' | 'luckiest' | 'poppins';
   weight: number;
   italic: boolean;

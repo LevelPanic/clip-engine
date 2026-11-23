@@ -1,10 +1,10 @@
 // Detect a clip's facecam and switch it to the split layout (facecam on top, gameplay below).
 // Used by `clip split`, the Studio's "Find facecam" button, and automatically for new Twitch clips
 // (autoSplit in project.json). It needs the clip's footage, so it downloads the section if missing.
-import { categoryAt, loadProject, saveProject } from '../core/project';
+import { categoryAt, loadProject, saveProject } from '../project';
 import { captionPositionForSplit, contentFitFor } from '../core/layout';
 import { resolveMedia, SECTION_MARGIN_MS, type ResolvedMedia } from '../ingest/media';
-import { downloadSections } from '../jobs/downloads';
+import { downloadSections } from '../ingest/downloads';
 import { detectFaces } from './faces';
 import { detectFacesInsight } from './insightface';
 import { detectFacesHybrid } from './hybrid';

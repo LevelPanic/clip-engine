@@ -1,8 +1,8 @@
 // The batch pipeline: each stage queues the next, so a list of links becomes a review queue of
 // rendered, QA'd shorts. ingest → discover → judge → make top N → autoedit → render → qa → review
-import { enqueue, type Job } from './queue';
+import { enqueue, type Job } from '../jobs/queue';
 import { loadCandidates, makeClip } from '../candidates';
-import { loadProject } from '../core/project';
+import { loadProject } from '../project';
 
 export interface BatchOptions {
   lens: string;

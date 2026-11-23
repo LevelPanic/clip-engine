@@ -13,7 +13,7 @@ import { twitchApi } from '../src/ingest/twitch';
 import { fetchChat, loadChat } from '../src/ingest/chat';
 import { claim, complete, fail, markDone, readUpTo, recover, summary, unqueueFrom, want, type Span } from '../src/track/coverage';
 import { listMoments, listStreams, saveCoverage, setStreamStatus, tierOf, updateCoverage, type StreamRow } from '../src/track/db';
-import { rankAndStore, unreadable } from '../src/scan/rank';
+import { rankAndStore, unreadable } from '../src/track/rank';
 import { runningObserver, writeHeartbeat } from '../src/track/observer';
 
 const args = process.argv.slice(2);

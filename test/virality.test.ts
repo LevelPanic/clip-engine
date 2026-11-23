@@ -112,7 +112,7 @@ test('hook QA flags silence, black, a late first word and filler', () => {
 });
 
 test('a batch makes clips in rank order, never by quality alone and never a skip', async () => {
-  const { pickForBatch } = await import('../src/jobs/pipeline');
+  const { pickForBatch } = await import('../src/pipeline/batch');
   const c = (id: string, over: object) => ({ id, status: 'new', score: 70, startMs: 0, endMs: 30_000, ...over });
   const picked = pickForBatch(
     [

@@ -175,7 +175,7 @@ test('meme editor: a chat card after the premise box, clear of the end; a reveal
 
 test('running the meme editor again keeps its premise box (it no longer sees its own old box as "a hook is there")', async () => {
   const { applyEditorSuggestions } = await import('../src/edit/editors');
-  const { saveProject, loadProject } = await import('../src/core/project');
+  const { saveProject, loadProject } = await import('../src/project');
   const { writeJson, paths } = await import('../src/core/paths');
   const VID = 'tw-memebox';
   const words = ['okay', 'watch', 'this', 'jump', 'right', 'here'].map((text, i) => ({ i, text, startMs: 100_300 + i * 900, endMs: 100_300 + i * 900 + 500 }));

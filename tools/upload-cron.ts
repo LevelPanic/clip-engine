@@ -24,7 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { paths, readJsonIf } from '../src/core/paths';
-import { loadProject, suggestedPost } from '../src/core/project';
+import { loadProject, suggestedPost } from '../src/project';
 import { postFor } from '../src/core/post';
 import { sexualTitleWords } from '../src/qa/adult';
 import { checkCareful, neverPost, neverPostText } from '../src/qa/unsafe';

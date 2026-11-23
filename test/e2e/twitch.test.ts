@@ -66,7 +66,7 @@ test('a Twitch video section is recorded at its real start (to the frame)', { sk
   const vod = await endedBroadcast();
   const id = `tw-${vod}`;
   const { ingest } = await import('../../src/ingest/ingest');
-  const { downloadSections, downloadAudioRanges, measureSectionStart } = await import('../../src/jobs/downloads');
+  const { downloadSections, downloadAudioRanges, measureSectionStart } = await import('../../src/ingest/downloads');
   const { listSections } = await import('../../src/ingest/media');
   await ingest(id, { audio: true, full: false, refresh: false, wait: false, log: () => {} });
   const asked = { startMs: 20 * MIN + 1_234, endMs: 20 * MIN + 31_234 };

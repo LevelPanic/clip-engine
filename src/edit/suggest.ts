@@ -2,7 +2,7 @@
 // the Studio, previewed, but never rendered until accepted.
 import { paths, readJsonIf } from '../core/paths';
 import type { Project, Marker, Transcript } from '../core/schemas';
-import { newMarkerId } from '../core/project';
+import { newMarkerId } from '../project';
 import { loadMarkerSchemas } from '../markers/registry-node';
 
 interface AudioEventsFile {

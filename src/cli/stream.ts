@@ -78,7 +78,7 @@ export function registerStream(program: Command, action: Action) {
         const ranked = await rankStream(r.id, 2, (t) => console.log(`  ${t}`));
         const { upsertMoments, skipNeverClip } = await import('../track/db');
         const { momentWindow } = await import('../scan/moments');
-        const { categoryAt } = await import('../core/project');
+        const { categoryAt } = await import('../project');
         const ms = skipNeverClip(ranked.ranked.filter((m) => (m.rank ?? 1e9) <= 12 || (m.altRank ?? 1e9) <= 12).map((m) => ({ ...m, window: momentWindow(m, ranked.edge), skip: undefined as string | undefined })), (t) => categoryAt(r.id, t));
         upsertMoments(r.id, ms, ranked.clips.length);
         const open = ms.filter((m) => !m.skip);
@@ -212,7 +212,7 @@ export function registerStream(program: Command, action: Action) {
     .option('--lens <name>', 'judging lens', 'stream-moments')
     .action(
       action(async (link: string, o: { from?: string; every: string; judge: boolean; lens: string }) => {
-        const { watch } = await import('../scan/watch');
+        const { watch } = await import('../pipeline/watch');
         const { parseEvery } = await import('../scan/resolve');
         await watch(link, { fromMs: o.from ? parseTime(o.from) : undefined, everyMs: parseEvery(o.every), judge: o.judge, lens: o.lens });
       }),
@@ -304,4 +304,4 @@ export async function judgeRange(id: string, range: { startMs: number; endMs: nu
 }
 
 
-const rankStream = async (link: string, chatHours: number, say: (s: string) => void) => (await import('../scan/rank')).rankStream(link, chatHours, say);
+const rankStream = async (link: string, chatHours: number, say: (s: string) => void) => (await import('../track/rank')).rankStream(link, chatHours, say);

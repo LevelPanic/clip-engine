@@ -51,7 +51,7 @@ export function unsafeReasons(e: { nudity?: string; slurs: { word: string; atMs:
 
 /** The check on a clip as it is now. `adult` is the clip's 18+ check (its frames are where nudity is seen). */
 export async function checkUnsafe(clipId: string, adult?: AdultCheck): Promise<UnsafeCheck> {
-  const { loadProject, suggestedPost } = await import('../core/project');
+  const { loadProject, suggestedPost } = await import('../project');
   const { postFor } = await import('../core/post');
   const { wordsThatPlay, sureNudity, sexualTitleWords } = await import('./adult');
   const { expertFlags } = await import('../scan/review');
@@ -137,7 +137,7 @@ export function carefulReasons(e: { sexual: string[]; adult: boolean; swears: { 
 
 /** The careful check on a clip as it is now. `adult`: the reviewer's 18+ decision (or what the 18+ check found). */
 export async function checkCareful(clipId: string, adult: boolean): Promise<CarefulReason[]> {
-  const { loadProject } = await import('../core/project');
+  const { loadProject } = await import('../project');
   const { wordsThatPlay } = await import('./adult');
   const { expertFlags } = await import('../scan/review');
   const { loadCandidates } = await import('../candidates');

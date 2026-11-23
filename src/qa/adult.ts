@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { paths, readJsonIf } from '../core/paths';
 import { run } from '../core/proc';
-import { loadProject } from '../core/project';
+import { loadProject } from '../project';
 import { fmtTime } from '../core/time';
 
 export interface AdultCheck {

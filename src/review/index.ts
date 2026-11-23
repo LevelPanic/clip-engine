@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { paths, readJsonIf } from '../core/paths';
-import { loadProject, saveProject, listClips } from '../core/project';
+import { loadProject, saveProject, listClips } from '../project';
 import { loadCandidates } from '../candidates';
 import { REJECT_REASONS, type RejectReason, type Review, type ViralityScores } from '../core/schemas';
 import { recordReview } from './db';

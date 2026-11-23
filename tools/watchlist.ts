@@ -25,7 +25,7 @@ import { twitchApi } from '../src/ingest/twitch';
 import { cli, reviseClip, runFullPipeline } from '../src/pipeline/full';
 import { youtubeLive } from '../src/ingest/media';
 import { revisionKey, revisionsToQueue } from '../src/track/revise';
-import { isSubscriberOnly, unreadable } from '../src/scan/rank';
+import { isSubscriberOnly, unreadable } from '../src/track/rank';
 import { runningObserver } from '../src/track/observer';
 import { armCounts, claimNext, dropQueued, finishJob, insertJob, listJobs, renewLease, requeueStale, saveStage, workerAlive, workerId, type WatchJob } from '../src/track/jobs';
 import { paint } from '../src/track/coverage';

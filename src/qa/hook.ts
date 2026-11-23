@@ -4,7 +4,9 @@
 //
 // Pure (no Node imports), so it is unit-tested on fixed evidence.
 
-export const OPENING_FILLERS = new Set(['so', 'yeah', 'um', 'uh', 'like', 'well', 'okay', 'right', 'and', 'but', 'alright']);
+import { OPENING_FILLERS } from '../core/vocabulary';
+
+export { OPENING_FILLERS };
 
 export interface HookEvidence {
   /** Silence covering the start, in seconds. */

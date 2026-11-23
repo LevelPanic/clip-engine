@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { paths, readJsonIf, writeJson } from '../core/paths';
-import { loadProject, suggestedPost } from '../core/project';
+import { loadProject, suggestedPost } from '../project';
 import { loadCandidates } from '../candidates';
 import { loadQa } from '../qa';
 import { postBody, postFor } from '../core/post';

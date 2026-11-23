@@ -2,7 +2,7 @@ import React from 'react';
 import { Html5Audio } from 'remotion';
 import type { z } from 'zod';
 import { defineRender } from '../../src/markers/define';
-import { useAsset } from '../../src/composition/context';
+import { useAsset } from '../../src/markers/context';
 import type schema from './schema';
 
 type P = z.infer<typeof schema.params>;

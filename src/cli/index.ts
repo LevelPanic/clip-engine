@@ -92,8 +92,8 @@ program
   .option('--exit-when-idle', 'stop once the queue is empty')
   .action(
     action(async (o: { exitWhenIdle?: boolean }) => {
-      const { runWorker } = await import('../jobs/worker');
-      const { handlers } = await import('../jobs/handlers');
+      const { runWorker } = await import('../pipeline/runner');
+      const { handlers } = await import('../pipeline/handlers');
       await runWorker(handlers, { exitWhenIdle: !!o.exitWhenIdle });
     }),
   );
@@ -124,9 +124,9 @@ program
   .option('--force', 'replace the transcript even if the video already has clips')
   .action(
     action(async (id: string, o: { model?: string; force?: boolean }) => {
-      const { downloadAudio } = await import('../jobs/downloads');
+      const { downloadAudio } = await import('../ingest/downloads');
       await downloadAudio(id, (s) => process.stdout.write(`\r${s}   `));
-      const { useWhisper } = await import('../ingest/whisperJob');
+      const { useWhisper } = await import('../pipeline/whisperJob');
       const r = await useWhisper(id, { model: o.model, force: !!o.force, log: (s) => process.stdout.write(`\r${s}   `) });
       console.log(`\n${r.words} words, ${r.tags} tags, ${r.seeds} seeds in ${r.seconds} s (YouTube's transcript kept as transcript.youtube.json)`);
     }),

@@ -7,7 +7,7 @@
 // Re-running replaces this pass's bleeps (source editor:censor). A word already under someone else's
 // bleep is left alone. Like the other editors it can propose instead of placing; by default it places,
 // because an unplaced bleep changes nothing the checks or the viewer see.
-import { loadProject, saveProject, newMarkerId } from '../core/project';
+import { loadProject, saveProject, newMarkerId } from '../project';
 import { slurIn, swearIn } from '../core/risk';
 import { OPEN_MS } from '../qa/unsafe';
 import type { Marker } from '../core/schemas';

@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import express from 'express';
 import { paths, listDirs, readJsonIf, writeJson } from '../core/paths';
 import { ProjectSchema, type Project, type VideoMeta, type SignalsFile, type Transcript } from '../core/schemas';
-import { loadProject, saveProject, listClips, listPresets, presetFromProject, presetFile, loadPreset, applyPreset, suggestedPost } from '../core/project';
+import { loadProject, saveProject, listClips, listPresets, presetFromProject, presetFile, loadPreset, applyPreset, suggestedPost } from '../project';
 import { loadCandidates, makeClip, setCandidateStatus, duplicateClip, deleteClip } from '../candidates';
 import { resolveMedia, footageSummary, missingRanges, SECTION_MARGIN_MS } from '../ingest/media';
 import { enqueue, listJobs, latestJob, activeJobsFor, type Job } from '../jobs/queue';
@@ -240,7 +240,7 @@ export async function startStudio(port: number) {
       const id = String(req.params.id);
       const ids = (req.body.ids as string[]) ?? [];
       const style = String(req.body.style ?? 'none');
-      const { DEFAULT_BATCH } = await import('../jobs/pipeline');
+      const { DEFAULT_BATCH } = await import('../pipeline/batch');
       const batch = { ...DEFAULT_BATCH, render: true, autoedit: style !== 'none', style: style === 'none' ? undefined : style };
       const out = [];
       for (const cid of ids) {
@@ -379,8 +379,8 @@ export async function startStudio(port: number) {
   app.post(
     '/api/batch',
     h(async (req) => {
-      const { startBatch } = await import('../jobs/batch');
-      const { DEFAULT_BATCH } = await import('../jobs/pipeline');
+      const { startBatch } = await import('../pipeline/startBatch');
+      const { DEFAULT_BATCH } = await import('../pipeline/batch');
       const b = req.body ?? {};
       return startBatch([String(b.inputs ?? '')], { ...DEFAULT_BATCH, ...b.options }, Number(b.limit ?? 5));
     }),

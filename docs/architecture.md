@@ -24,14 +24,14 @@ reviewer approves. It runs in two modes:
    - Chat reads go through one lexicon (`src/discover/chatAnalysis.ts`).
    - On streams:
      - The queue checkers (`src/scan/queues.ts`) find witnessed moments.
-     - The moment ranker (`src/scan/moments.ts`, `src/scan/rank.ts`) orders a broadcast by what viewers clipped and laughed at.
+     - The moment ranker (`src/scan/moments.ts`, `src/track/rank.ts`) orders a broadcast by what viewers clipped and laughed at.
      - The tracker (`src/track/`) keeps every stream, moment, job and coverage span in SQLite.
 3. **Judgment.**
    - Three queue experts (`agents/`, `.claude/agents/`) write checked verdicts (`src/scan/review.ts`).
    - Extraction scores start and end windows (`src/extract/`).
    - The candidate validator (`src/candidates/`) checks quotes, snapping and evidence, and ranks by the virality funnel.
    - The curator (`src/curate/`) keeps or drops, and every drop needs a ground.
-4. **Clip projects.** One `clips/<clipId>/project.json` per clip (`src/core/project.ts`, schemas in `src/core/schemas.ts`).
+4. **Clip projects.** One `clips/<clipId>/project.json` per clip (`src/project/`, schemas in `src/core/schemas.ts`).
    - Every edit is a **marker** in source-video milliseconds.
    - Each marker type is a plugin folder in `markers/`.
    - The first-pass edit, the editors, the captions decision and censoring are in `src/edit/`.
@@ -57,7 +57,7 @@ reviewer approves. It runs in two modes:
    - Analytics back into the learning loop.
 
 **Long work** runs in one of two places:
-- **The Studio's own jobs** (renders, downloads) go through a SQLite job queue and worker (`src/jobs/`).
+- **The Studio's own jobs** (renders, downloads) go through a SQLite job queue (`src/jobs/`). The worker loop and the handlers are in `src/pipeline/`.
 - **The watchlist and the other daemons** are in `tools/`; `docs/operations.md` lists them.
 
 ## Design principles
@@ -77,13 +77,25 @@ The rules in `CLAUDE.md` come from a few ideas:
 - **The channel credits what it clips.** A credit on screen, a link in every post and a do-not-clip list are enforced by QA and by the publishers.
 - **Never posted.** Three gates (the ranker, curation and the publishers) keep nudity, slurs, minors and sexual titles out, whatever `--force` says.
 
+## Layers
+
+Every folder of `src/` has a place in one order, lowest first:
+
+core → jobs → markers → project → composition → ingest → discover → scan → extract → candidates → review → curate →
+reframe → qa → edit → render → judge → track → pipeline → publish → studio → cli → tools
+
+A file imports only from its own folder or one below it, and `test/layers.test.ts` fails on any import that goes up
+(dynamic `import()` included). That keeps the folders free of cycles. Two rules of thumb follow:
+- **Shared code moves down.** For example, the opening filler words live in `core/vocabulary.ts` because candidates, QA and the judge all read them.
+- **Low layers never call up.** Any layer may queue a job in `jobs/`. The loop that runs the jobs lives in `pipeline/` with the handlers, which know every stage, and it takes them as an argument.
+
 ## Known structural debt
 
-The release audit found these; phase 2 of `docs/release-plan.md` addresses them.
-- **One import cycle** spans most of `src/`. For example, `src/core/project.ts` imports `markers/` and `edit/`, and lower layers import `jobs/downloads.ts`.
+Phase 2 of `docs/release-plan.md` works through these.
 - **About 1,400 lines of daemon logic** live in `tools/`, where tests cannot import them.
 - **`src/cli/more.ts`** is one 1,615-line function.
 - **60 environment variables** have no single config module.
+- **The Studio server and the four largest UI files** are big closures to split into routers, components and hooks.
 
 ## Reference
 

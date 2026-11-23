@@ -5,6 +5,9 @@
 // so there is one list: `clip vocab` prints it, and agents/vocabulary.md explains how to use it.
 // Browser-safe (no Node imports).
 
+/** Words a weak opening starts on (QA's hook check, the candidate score checks, the heuristic judge). */
+export const OPENING_FILLERS = new Set(['so', 'yeah', 'um', 'uh', 'like', 'well', 'okay', 'right', 'and', 'but', 'alright']);
+
 export interface Term {
   key: string;
   /** How you recognise it in a clip. One line, operational. */

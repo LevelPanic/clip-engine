@@ -45,7 +45,7 @@ export interface TranscribeDeps {
 }
 
 const defaultDeps = async (): Promise<TranscribeDeps> => {
-  const { downloadAudioRanges } = await import('../jobs/downloads');
+  const { downloadAudioRanges } = await import('./downloads');
   const { whisperTranscript } = await import('./whisper');
   return {
     downloadAudio: (id, ranges, log) => downloadAudioRanges(id, ranges, log),

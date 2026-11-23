@@ -9,7 +9,7 @@ import type { Candidate, VideoMeta } from '../src/core/schemas';
 const { writeJson, paths } = await import('../src/core/paths');
 const { creditBlock, creditLine, linkTime, sourceLink, suggestPost, suggestTitles, postFor, postBody } = await import('../src/core/post');
 const { loadChannel, channelFile, optedOut, uncredited, ChannelSchema } = await import('../src/core/channel');
-const { projectFromCandidate, saveProject, suggestedPost, setCredit, loadProject, CREDIT } = await import('../src/core/project');
+const { projectFromCandidate, saveProject, suggestedPost, setCredit, loadProject, CREDIT } = await import('../src/project');
 const fs = await import('node:fs');
 
 const twitch = { platform: 'twitch' as const, videoId: 'tw-2927311587', url: 'https://www.twitch.tv/videos/2927311587', channel: 'caseoh_', login: 'caseoh_', title: '🟨LOSING MY MIND🟨', game: 'Just Chatting' };

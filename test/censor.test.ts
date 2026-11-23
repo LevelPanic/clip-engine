@@ -18,7 +18,7 @@ const { gainAt, gainSpans } = await import('../src/markers/define');
 const { buildTimeMap } = await import('../src/core/timeline');
 const { loadMarkerSchemas } = await import('../src/markers/registry-node');
 const { defaultCaptions, defaultFraming, CaptionSettingsSchema } = await import('../src/core/schemas');
-const { saveProject, loadProject } = await import('../src/core/project');
+const { saveProject, loadProject } = await import('../src/project');
 const { writeJson, paths } = await import('../src/core/paths');
 
 test('captions mask strong swears at the root and slurs whole; ordinary words that contain them are left alone', () => {

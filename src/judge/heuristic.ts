@@ -8,7 +8,7 @@ import { loadMeta, loadTranscript } from '../ingest/ingest';
 import { discover } from '../discover';
 import { buildLines } from '../ingest/transcript';
 import { addCandidates } from '../candidates';
-import { OPENING_FILLERS } from '../qa/hook';
+import { OPENING_FILLERS } from '../core/vocabulary';
 import { fmtTime } from '../core/time';
 import type { CandidateInput, Seed, Transcript } from '../core/schemas';
 

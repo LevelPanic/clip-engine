@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { z } from 'zod';
-import { paths, readJson, writeJson, listDirs, readJsonIf } from './paths';
+import { paths, readJson, writeJson, listDirs, readJsonIf } from '../core/paths';
 import {
   ProjectSchema,
   type Project,
@@ -13,12 +13,12 @@ import {
   defaultFraming,
   type Preset,
   PresetSchema,
-} from './schemas';
+} from '../core/schemas';
 import { loadMarkerSchemas } from '../markers/registry-node';
-import { fmtTime } from './time';
-import { creditLine, creditLabel, suggestPost, type SourceRef } from './post';
-import { doNotClipError, loadChannel, optedOut } from './channel';
-import type { Post } from './schemas';
+import { fmtTime } from '../core/time';
+import { creditLine, creditLabel, suggestPost, type SourceRef } from '../core/post';
+import { doNotClipError, loadChannel, optedOut } from '../core/channel';
+import type { Post } from '../core/schemas';
 
 export const newMarkerId = () => 'm_' + crypto.randomBytes(4).toString('hex');
 
@@ -174,26 +174,6 @@ export async function setCredit(clipId: string, o: { text?: string; label?: stri
   const marker = await validateMarker({ type: CREDIT, startMs: p.segments[0].startMs, params: { ...(old?.params ?? {}), text, label }, ...(old ? { id: old.id } : {}) }, p);
   const markers = [...others, { ...marker, source: 'credit' }].sort((a, b) => a.startMs - b.startMs);
   return saveProject({ ...p, markers });
-}
-
-export async function setIntro(clipId: string, o: { text?: string } = {}): Promise<{ project: Project; marker?: Marker; current?: string }> {
-  const p = loadProject(clipId);
-  const start = p.segments[0].startMs;
-  // the hook line is the text at the opening, in whichever style the caption look gave it (hook,
-  // street or comment): matching only style "hook" missed the editors' street/comment hooks and added
-  // a second line on top of them. Action lines later in the clip are not the hook.
-  const HOOK_STYLES = new Set(['hook', 'street', 'comment', 'highlight', 'outline']);
-  const hook = p.markers.find((m) => m.type === 'text' && HOOK_STYLES.has(String((m.params as Record<string, unknown>).style)) && Math.abs(m.startMs - start) <= 1500);
-  if (!o.text) return { project: p, marker: hook, current: hook ? String((hook.params as Record<string, unknown>).text ?? '') : undefined };
-  const end = Math.min(p.segments[0].endMs, start + 2600);
-  const { hookStyleFor, hookYFor } = await import('../edit/editors');
-  const style = hookStyleFor(p.captions.style);
-  const params = hook
-    ? { ...(hook.params as Record<string, unknown>), text: o.text }
-    : { text: o.text, style, y: hookYFor(p.framing), fontSize: style === 'street' ? 78 : 66, animation: 'pop' };
-  const marker = await validateMarker({ type: 'text', startMs: start, endMs: end, params, ...(hook ? { id: hook.id } : {}) }, p);
-  const markers = [...p.markers.filter((m) => m.id !== hook?.id), { ...marker, source: hook?.source ?? 'intro' }].sort((a, b) => a.startMs - b.startMs);
-  return { project: saveProject({ ...p, markers }), marker };
 }
 
 export async function addMarker(clipId: string, input: MarkerInput): Promise<{ project: Project; marker: Marker }> {

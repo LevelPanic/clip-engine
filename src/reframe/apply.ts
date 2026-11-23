@@ -3,9 +3,9 @@
 // is cropped to the face (cuts on source cuts and speaker switches, short pans otherwise); at the end
 // of the range it returns to whatever framing was there before. Base framing is never changed, so
 // rejecting the proposals undoes it completely.
-import { loadProject, saveProject, newMarkerId } from '../core/project';
+import { loadProject, saveProject, newMarkerId } from '../project';
 import { resolveMedia, SECTION_MARGIN_MS } from '../ingest/media';
-import { downloadSections } from '../jobs/downloads';
+import { downloadSections } from '../ingest/downloads';
 import { detectFaces } from './faces';
 import { planReframe, PAN_MS } from './auto';
 import { framingKeys, framingAt } from '../markers/define';

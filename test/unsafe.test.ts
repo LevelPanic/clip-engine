@@ -1,7 +1,7 @@
 // The never-post list and the two gates in front of it (docs/research/censorship-review-2026-11-22.md):
 // A1 nudity, a slur said, a minor and a sexual title are never uploaded (src/qa/unsafe.ts); A2 a moment
 // flagged sexual, slur or minor is dropped at curation, not handed to the editor (src/curate,
-// src/pipeline/full.ts); A3 the ranker skips moments the community marked as sexual (src/scan/rank.ts).
+// src/pipeline/full.ts); A3 the ranker skips moments the community marked as sexual (src/track/rank.ts).
 import { DATA } from './helpers/sandbox';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,10 +14,10 @@ const { sexualTitleWords, sureNudity, sexualMoment } = await import('../src/qa/a
 const { unsafeFlags, expertFlags } = await import('../src/scan/review');
 const { checkDecision, riskyCandidates, CurationInputSchema } = await import('../src/curate');
 const { pickForEdit } = await import('../src/pipeline/full');
-const { skipSexual } = await import('../src/scan/rank');
+const { skipSexual } = await import('../src/track/rank');
 const { planMoments, momentWindow } = await import('../src/scan/moments');
 const { defaultCaptions, defaultFraming } = await import('../src/core/schemas');
-const { saveProject, loadProject } = await import('../src/core/project');
+const { saveProject, loadProject } = await import('../src/project');
 const { writeJson, paths } = await import('../src/core/paths');
 
 test('titles: sexual words are caught as words, not inside other words', () => {

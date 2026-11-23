@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import { paths, readJsonIf } from '../core/paths';
 import type { Marker, Project, Transcript, Candidate, Word } from '../core/schemas';
-import { loadProject, saveProject, newMarkerId, listPresets, loadPreset, applyPreset } from '../core/project';
+import { loadProject, saveProject, newMarkerId, listPresets, loadPreset, applyPreset } from '../project';
 import { loadCandidates } from '../candidates';
 import { loadMarkerSchemas } from '../markers/registry-node';
 import { suggestSilenceCuts } from './suggest';

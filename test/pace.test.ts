@@ -14,7 +14,7 @@ const { paceAt, limitLiftsAt, pacificMidnightAfter, paceNow, LIFT_MARGIN_MS, UNK
 const { openSwears, carefulReasons, checkCareful } = await import('../src/qa/unsafe');
 const { carefulUntil, ChannelSchema } = await import('../src/core/channel');
 const { defaultCaptions, defaultFraming } = await import('../src/core/schemas');
-const { saveProject } = await import('../src/core/project');
+const { saveProject } = await import('../src/project');
 const { writeJson, paths } = await import('../src/core/paths');
 
 const H = 3_600_000;

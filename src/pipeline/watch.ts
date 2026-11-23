@@ -4,8 +4,8 @@
 import fs from 'node:fs';
 import { paths } from '../core/paths';
 import { fmtTime } from '../core/time';
-import { loadScan, saveScan, runPass, scannedRanges, type WatchState } from './index';
-import { resolveInput } from './resolve';
+import { loadScan, saveScan, runPass, scannedRanges, type WatchState } from '../scan';
+import { resolveInput } from '../scan/resolve';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

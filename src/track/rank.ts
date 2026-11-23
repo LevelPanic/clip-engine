@@ -4,11 +4,11 @@
 import fs from 'node:fs';
 import { paths } from '../core/paths';
 import { fmtTime } from '../core/time';
-import { categoryAt } from '../core/project';
-import { skipNeverClip, upsertMoments, upsertStream, type StreamRow } from '../track/db';
-import { CHAT_LAG_MS, laughLevels, momentWindow, rankMoments } from './moments';
+import { categoryAt } from '../project';
+import { skipNeverClip, upsertMoments, upsertStream, type StreamRow } from './db';
+import { CHAT_LAG_MS, laughLevels, momentWindow, rankMoments } from '../scan/moments';
 import { lewdChat, sexualMoment } from '../qa/adult';
-import { loadScan, scannedRanges } from '.';
+import { loadScan, scannedRanges } from '../scan';
 
 const SUBSCRIBER_ONLY = /subscriber-only|subscriber only|requires an account|requires.*logged/i;
 /**
@@ -31,7 +31,7 @@ export const isSubscriberOnly = (msg: string) => SUBSCRIBER_ONLY.test(msg);
  */
 export async function rankStream(link: string, chatHours: number, say: (s: string) => void = () => {}) {
   const { twitchApi } = await import('../ingest/twitch');
-  const { resolveInput } = await import('./resolve');
+  const { resolveInput } = await import('../scan/resolve');
   const api = twitchApi();
   const r = await resolveInput(link, api);
   if (!r.id.startsWith('tw-')) throw new Error('moments reads Twitch broadcasts (viewer clips and chat replay)');

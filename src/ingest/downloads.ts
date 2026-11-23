@@ -4,11 +4,11 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { paths, writeJson } from '../core/paths';
 import { runOrThrow, YTDLP, ffprobe } from '../core/proc';
-import { loadMeta } from '../ingest/ingest';
-import { missingRanges, registerSection, missingAudio, audioChunkPath, listAudioChunks, liveFromStart } from '../ingest/media';
-import { ALIGN, sectionStartFromAudio } from '../ingest/align';
+import { loadMeta } from './ingest';
+import { missingRanges, registerSection, missingAudio, audioChunkPath, listAudioChunks, liveFromStart } from './media';
+import { ALIGN, sectionStartFromAudio } from './align';
 import { fmtTime } from '../core/time';
-import { sourceOf } from '../ingest/source';
+import { sourceOf } from './source';
 
 const watchUrl = (id: string) => sourceOf(id).url;
 const YT_VIDEO_FORMAT = 'bv*[vcodec^=avc1][height<=1080]+ba[ext=m4a]/b[ext=mp4][height<=1080]/bv*[height<=1080]+ba/b';

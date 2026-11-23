@@ -2,8 +2,8 @@ import React from 'react';
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import type { z } from 'zod';
 import { defineRender } from '../../src/markers/define';
-import { FONT } from '../../src/composition/context';
-import { fontFamilyOf } from '../../src/composition/fonts';
+import { FONT } from '../../src/markers/context';
+import { fontFamilyOf } from '../../src/markers/fonts';
 import type schema from './schema';
 
 type P = z.infer<typeof schema.params>;

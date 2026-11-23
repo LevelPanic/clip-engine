@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { AbsoluteFill, useVideoConfig } from 'remotion';
 import type { z } from 'zod';
 import { defineRender } from '../../src/markers/define';
-import { ClipContext, FONT } from '../../src/composition/context';
+import { ClipContext, FONT } from '../../src/markers/context';
 import type schema from './schema';
 
 type P = z.infer<typeof schema.params>;
