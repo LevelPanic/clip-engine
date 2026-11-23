@@ -97,7 +97,8 @@ src/pipeline/      full.ts: the unattended full process for one moment or one ch
                    the job handlers (handlers.ts) and the worker loop (runner.ts), batches (batch.ts, startBatch.ts),
                    clip watch (watch.ts), the Whisper re-transcribe job (whisperJob.ts)
 src/publish/       YouTube (OAuth, resumable upload, schedule, 18+), TikTok inbox, analytics, the upload pace, upload status
-src/cli/           the `./clip` commands (index.ts, stream.ts, more.ts)
+src/cli/           the `./clip` commands: index.ts (ingest, transcript, jobs, worker), stream.ts (Twitch), and one file per group
+                   (analyze, candidates, clips, markers, edit, batch, review, publish, studio) sharing shared.ts
 tools/             the daemons (watchlist.ts, observer.ts, upload-cron.ts, cleanup.ts) and one-off scripts;
                    Swift CLIs: audio-events (SoundAnalysis), faces (Vision). Compiled on first use into .cache/bin.
                    InsightFace Python sidecar in tools/insightface/ (uv venv in .cache/face-py on first use)

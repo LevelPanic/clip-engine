@@ -2,6 +2,15 @@
 // The `clip` command. Everything the Studio can do is also here, so the agent can do it too.
 import { Command } from 'commander';
 import { fmtTime, parseTime } from '../core/time';
+import { register as analyze } from './analyze';
+import { register as candidates } from './candidates';
+import { register as clips } from './clips';
+import { register as markers } from './markers';
+import { register as edit } from './edit';
+import { register as batch } from './batch';
+import { register as review } from './review';
+import { register as publish } from './publish';
+import { register as studio } from './studio';
 
 // Piping into `head` closes stdout early; that's fine.
 process.stdout.on('error', (e: NodeJS.ErrnoException) => {
@@ -187,8 +196,8 @@ program
 
 export { program };
 
-const { registerMore } = await import('./more');
-registerMore(program, action);
+// the command groups, in the order --help lists them
+for (const register of [analyze, candidates, clips, markers, edit, batch, review, publish, studio]) register(program, action);
 const { registerStream } = await import('./stream');
 registerStream(program, action);
 await program.parseAsync(process.argv);

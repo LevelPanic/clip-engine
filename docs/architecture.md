@@ -93,7 +93,6 @@ A file imports only from its own folder or one below it, and `test/layers.test.t
 
 Phase 2 of `docs/release-plan.md` works through these.
 - **About 1,400 lines of daemon logic** live in `tools/`, where tests cannot import them.
-- **`src/cli/more.ts`** is one 1,615-line function.
 - **60 environment variables** have no single config module.
 - **The Studio server and the four largest UI files** are big closures to split into routers, components and hooks.
 
