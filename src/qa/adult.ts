@@ -10,6 +10,7 @@ import { paths, readJsonIf } from '../core/paths';
 import { run } from '../core/proc';
 import { loadProject } from '../project';
 import { fmtTime } from '../core/time';
+import { setting } from '../core/config';
 
 export interface AdultCheck {
   detected: boolean;
@@ -213,7 +214,7 @@ async function framesOf(clipId: string): Promise<{ stills: number; exposed: Adul
     const ff = await run('ffmpeg', ['-v', 'error', '-y', '-ss', '1', '-i', file, '-vf', `fps=1/${STILL_EVERY_S},scale=720:-2`, '-q:v', '3', path.join(dir, '%03d.jpg')]);
     const stills = fs.readdirSync(dir).filter((f) => f.endsWith('.jpg')).sort();
     if (ff.code !== 0 || !stills.length) return { error: `no stills (${ff.stderr.trim().split('\n').pop() ?? 'ffmpeg failed'})` };
-    const py = process.env.CLIP_NUDITY_PY;
+    const py = setting('CLIP_NUDITY_PY');
     const args = stills.map((f) => path.join(dir, f));
     const r = py ? await run(py, [path.join(paths.root, 'tools', 'nudity', 'main.py'), ...args]) : await run(path.join(paths.root, 'tools', 'nudity', 'run.sh'), args);
     if (r.code !== 0) return { error: `NudeNet failed (${r.stderr.trim().split('\n').pop()?.slice(0, 160) ?? `exit ${r.code}`})` };

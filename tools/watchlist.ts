@@ -34,6 +34,7 @@ import { listReviews } from '../src/review/db';
 import { loadTopics, topicPicks, TOPIC_TOP, type TopicCandidate } from '../src/scan/topics';
 import { loadChannel, optedOut } from '../src/core/channel';
 import { getStream, listMoments, listStreams, nextArm, nextMoments, setMomentStatus, setStreamStatus, tierOf, TIER_NAMES, trialOn, TRIAL_ARMS, updateCoverage, upsertStream, wrongStream, type TrialArm } from '../src/track/db';
+import { setting } from '../src/core/config';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
@@ -41,18 +42,18 @@ const opt = (f: string, d: string) => {
   const i = args.indexOf(f);
   return i >= 0 && args[i + 1] ? args[i + 1] : d;
 };
-const CHECK_MIN = Number(process.env.CHECK_MIN ?? 15);
+const CHECK_MIN = setting('CHECK_MIN');
 /** TOPICS=0 turns the topics off. */
-const TOPICS = process.env.TOPICS !== '0';
+const TOPICS = setting('TOPICS');
 /** One stream gives at most this many moments to the pipeline. */
-const MOMENTS_PER_STREAM = Number(process.env.MOMENTS_PER_STREAM ?? 4);
-const MIN_YT_MIN = Number(process.env.MIN_YT_MIN ?? 15);
-const MAX_YT_STREAM_MIN = Number(process.env.MAX_YT_STREAM_MIN ?? 720);
-const AUTO_EDITED = process.env.AUTO_EDITED === '1';
-const AUTO_CLIPS = Number(process.env.AUTO_CLIPS ?? 3);
+const MOMENTS_PER_STREAM = setting('MOMENTS_PER_STREAM');
+const MIN_YT_MIN = setting('MIN_YT_MIN');
+const MAX_YT_STREAM_MIN = setting('MAX_YT_STREAM_MIN');
+const AUTO_EDITED = setting('AUTO_EDITED');
+const AUTO_CLIPS = setting('AUTO_CLIPS');
 const NO_CLIPS = has('--no-clips');
 const DRY = has('--dry-run');
-const MAX_JOBS = Number(process.env.MAX_JOBS ?? opt('--max', '2'));
+const MAX_JOBS = (setting('MAX_JOBS') ?? Number(opt('--max', '2')));
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -118,7 +119,7 @@ function enqueue(c: Pick<Creator, 'name'>, kind: Job['kind'], videoId: string, o
 }
 
 /** How far back a creator check looks: every broadcast live at any time in this window is tracked. */
-const RECENT_HOURS = Number(process.env.RECENT_HOURS ?? 48);
+const RECENT_HOURS = setting('RECENT_HOURS');
 
 async function checkTwitch(c: Creator) {
   const e = entry(c);
@@ -489,7 +490,7 @@ async function quickClips(videoId: string, fromMs: number, toMs: number, creator
   return { outcome: 'submitted', clips: made, note: `${made.length} clip${made.length === 1 ? '' : 's'} in review: ${made.join(', ')}${failed.length ? ` (${failed.length} failed)` : ''}` };
 }
 
-const MAX_RETRIES = Number(process.env.WATCHLIST_RETRIES ?? 1);
+const MAX_RETRIES = setting('WATCHLIST_RETRIES');
 
 /** Paint a moment job's window on the stream's `clip` ledger (src/track/coverage.ts). */
 const clipLedger = (job: Job, state: 'claimed' | 'done' | 'queued' | 'failed', reason?: string) => {

@@ -4,6 +4,7 @@ import type { Command } from 'commander';
 import { fmtTime, parseTime } from '../core/time';
 import type { EditorMode } from '../edit/editors';
 import { STUDIO, type Action } from './shared';
+import { setting } from '../core/config';
 
 export function register(program: Command, action: Action) {
   program
@@ -183,7 +184,7 @@ export function register(program: Command, action: Action) {
   program
     .command('split <clipId>')
     .description('Find the facecam and switch the clip to the split layout: facecam on top, gameplay below')
-    .option('--detector <name>', 'hybrid (default), insightface or vision', process.env.CLIP_FACE_DETECTOR ?? 'hybrid')
+    .option('--detector <name>', 'hybrid (default), insightface or vision', setting('CLIP_FACE_DETECTOR'))
     .action(
       action(async (clipId: string, o: { detector: string }) => {
         const { detectSplit } = await import('../reframe/split');

@@ -14,6 +14,7 @@ import { postBody, postFor } from '../core/post';
 import { doNotClipError, optedOutVideo, uncredited } from '../core/channel';
 import type { QaReport } from '../qa';
 import type { Project, Candidate } from '../core/schemas';
+import { setting } from '../core/config';
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -27,7 +28,7 @@ const SCOPES = [
 const REDIRECT = 'http://localhost:8080/oauth2callback';
 const CHUNK = 8 * 1024 * 1024;
 const TOKEN_FILE = () => path.join(paths.cache, 'youtube-token.json');
-const SECRETS_FILE = () => process.env.CLIP_YOUTUBE_CLIENT_SECRETS ?? path.join(paths.root, 'client_secrets.json');
+const SECRETS_FILE = () => setting('CLIP_YOUTUBE_CLIENT_SECRETS') ?? path.join(paths.root, 'client_secrets.json');
 
 export interface PublishRecord {
   platform: 'youtube';

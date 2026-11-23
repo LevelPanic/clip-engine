@@ -18,16 +18,17 @@ import { listReviews, deleteReview } from '../src/review/db';
 import { listJobs } from '../src/jobs/queue';
 import { listJobs as listWatchJobs } from '../src/track/jobs';
 import { isHeavyMedia, rejectedToDelete, sourceMayGo, videosInUse } from '../src/pipeline/cleanup';
+import { setting } from '../src/core/config';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
 const ONCE = has('--once');
 const DRY = has('--dry-run');
 const DAEMON = has('--daemon');
-const CLEANUP_MIN = Number(process.env.CLEANUP_MIN ?? 60);
-const REJECTED_GRACE_MIN = Number(process.env.REJECTED_GRACE_MIN ?? 60);
-const SOURCE_GRACE_HOURS = Number(process.env.SOURCE_GRACE_HOURS ?? 24);
-const SOURCE_DELETE = process.env.SOURCE_DELETE === 'all' ? 'all' : 'media';
+const CLEANUP_MIN = setting('CLEANUP_MIN');
+const REJECTED_GRACE_MIN = setting('REJECTED_GRACE_MIN');
+const SOURCE_GRACE_HOURS = setting('SOURCE_GRACE_HOURS');
+const SOURCE_DELETE = setting('SOURCE_DELETE');
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

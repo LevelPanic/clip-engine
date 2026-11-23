@@ -23,6 +23,129 @@ watchlist puts its running job back in line (`interrupted`), never `failed`. Do 
 **Space.** Footage is the bulk of `library/`. The cleanup frees a stream's footage once no clip of it is waiting for review
 or upload (`tools/cleanup.ts --dry-run` shows what it would delete), so clearing the review queue is what frees disk.
 
+## Settings
+
+Every setting the engine reads from the environment, generated from `src/core/config.ts` (`test/config.test.ts` checks this
+table against it). `./clip config` shows the values in force; a value it cannot read is an error, not a silent default.
+
+**paths**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_DATA` | (see description) | Where library/, clips/ and exports/ live (default: the project folder). The tests point it at a temp folder. |
+
+**publishing**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_YOUTUBE_CLIENT_SECRETS` | (see description) | The Google OAuth client JSON (default: client_secrets.json in the project). |
+| `TIKTOK_SECRETS` | (see description) | The TikTok app's keys JSON (default: tiktok_secrets.json in the project). |
+| `TIKTOK_CLIENT_KEY` | (see description) | The TikTok client key, instead of the secrets file. |
+| `TIKTOK_CLIENT_SECRET` | (see description) | The TikTok client secret, instead of the secrets file. |
+| `TIKTOK_REDIRECT_URI` | (see description) | The TikTok login redirect (default: the one in the secrets file). |
+
+**faces**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_INSIGHTFACE_PY` | (see description) | A Python for the InsightFace sidecar, instead of the one it sets up in .cache/face-py. |
+| `CLIP_FACE_DETECTOR` | hybrid | Apple Vision, InsightFace, or Vision with InsightFace filling its misses. |
+
+**qa**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_NUDITY_PY` | (see description) | A Python for the NudeNet sidecar, instead of the one it sets up in .cache/nudity-py. |
+
+**judge**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_CLAUDE` | (see description) | The claude CLI to run the headless judge with (default: found on PATH). |
+| `CLIP_OPENCODE` | (see description) | The opencode CLI for the unattended agents (default: the OpenCode app, then PATH). |
+| `CLIP_JUDGE` | claude | Which judge `clip judge` and batches use. |
+| `CLIP_JUDGE_MODEL` | opencode-go/deepseek-v4.1-flash | The model the OpenCode judge runs. |
+
+**render**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_BROWSER` | (see description) | A Chrome to render with, instead of Remotion's headless shell. |
+| `CLIP_CONCURRENCY` | (see description) | Render tabs (default: CPUs − 2, at least 2). |
+| `CLIP_OVT` | (see description) | Video-decode threads per render (default 4). |
+| `CLIP_HW` | on | Hardware video encoding (0 turns it off). |
+| `CLIP_GL` | (engine default) | Chrome's GL backend for rendering (default: Remotion's choice). |
+| `CLIP_LOG` | error | Remotion's log level while rendering. |
+
+**pipeline**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_PIPELINE_MODEL` | = CLIP_JUDGE_MODEL | The model the unattended pipeline's agents run (default: CLIP_JUDGE_MODEL). |
+| `MAX_KEEP` | 3 | Candidates the unattended pipeline keeps per pass at most. |
+| `FULL_EXPERT_TIMEOUT_MIN` | 60 min | Time limit for the three queue experts. |
+| `FULL_VERIFY_TIMEOUT_MIN` | 45 min | Time limit for checking the experts' confirms. |
+| `FULL_EXTRACT_TIMEOUT_MIN` | 60 min | Time limit for the extractor. |
+| `FULL_CURATE_TIMEOUT_MIN` | 45 min | Time limit for the curator. |
+| `FULL_EDIT_TIMEOUT_MIN` | 90 min | Time limit for the editor (and a change request). |
+
+**transcripts**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLIP_WHISPER_MODEL` | (see description) | The whisper.cpp model (default: small.en; `small` is multilingual and translates to English). |
+
+**watchlist**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CHECK_MIN` | 15 min | How often the creators and topics are checked for broadcasts. |
+| `RECENT_HOURS` | 48 h | A creator check takes every broadcast live within this. |
+| `MOMENTS_PER_STREAM` | 4 | Moment jobs per stream at most. |
+| `MAX_JOBS` | (see description) | Jobs to run before a one-off watchlist run stops (default: --max, else 2). |
+| `WATCHLIST_RETRIES` | 1 | Retries for a job that failed on a timeout or the network. |
+| `AUTO_CLIPS` | 3 | Clips per YouTube video the watchlist makes at most. |
+| `AUTO_EDITED` | off | Clip edited YouTube channels too (1), not only streams and podcasts. |
+| `MIN_YT_MIN` | 15 min | A YouTube upload shorter than this (or the creator's minMinutes) is skipped as a Short or an edited clip. |
+| `MAX_YT_STREAM_MIN` | 720 min | A YouTube stream recording longer than this is skipped (too long to ingest whole). |
+| `TOPICS` | on | Follow the trending games in topics.json (0 turns topics off). |
+| `TOPIC_TOP` | 3 | Each topic's top streams taken into the tracker. |
+| `MOMENT_RANKER` | score | The ranking the watchlist orders moments by (outside the trial). |
+| `RANKER_TRIAL` | on | The blind ranker trial (0 turns it off). |
+| `TRIAL_TOP` | 4 | A stream's top moments each trial arm draws from. |
+
+**observer**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `OBSERVE_CHUNK_MIN` | 60 min | Chat read per job at most. |
+| `OBSERVE_LIVE_BATCH_MIN` | 10 min | A live stream's new minutes are read in batches of this. |
+| `OBSERVE_IDLE_S` | 60 s | Sleep when there is nothing to read. |
+| `RANK_EVERY_MIN` | 20 min | Each tracked stream is re-ranked this often. |
+| `TRACK_ENDED_HOURS` | 48 h | An ended stream is followed this long (viewer clips keep coming). |
+
+**uploads**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `UPLOADS_PER_DAY` | 8 | Uploads in any 24 hours at most. |
+| `UPLOAD_MIN` | 180 min | Minutes between uploads at least. |
+| `LEAD_MIN` | 5 min | An upload goes live this long after it is uploaded. |
+| `HOLD_RETRY_MIN` | 60 min | A clip held by a passing error is tried again after this. (also read as `QUOTA_MIN`) |
+| `REFUSED_PAUSE_MIN` | 20 min | Pause after a refusal for good, so a fault cannot sweep the line aside. |
+| `AUTH_RETRY_MIN` | 10 min | While the YouTube login is broken, a token refresh is tried this often. |
+| `MIN_UPLOAD_S` | 5 s | An approval shorter than this is a broken export and is set aside. |
+| `ANALYTICS_HOURS` | 24 h | How often the scheduler pulls YouTube analytics (0 turns it off). |
+
+**cleanup**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CLEANUP_MIN` | 60 min | How often the cleanup sweeps. |
+| `REJECTED_GRACE_MIN` | 60 min | A rejected clip is deleted this long after the rejection. |
+| `SOURCE_GRACE_HOURS` | 24 h | A source's footage is kept this long after its last activity. |
+| `SOURCE_DELETE` | media | What goes when a source is done: its media, or the whole folder. |
+
 ## Upload scheduler
 
 - **Upload scheduler** (`tools/upload-cron.ts --daemon`, log `.cache/upload-cron.log`): **at most 8 in any 24 hours, 3 hours apart** (`UPLOADS_PER_DAY`, `UPLOAD_MIN` 180; `paceAt`, `src/publish/pace.ts`; user, 2026-11-22, change 2 of `docs/research/censorship-review-2026-11-22.md`: 26 in one day in one title template looked mass-produced), counted from the publish records so a restart or an upload by hand counts, and never more than YouTube's limit let through the last time it refused (for 2 days after); each live 5 minutes after upload. **While `channel.json` has a `careful` period** (until 2026-12-06), an approval with a `sexual` flag from any expert, an 18+ tick or an f-word in its first 3 s (`checkCareful`, `src/qa/unsafe.ts`) is held as `deferred` and the next one goes; the deferred go back in line by themselves when the period ends (**Check again** on the review page after a re-edit). Whether the creator is on screen, not a cutscene, is the reviewer's call: the To review tab says so above Approve (most of the channel's streamers use an avatar, so the layout cannot tell). It takes approvals of 5–60 s (`MIN_UPLOAD_S`; 15 s is the editing target, not an upload rule: Shorts have no minimum, and an approval under it is the reviewer's call) with a real title. **QA does not hold an approval back** (user, 2026-11-22): the reviewer saw the report and approved, so a failed QA is logged with the try and the clip goes up; only the missing credit and the **never-post list** (nudity, a slur said, a minor, a sexual title; see Rules) still stop one, checked before an upload call is spent. A sexual title holds the approval as `blocked-title` until the title is edited (then it uploads by itself); the rest are set aside. A refusal that made no upload call moves straight to the next approval instead of waiting for the next slot. A refusal is written to `reviews.sqlite`; the review page's Approved tab shows it on the clip with **Retry upload** (`POST /api/clips/:id/retry-upload`, `releasePick`). A broken YouTube login (expired, revoked) is a hold, not a failure: the approval becomes `blocked-auth`, nothing new is picked, a token refresh is tried every 10 minutes, and the held clips go back in line by themselves after `./clip auth youtube`. **The Google OAuth app is in Testing mode, so a login lasts 7 days**; publishing the app (OAuth consent screen → Publish) removes the limit. **YouTube limits this channel's uploads** (`uploadLimitExceeded`): on 2026-11-19 and 11-20, 10 went up and the 11th was refused until about a day after the first; on 11-21, 19 went up in 24 hours with no refusal. The user treats 10 a day as the limit (they suspect the account is shadow-banned, 2026-11-21). That is the channel's own limit; a Cloud quota increase does not raise it, and the API answers other calls normally while it holds. **The Cloud project has its own daily limits**, reset at midnight Pacific: the API units (`quotaExceeded`) and **"Video Uploads per day"** (`rateLimitExceeded`), which **counts refused upload calls too**: on 11-20 Pacific it refused the 27th call, 26 of which the channel's limit had refused at a 20-minute retry, and so held the line from 01:38 to 08:18 UTC after the channel's limit had already lifted. **It stays on one clip until that clip uploads** (`pickApproved`, `src/review/db.ts`; user, 2026-11-20): a YouTube limit or a passing network/5xx error holds the clip (`held`, its tries counted in `attempts`), the same clip is tried again when the limit should lift (2026-11-22: the channel's limit a day after the first upload of the last 24 hours, `limitLiftsAt`; the project's quotas at midnight Pacific, `pacificMidnightAfter`; a passing error every `HOLD_RETRY_MIN`, **60** minutes; each try spends one of the project's upload calls), the next approval waits behind it, and a restart picks the held clip up again at the try time already set (`nextTryAt`); only an upload, a refusal retrying cannot fix (set aside as `failed`, with **Retry upload**) or the reviewer taking the approval back moves the line on. **Every try is a line in `library/upload-log.jsonl`** (kept, never pruned; the tries before 2026-11-20 19:15 UTC were read back from `.cache/upload-cron.log`, marked `from`), and the review page's Approved and Uploaded tabs show the last 30. The scheduler also writes `library/upload-status.json` (`src/publish/uploadStatus.ts`: which limit, YouTube's words, the next try), which the review page's Approved tab shows as a banner with each waiting clip's place in line (`GET /api/upload-status`, SSE `upload-status`).

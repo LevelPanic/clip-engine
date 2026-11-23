@@ -12,13 +12,14 @@ import { loadProject, suggestedPost } from '../project';
 import { postFor, postBody } from '../core/post';
 import { doNotClipError, optedOutVideo, uncredited } from '../core/channel';
 import { loadCandidates } from '../candidates';
+import { setting } from '../core/config';
 
 const AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
 const API = 'https://open.tiktokapis.com';
 const SCOPES = ['user.info.basic', 'video.upload'];
 const TOKEN_FILE = () => path.join(paths.cache, 'tiktok-token.json');
-const SECRETS_FILE = () => process.env.TIKTOK_SECRETS ?? path.join(paths.root, 'tiktok_secrets.json');
+const SECRETS_FILE = () => setting('TIKTOK_SECRETS') ?? path.join(paths.root, 'tiktok_secrets.json');
 const DEFAULT_REDIRECT = 'http://localhost:8080/tiktok/callback/';
 
 export interface TikTokSecrets {
@@ -59,9 +60,9 @@ export interface TikTokUploadRecord {
 
 export function readTikTokSecrets(file = SECRETS_FILE()): TikTokSecrets {
   const env = {
-    client_key: process.env.TIKTOK_CLIENT_KEY,
-    client_secret: process.env.TIKTOK_CLIENT_SECRET,
-    redirect_uri: process.env.TIKTOK_REDIRECT_URI,
+    client_key: setting('TIKTOK_CLIENT_KEY'),
+    client_secret: setting('TIKTOK_CLIENT_SECRET'),
+    redirect_uri: setting('TIKTOK_REDIRECT_URI'),
   };
   let raw: Partial<TikTokSecrets> = env;
   if ((!env.client_key || !env.client_secret) && fs.existsSync(file)) raw = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<TikTokSecrets>;

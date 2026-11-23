@@ -18,6 +18,7 @@ import { timeMarkers, framingKeys } from '../markers/define';
 import { loadMarkerSchemas } from '../markers/registry-node';
 import { fmtTime } from '../core/time';
 import { framingFilter, splitSpans } from './framing';
+import { setting } from '../core/config';
 
 export { framingFilter } from './framing';
 
@@ -92,9 +93,9 @@ function isFaststart(file: string): boolean {
  * helper crashes on macOS 26). CLIP_BROWSER=<path to Chrome> and CLIP_GL=<angle|swangle> override.
  */
 function browserOptions() {
-  const gl = process.env.CLIP_GL as 'swangle' | 'angle' | 'swiftshader' | undefined;
+  const gl = (setting('CLIP_GL') || undefined) as 'swangle' | 'angle' | 'swiftshader' | undefined;
   const chromiumOptions = gl ? { gl } : {};
-  if (process.env.CLIP_BROWSER) return { chromiumOptions, browserExecutable: process.env.CLIP_BROWSER, chromeMode: 'chrome-for-testing' as const };
+  if (setting('CLIP_BROWSER')) return { chromiumOptions, browserExecutable: setting('CLIP_BROWSER'), chromeMode: 'chrome-for-testing' as const };
   if (process.platform === 'darwin')
     return { chromiumOptions, browserExecutable: path.join(paths.root, 'bin', 'headless-shell'), chromeMode: 'headless-shell' as const };
   return { chromiumOptions, chromeMode: 'headless-shell' as const };
@@ -242,13 +243,13 @@ export async function renderClip(
     const { ensureBrowser, selectComposition, renderMedia } = await import('@remotion/renderer');
     const browser = browserOptions();
     await ensureBrowser({ chromeMode: 'headless-shell' }); // downloads the shell on first use
-    const logLevel = (process.env.CLIP_LOG ?? 'error') as 'error' | 'verbose' | 'info' | 'warn';
+    const logLevel = setting('CLIP_LOG') as 'error' | 'verbose' | 'info' | 'warn';
     log('preparing composition…');
     const composition = await selectComposition({ serveUrl, id: 'Clip', inputProps, logLevel, ...browser });
     fs.mkdirSync(paths.exports, { recursive: true });
     const out = path.join(paths.exports, `${clipId}.mp4`);
     const tmp = path.join(work, 'out.mp4');
-    const concurrency = opts.concurrency ?? (Number(process.env.CLIP_CONCURRENCY) || Math.max(2, os.cpus().length - 2));
+    const concurrency = opts.concurrency ?? (setting('CLIP_CONCURRENCY') || Math.max(2, os.cpus().length - 2));
     const tr = Date.now();
     let lastPct = -1;
     await renderMedia({
@@ -266,8 +267,8 @@ export async function renderClip(
       audioBitrate: '192k',
       enforceAudioTrack: true,
       // measured on an M1: 4 decode threads + VideoToolbox encoding took a 10 s test from 2.0× to 1.45× clip length
-      offthreadVideoThreads: Number(process.env.CLIP_OVT) || 4,
-      hardwareAcceleration: process.env.CLIP_HW === '0' ? 'disable' : 'if-possible',
+      offthreadVideoThreads: setting('CLIP_OVT') || 4,
+      hardwareAcceleration: setting('CLIP_HW') ? 'if-possible' : 'disable',
       logLevel,
       ...browser,
       onProgress: ({ progress }) => {

@@ -16,6 +16,7 @@ import { findOpencode } from '../judge';
 import { loadCandidates } from '../candidates';
 import { listReviews } from '../review/db';
 import { AVOIDS, loadCuration, riskyCandidates, type CurationDecision } from '../curate';
+import { setting } from '../core/config';
 
 export interface FullPipelineOptions {
   videoId: string;
@@ -80,7 +81,7 @@ export function cli(args: string[], timeout = 30 * 60_000): Promise<{ ok: boolea
 async function runAgent(o: { title: string; prompt: string; timeoutMs: number; log: (s: string) => void }): Promise<string> {
   const opencode = findOpencode();
   if (!opencode) throw new Error('OpenCode CLI not found');
-  const model = process.env.CLIP_PIPELINE_MODEL ?? process.env.CLIP_JUDGE_MODEL ?? 'opencode-go/deepseek-v4.1-flash';
+  const model = setting('CLIP_PIPELINE_MODEL');
   const dir = path.join(paths.cache, 'full');
   fs.mkdirSync(dir, { recursive: true });
   const slug = o.title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 90) || 'stage';
@@ -173,7 +174,7 @@ async function queueCheck(id: string, fromMs: number, toMs: number, log: (s: str
       runAgent({
         title: `${e.name} expert ${id} ${from}-${to}`,
         prompt: expertPrompt(e, id, from, to, undefined, moment),
-        timeoutMs: Number(process.env.FULL_EXPERT_TIMEOUT_MIN ?? 60) * 60_000,
+        timeoutMs: setting('FULL_EXPERT_TIMEOUT_MIN') * 60_000,
         log,
       }),
     ),
@@ -191,7 +192,7 @@ async function queueCheck(id: string, fromMs: number, toMs: number, log: (s: str
         runAgent({
           title: `${e.name} retry ${id} ${from}-${to}`,
           prompt: expertPrompt(e, id, from, to, mine(e), moment),
-          timeoutMs: Number(process.env.FULL_EXPERT_TIMEOUT_MIN ?? 60) * 60_000,
+          timeoutMs: setting('FULL_EXPERT_TIMEOUT_MIN') * 60_000,
           log,
         }),
       ),
@@ -212,7 +213,7 @@ async function queueCheck(id: string, fromMs: number, toMs: number, log: (s: str
         'Do not add candidates, make clips, edit, or start other agents. Do not ask questions.',
         'Reply with the confirmed moments, coverage gaps and risk flags.',
       ].join(' '),
-      timeoutMs: Number(process.env.FULL_VERIFY_TIMEOUT_MIN ?? 45) * 60_000,
+      timeoutMs: setting('FULL_VERIFY_TIMEOUT_MIN') * 60_000,
       log,
     });
     log(`queue-check verifier: ${verify.slice(0, 240)}`);
@@ -236,7 +237,7 @@ async function extract(id: string, fromMs: number, toMs: number, log: (s: string
     ]
       .filter(Boolean)
       .join(' '),
-    timeoutMs: Number(process.env.FULL_EXTRACT_TIMEOUT_MIN ?? 60) * 60_000,
+    timeoutMs: setting('FULL_EXTRACT_TIMEOUT_MIN') * 60_000,
     log,
   });
   const added = loadCandidates(id).candidates.filter((c) => !before.has(c.id)).map((c) => c.id);
@@ -255,7 +256,7 @@ async function curate(id: string, fromMs: number, toMs: number, ids: string[], l
       'Assign niche, angle and fit; keep / review / drop with a reason; write curate.json and run ./clip curate.',
       'Do not edit, make clips, or ask questions. Work from the project root. Reply with keep / review / drop counts.',
     ].join(' '),
-    timeoutMs: Number(process.env.FULL_CURATE_TIMEOUT_MIN ?? 45) * 60_000,
+    timeoutMs: setting('FULL_CURATE_TIMEOUT_MIN') * 60_000,
     log,
   });
   log(`curate: ${reply.slice(0, 240)}`);
@@ -328,7 +329,7 @@ async function edit(id: string, fromMs: number, toMs: number, creator: string, a
       'Run the meme and expert editors as proposals, check every proposal against the words and the screen, settle captions, bleep what must not be heard (`./clip censor <clip>`), render, read QA, fix what fails, check the post text, and submit each clip to review.',
       `The creator is ${creator}. Do not approve or upload. Do not ask questions. Work from the project root. Reply with the clip ids submitted.`,
     ].join(' '),
-    timeoutMs: Number(process.env.FULL_EDIT_TIMEOUT_MIN ?? 90) * 60_000,
+    timeoutMs: setting('FULL_EDIT_TIMEOUT_MIN') * 60_000,
     log,
   });
   // only this pass's picks count as its clips (a clip id is <video>-<candidate>, or -v2 for a copy)
@@ -341,7 +342,7 @@ export async function runFullPipeline(o: FullPipelineOptions): Promise<FullPipel
   const log = o.log ?? logLine;
   const from = fmtTime(o.fromMs, 0);
   const to = fmtTime(o.toMs, 0);
-  const maxKeep = o.maxKeep ?? Number(process.env.MAX_KEEP ?? 3);
+  const maxKeep = o.maxKeep ?? setting('MAX_KEEP');
   log(`full pipeline ${o.videoId} ${from}–${to} (${o.creator})`);
 
   const run = stagesToRun(o.resume?.stage);
@@ -423,7 +424,7 @@ export async function reviseClip(o: { clipId: string; note: string; creator: str
       `Render, read QA, fix what fails, then submit it with a hand-over: \`./clip review ${o.clipId} submit --note "You asked: <the request in a few words>. Changed: <what you did>. <anything left>"\`.`,
       `The creator is ${o.creator}. Do not approve or upload. Do not make or change any other clip. Do not ask questions. Work from the project root. Reply with what you changed.`,
     ].join(' '),
-    timeoutMs: Number(process.env.FULL_EDIT_TIMEOUT_MIN ?? 90) * 60_000,
+    timeoutMs: setting('FULL_EDIT_TIMEOUT_MIN') * 60_000,
     log,
   });
 }

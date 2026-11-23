@@ -11,6 +11,7 @@ import { detectFacesHybrid } from './hybrid';
 import { findFacecam, layoutForCam } from './cam';
 import { refinePanel } from './panel';
 import type { SplitLayout } from '../core/schemas';
+import { setting } from '../core/config';
 
 export interface SplitReport {
   found: boolean;
@@ -43,7 +44,7 @@ export async function detectSplit(
   if (opts.auto && (!p.autoSplit || p.framing.mode !== 'blur')) {
     return { found: false, auto: true, samples: 0, faces: 0, reason: 'no automatic split pending' };
   }
-  const env = process.env.CLIP_FACE_DETECTOR;
+  const env = setting('CLIP_FACE_DETECTOR');
   const detector = opts.detector ?? (env === 'vision' || env === 'insightface' ? env : 'hybrid');
   const detect = async (file: string, startMs: number, endMs: number) => {
     // about 60 samples whatever the length: 2 a second for a 30 s clip (as before), spread thinner over a

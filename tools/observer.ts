@@ -15,16 +15,17 @@ import { claim, complete, fail, markDone, readUpTo, recover, summary, unqueueFro
 import { listMoments, listStreams, saveCoverage, setStreamStatus, tierOf, updateCoverage, type StreamRow } from '../src/track/db';
 import { rankAndStore, unreadable } from '../src/track/rank';
 import { runningObserver, writeHeartbeat } from '../src/track/observer';
+import { setting } from '../src/core/config';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
 /** How much chat one step reads (about a minute for a busy stream's hour). */
-const CHUNK_MIN = Number(process.env.OBSERVE_CHUNK_MIN ?? 60);
-const RANK_EVERY_MIN = Number(process.env.RANK_EVERY_MIN ?? 20);
-const TRACK_ENDED_HOURS = Number(process.env.TRACK_ENDED_HOURS ?? 48);
-const IDLE_S = Number(process.env.OBSERVE_IDLE_S ?? 60);
+const CHUNK_MIN = setting('OBSERVE_CHUNK_MIN');
+const RANK_EVERY_MIN = setting('RANK_EVERY_MIN');
+const TRACK_ENDED_HOURS = setting('TRACK_ENDED_HOURS');
+const IDLE_S = setting('OBSERVE_IDLE_S');
 /** A live stream's new minutes are read once this many have built up (the time between goes to older footage). */
-const LIVE_BATCH_MIN = Number(process.env.OBSERVE_LIVE_BATCH_MIN ?? 10);
+const LIVE_BATCH_MIN = setting('OBSERVE_LIVE_BATCH_MIN');
 
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

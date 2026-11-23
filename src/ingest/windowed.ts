@@ -7,6 +7,7 @@ import { paths, readJsonIf, writeJson } from '../core/paths';
 import { mergeRanges, subtractRanges, type Range } from '../core/ranges';
 import { fmtTime } from '../core/time';
 import type { Transcript, Word } from '../core/schemas';
+import { setting } from '../core/config';
 
 /** Put freshly transcribed words for `range` into a transcript (replacing what was there). Pure. */
 export function mergeTranscript(videoId: string, old: Transcript | undefined, add: { words: Omit<Word, 'i'>[] | Word[]; tags: Transcript['tags'] }, range: Range): Transcript {
@@ -51,7 +52,7 @@ const defaultDeps = async (): Promise<TranscribeDeps> => {
     downloadAudio: (id, ranges, log) => downloadAudioRanges(id, ranges, log),
     // CLIP_WHISPER_MODEL=small for non-English streams; the default small.en hallucinates on German.
     whisper: (id, r, log) =>
-      whisperTranscript(id, { fromMs: r.startMs, toMs: r.endMs, model: process.env.CLIP_WHISPER_MODEL, onProgress: log }),
+      whisperTranscript(id, { fromMs: r.startMs, toMs: r.endMs, model: setting('CLIP_WHISPER_MODEL'), onProgress: log }),
   };
 };
 

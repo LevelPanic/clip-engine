@@ -93,6 +93,24 @@ program
     }),
   );
 
+// ---------- settings ----------
+
+program
+  .command('config')
+  .description('Show every setting the engine reads from the environment: its value now and where it came from (docs/operations.md → Settings)')
+  .option('--changed', 'only the ones set in the environment')
+  .action(
+    action(async (o: { changed?: boolean }) => {
+      const { settingsNow } = await import('../core/config');
+      const byArea = new Map<string, ReturnType<typeof settingsNow>>();
+      for (const s of settingsNow()) if (!o.changed || s.from === 'env') byArea.set(s.area, [...(byArea.get(s.area) ?? []), s]);
+      for (const [area, list] of byArea) {
+        console.log(`\n${area}`);
+        for (const s of list) console.log(`  ${s.name.padEnd(28)} ${(s.value || '·').padEnd(34)} ${s.from === 'env' ? 'set' : '   '}  ${s.doc}`);
+      }
+    }),
+  );
+
 // ---------- jobs ----------
 
 program

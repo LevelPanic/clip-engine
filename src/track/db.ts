@@ -12,6 +12,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { paths } from '../core/paths';
 import { duplicatesOf, planMoments, type KnownMoment, type RankedMoment } from '../scan/moments';
 import { normalize, type Span } from './coverage';
+import { setting } from '../core/config';
 
 export type StreamStatus = 'tracking' | 'done' | 'skipped';
 export type MomentStatus = 'pending' | 'queued' | 'working' | 'clipped' | 'no-clip' | 'skipped' | 'failed' | 'covered';
@@ -291,7 +292,7 @@ const takenFrom = (videoId: string) =>
  * round; a stream gives at most `perStream` moments; skipped and done streams give none. Pure over the db.
  */
 /** Which ranking orders a stream's own moments: `score` (the combined score, default) or `alternate` (the shadow one). */
-export const momentRanker = () => (process.env.MOMENT_RANKER === 'alternate' ? 'alternate' : 'score');
+export const momentRanker = () => (setting('MOMENT_RANKER') === 'alternate' ? 'alternate' : 'score');
 
 /**
  * The blind ranker trial (2026-11-19): which moments a trial arm may pick. `score`: in a stream's top
@@ -302,8 +303,8 @@ export const momentRanker = () => (process.env.MOMENT_RANKER === 'alternate' ? '
  */
 export type TrialArm = 'score' | 'alternate' | 'both';
 export const TRIAL_ARMS: TrialArm[] = ['score', 'alternate', 'both'];
-export const TRIAL_TOP = Number(process.env.TRIAL_TOP ?? 4);
-export const trialOn = () => process.env.RANKER_TRIAL !== '0';
+export const TRIAL_TOP = setting('TRIAL_TOP');
+export const trialOn = () => setting('RANKER_TRIAL');
 export function inArm(m: Pick<MomentRow, 'rank' | 'altRank'>, arm: TrialArm, top = TRIAL_TOP): boolean {
   const s = (m.rank ?? 1e9) <= top;
   const a = (m.altRank ?? 1e9) <= top;

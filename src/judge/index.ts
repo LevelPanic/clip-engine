@@ -12,10 +12,12 @@ import { fmtTime } from '../core/time';
 import { loadMeta } from '../ingest/ingest';
 import { loadChat } from '../ingest/chat';
 import { findChatSpikes } from '../discover/chatAnalysis';
+import { setting } from '../core/config';
 
 /** The claude CLI: CLIP_CLAUDE, then PATH, then the copy bundled with the Claude desktop app. */
 export function findClaude(): string | null {
-  if (process.env.CLIP_CLAUDE && fs.existsSync(process.env.CLIP_CLAUDE)) return process.env.CLIP_CLAUDE;
+  const claude = setting('CLIP_CLAUDE');
+  if (claude && fs.existsSync(claude)) return claude;
   for (const dir of (process.env.PATH ?? '').split(':')) {
     const f = path.join(dir, 'claude');
     if (fs.existsSync(f)) return f;
@@ -34,7 +36,8 @@ export function findClaude(): string | null {
 
 /** The OpenCode CLI: CLIP_OPENCODE, the app bundle, the desktop CLI cache, then PATH. */
 export function findOpencode(): string | null {
-  if (process.env.CLIP_OPENCODE && fs.existsSync(process.env.CLIP_OPENCODE)) return process.env.CLIP_OPENCODE;
+  const opencode = setting('CLIP_OPENCODE');
+  if (opencode && fs.existsSync(opencode)) return opencode;
   const fixed = '/Applications/OpenCode.app/Contents/Resources/opencode-cli';
   if (fs.existsSync(fixed)) return fixed;
   const base = path.join(os.homedir(), 'Library', 'Application Support', 'ai.opencode.desktop', 'cli');
@@ -88,7 +91,7 @@ export async function judgeVideo(
   videoId: string,
   opts: { lens?: string; want?: number; range?: { startMs: number; endMs: number }; log?: (s: string) => void; provider?: JudgeProvider } = {},
 ) {
-  const provider = judgeProvider(opts.provider ?? process.env.CLIP_JUDGE);
+  const provider = judgeProvider(opts.provider ?? setting('CLIP_JUDGE'));
   if (provider === 'heuristic') {
     const { heuristicJudge } = await import('./heuristic');
     return heuristicJudge(videoId, opts);
@@ -116,7 +119,7 @@ export async function judgeVideo(
   if (provider === 'opencode') {
     const opencode = findOpencode();
     if (!opencode) throw new Error('No OpenCode CLI found. Install OpenCode, or set CLIP_OPENCODE to its path.');
-    const model = process.env.CLIP_JUDGE_MODEL ?? 'opencode-go/deepseek-v4.1-flash';
+    const model = setting('CLIP_JUDGE_MODEL');
     log(`judging with opencode (${model}, lens ${lens})…`);
     const r = await run(opencode, ['run', '--model', model, '--auto', '--archived', '--title', `clip judge ${videoId}`, fullPrompt], {
       cwd: paths.root,

@@ -93,7 +93,6 @@ A file imports only from its own folder or one below it, and `test/layers.test.t
 
 Phase 2 of `docs/release-plan.md` works through these.
 - **Daemon logic in `tools/`.** The decisions that matter most now live in `src/` with tests: what the upload scheduler sends, holds, defers or sets aside (`src/publish/scheduler.ts`); what a failed watchlist job becomes (`src/track/runner.ts`); what the cleanup may delete (`src/pipeline/cleanup.ts`). Still in `tools/`: the watchlist's discovery, its status page, and the observer's loop.
-- **60 environment variables** have no single config module.
 - **The Studio server and the four largest UI files** are big closures to split into routers, components and hooks.
 
 ## Reference

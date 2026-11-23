@@ -3,9 +3,10 @@
 // public, so the order of the checks is the behaviour. docs/operations.md → "Upload scheduler".
 import { holdOf, passingError, refusalText, type UploadHold } from './uploadStatus';
 import { limitLiftsAt, LIFT_MARGIN_MS, pacificMidnightAfter } from './pace';
+import { setting } from '../core/config';
 
 /** Under this is a broken export; YouTube Shorts have no minimum of their own (15 s is the editing target). */
-export const MIN_UPLOAD_S = Number(process.env.MIN_UPLOAD_S ?? 5);
+export const MIN_UPLOAD_S = setting('MIN_UPLOAD_S');
 /** Over a minute, a Short with a Content ID claim is blocked worldwide. */
 export const MAX_UPLOAD_S = 60;
 

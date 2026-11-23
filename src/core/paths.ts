@@ -2,10 +2,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setting } from './config';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 /** Where library/, clips/ and exports/ live. Tests point CLIP_DATA at a temp folder. */
-export const DATA = process.env.CLIP_DATA ? path.resolve(process.env.CLIP_DATA) : ROOT;
+export const DATA = setting('CLIP_DATA') ? path.resolve(setting('CLIP_DATA')!) : ROOT;
 
 export const paths = {
   root: ROOT,

@@ -72,7 +72,7 @@ On macOS, renders go through `bin/headless-shell`, which runs Remotion's Chrome 
 ## Layout
 
 ```
-src/core/          schemas (zod, shared with the browser), time, timeline (time map), paths, proc, post text (titles, caption, the credit), channel (the posting channel's identity and do-not-clip list), vocabulary (the lists the ledgers are checked against), lock (one writer per video file)
+src/core/          schemas (zod, shared with the browser), config (every environment setting), time, timeline (time map), paths, proc, post text (titles, caption, the credit), channel (the posting channel's identity and do-not-clip list), vocabulary (the lists the ledgers are checked against), lock (one writer per video file)
 src/ingest/        source (links → ids), yt-dlp, downloads (sections, full, audio chunks), json3 → transcript, name fixes (vocab), SponsorBlock, media/sections/audio chunks,
                    frames, audio events, twitch (web API: broadcast, chat replay, viewer clips), chat, windowed (growing transcripts)
 src/discover/      signal.ts contract + signals/*.ts (one file per signal), seed picking, chatAnalysis (chat spikes)
@@ -199,6 +199,7 @@ docs/              architecture, pipeline, operations, changelog, research/ (the
 - **Long work is a job.** Add a `JobKind` (`src/jobs/queue.ts`), a handler in `src/pipeline/handlers.ts` and a limit in `LIMITS` (`src/jobs/worker.ts`); batches chain through `src/pipeline/batch.ts`.
 - **Layers:** every `src/` folder has a place in `LAYERS` (`test/layers.test.ts`, lowest first: core, jobs, markers, project, composition, ingest, discover, scan, extract, candidates, review, curate, reframe, qa, edit, render, judge, track, pipeline, publish, studio, cli, tools). A file imports only from its own folder or one below; dynamic `import()` counts. The test fails on an import that goes up, which is what keeps the folders free of cycles: move the code down, or pass it in from above (the worker loop takes its handlers as an argument). A new folder needs a place in `LAYERS`.
 - **Files:** write JSON with `writeJson` (temp file + rename) so watchers never read half a file.
+- **Settings:** read an environment variable only through `setting()` (`src/core/config.ts`), which parses it strictly (`15m` for a number is an error, not NaN). A new one goes in `SETTINGS` with its default and a line on what it does, and in the table in `docs/operations.md` → "Settings" (`test/config.test.ts` checks both and fails on a direct `process.env` read). `./clip config` prints the values in force.
 
 ## Testing
 

@@ -4,6 +4,7 @@ import type { Command } from 'commander';
 import { fmtTime, parseTime } from '../core/time';
 import type { QueueKind } from '../scan/queues';
 import { collect, readList, type Action } from './shared';
+import { setting } from '../core/config';
 
 export function register(program: Command, action: Action) {
   // ---------- discovery ----------
@@ -496,7 +497,7 @@ export function register(program: Command, action: Action) {
   program
     .command('judge <videoId>')
     .description('Find candidates with the Claude judge (default) or the experimental heuristic judge')
-    .option('--provider <name>', 'claude, opencode, or heuristic (experimental)', process.env.CLIP_JUDGE ?? 'claude')
+    .option('--provider <name>', 'claude, opencode, or heuristic (experimental)', setting('CLIP_JUDGE'))
     .option('--lens <name>', 'lens (default: stream-moments for Twitch, podcast-general for YouTube)')
     .option('--want <n>', 'aim for this many candidates', '8')
     .option('--from <time>', 'start of the range to judge')

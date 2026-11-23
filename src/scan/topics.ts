@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { paths, readJsonIf } from '../core/paths';
 import { run, YTDLP } from '../core/proc';
 import type { CategoryStream } from '../ingest/twitch';
+import { setting } from '../core/config';
 
 export const TopicSchema = z.object({
   /** What the topic is called here and in the logs. */
@@ -64,7 +65,7 @@ export interface TopicSkip {
 }
 
 /** How many streams each topic takes into the tracker per check. */
-export const TOPIC_TOP = Number(process.env.TOPIC_TOP ?? 3);
+export const TOPIC_TOP = setting('TOPIC_TOP');
 
 /**
  * Each topic's top `perTopic` eligible streams right now, and why every other one was passed over. Pure.

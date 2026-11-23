@@ -35,23 +35,24 @@ import { loadQa } from '../src/qa';
 import { pickApproved, markUploaded, markFailed, releasePick, blockTitle, blockAuth, deferPick, listReviews, noteAttempt, holdPick, type ReviewRow } from '../src/review/db';
 import { youtubeAccessToken } from '../src/publish/youtube';
 import { appendUploadLog, readUploadStatus, uploadTimes, writePace, writeUploadStatus, type UploadTry } from '../src/publish/uploadStatus';
+import { setting } from '../src/core/config';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
 /** The posting pace (user, 2026-11-22: change 2 of the censorship review): this many in any 24 hours, this far apart. */
-const UPLOADS_PER_DAY = Number(process.env.UPLOADS_PER_DAY ?? 8);
-const UPLOAD_MIN = Number(process.env.UPLOAD_MIN ?? 180);
+const UPLOADS_PER_DAY = setting('UPLOADS_PER_DAY');
+const UPLOAD_MIN = setting('UPLOAD_MIN');
 const PACE = { perDay: UPLOADS_PER_DAY, everyMin: UPLOAD_MIN };
-const LEAD_MIN = Number(process.env.LEAD_MIN ?? 5);
+const LEAD_MIN = setting('LEAD_MIN');
 /** How often a clip held by a passing error is tried again (a YouTube limit is waited out to when it lifts). */
-const HOLD_RETRY_MIN = Number(process.env.HOLD_RETRY_MIN ?? process.env.QUOTA_MIN ?? 60);
+const HOLD_RETRY_MIN = setting('HOLD_RETRY_MIN');
 /** A pause after YouTube refused an upload for good, so a fault that refuses every clip does not set the whole line aside in minutes. */
-const REFUSED_PAUSE_MIN = Number(process.env.REFUSED_PAUSE_MIN ?? 20);
+const REFUSED_PAUSE_MIN = setting('REFUSED_PAUSE_MIN');
 const ONCE = has('--once');
 const DRY = has('--dry-run');
 const log = (s: string) => console.log(`${new Date().toISOString()}  ${s}`);
 /** Audience numbers for what was uploaded: `clip analytics` once a day (YouTube's data lags 2–3 days). */
-const ANALYTICS_HOURS = Number(process.env.ANALYTICS_HOURS ?? 24);
+const ANALYTICS_HOURS = setting('ANALYTICS_HOURS');
 const analyticsFile = path.join(paths.cache, 'analytics-last.json');
 
 /** Import YouTube Analytics when the last import is ANALYTICS_HOURS old. A failure is logged and tried at the next interval. */
@@ -83,7 +84,7 @@ function setAside(row: ReviewRow, why: string) {
   log(`failed ${row.clipId}: ${why.slice(0, 300)}`);
 }
 
-const AUTH_RETRY_MIN = Number(process.env.AUTH_RETRY_MIN ?? 10);
+const AUTH_RETRY_MIN = setting('AUTH_RETRY_MIN');
 
 function publish(clipId: string, publishAt: string): { ok: boolean; url?: string; error?: string; publishAt?: string; heldPrivate?: string; ageRestricted?: boolean } {
   if (DRY) return { ok: true, url: 'https://youtu.be/dry-run' };
