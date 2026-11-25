@@ -74,3 +74,15 @@ test('a retry goes back in line keeping its checkpoint; failed and done keep the
   assert.equal(getJob(j.id)!.error, 'gave up');
   assert.ok(getJob(j.id)!.finishedAt);
 });
+
+test('paused in the Studio: only change requests are taken, and a waiting moment keeps its place for the resume', async () => {
+  const { claimableKinds } = await import('../src/track/watchlist');
+  insertJob(moment('waits', 'moment@0:10:00', 0)); // by hand: first in line when running
+  insertJob({ id: 'revise-tw-x-c01-1', kind: 'revise', creator: 'x', tier: 0, videoId: 'tw-x', momentId: 'tw-x-c01@2026-11-24T13:00:00Z' });
+  assert.equal(claimNext('w:1', 600_000, claimableKinds(true))?.kind, 'revise');
+  assert.equal(claimNext('w:1', 600_000, claimableKinds(true)), undefined); // the moment waits
+  assert.equal(getJob(listJobs({ kind: 'twitch-moment', states: ['queued'] })[0].id)!.creator, 'waits');
+  const resumed = claimNext('w:1', 600_000, claimableKinds(false))!;
+  assert.equal(resumed.creator, 'waits');
+  for (const j of listJobs({ states: ['running'] })) finishJob(j.id, 'w:1', { state: 'done' });
+});

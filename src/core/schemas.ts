@@ -124,6 +124,12 @@ export const ReviewSchema = z.object({
    * starts from the 18+ check in QA, src/qa/adult.ts); fixed from then on, the other tabs only show it.
    */
   adult: z.boolean().optional(),
+  /**
+   * When the reviewer chose Upload anyway on an approval the careful period held (the review page): the
+   * period no longer holds this one. Only the careful period: the never-post list and the credit still
+   * refuse. A new decision clears it.
+   */
+  uploadAnyway: z.string().optional(),
   at: z.string(),
 });
 export type Review = z.infer<typeof ReviewSchema>;

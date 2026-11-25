@@ -1,7 +1,9 @@
 #!/usr/bin/env tsx
 // The upload cron: take one approved clip the review DB has not picked, upload it private, schedule it
-// LEAD_MIN minutes later, and mark it picked/uploaded. At most UPLOADS_PER_DAY (8) in any 24 hours,
-// UPLOAD_MIN (180) minutes apart, and never more than YouTube's own limit let through the last time it
+// to go live a few minutes later, and mark it picked/uploaded. The schedule (how many in 24 hours, how far
+// apart, the posting hours, the go-live delay, a pause) is the Studio's Settings → Uploads
+// (src/publish/schedule.ts, read every minute so a change needs no restart), else UPLOADS_PER_DAY (8),
+// UPLOAD_MIN (180) and LEAD_MIN (5); never more than YouTube's own limit let through the last time it
 // said no (src/publish/pace.ts; docs/research/censorship-review-2026-11-22.md, C4). While channel.json has a
 // careful period, an approval with a sexual flag, an 18+ tick or an f-word in its first 3 s waits for
 // the period to end (`deferred`) and the next approval goes instead (C5).
@@ -30,6 +32,7 @@ import { sexualTitleWords } from '../src/qa/adult';
 import { checkCareful, neverPost, neverPostText } from '../src/qa/unsafe';
 import { carefulUntil } from '../src/core/channel';
 import { paceNow, paceWords, type Pace } from '../src/publish/pace';
+import { loadSchedule, scheduleWords } from '../src/publish/schedule';
 import { gateApproval, readFailure, type ApprovalFacts } from '../src/publish/scheduler';
 import { loadQa } from '../src/qa';
 import { pickApproved, markUploaded, markFailed, releasePick, blockTitle, blockAuth, deferPick, listReviews, noteAttempt, holdPick, type ReviewRow } from '../src/review/db';
@@ -40,11 +43,7 @@ import { sleep } from '../src/core/time';
 
 const args = process.argv.slice(2);
 const has = (f: string) => args.includes(f);
-/** The posting pace (user, 2026-11-22: change 2 of the censorship review): this many in any 24 hours, this far apart. */
-const UPLOADS_PER_DAY = setting('UPLOADS_PER_DAY');
-const UPLOAD_MIN = setting('UPLOAD_MIN');
-const PACE = { perDay: UPLOADS_PER_DAY, everyMin: UPLOAD_MIN };
-const LEAD_MIN = setting('LEAD_MIN');
+// The posting pace (user, 2026-11-22: change 2 of the censorship review) is the schedule: loadSchedule()
 /** How often a clip held by a passing error is tried again (a YouTube limit is waited out to when it lifts). */
 const HOLD_RETRY_MIN = setting('HOLD_RETRY_MIN');
 /** A pause after YouTube refused an upload for good, so a fault that refuses every clip does not set the whole line aside in minutes. */
@@ -166,6 +165,7 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
     unsafe: [],
     unsafeText: '',
     sexualWords: [],
+    uploadAnyway: !!project?.review?.uploadAnyway,
   };
   let gate = gateApproval(facts);
   if (gate.action === 'upload' && project) {
@@ -173,6 +173,7 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
     const until = carefulUntil();
     const careful = until ? { until, reasons: (await checkCareful(row.clipId, row.adult ?? qa?.adult?.detected ?? false)).map((c) => c.why) } : undefined;
     gate = gateApproval({ ...facts, unsafe, unsafeText: neverPostText(row.clipId, unsafe), sexualWords: sexualTitleWords(postFor(project.post, suggestedPost(project)).title), careful });
+    if (gate.action === 'upload' && careful?.reasons.length && facts.uploadAnyway) log(`${row.clipId}: the careful period would hold it (${careful.reasons.join('; ')}); the reviewer chose Upload anyway`);
   }
   if (gate.action === 'set-aside') {
     setAside(row, gate.why);
@@ -199,7 +200,7 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
   // QA does not hold an approval back (user, 2026-11-22): what it failed is logged with the try
   const qaFailed = qa && !qa.passed ? qa.issues.filter((i) => i.level === 'fail').map((i) => `${i.check}: ${i.detail}`).join('; ') : '';
   if (qaFailed) log(`${row.clipId}: QA failed (${qaFailed.slice(0, 200)}); uploading it anyway, as approved`);
-  const at = isoIn(LEAD_MIN);
+  const at = isoIn(loadSchedule().leadMin);
   const n = DRY ? row.attempts + 1 : noteAttempt(row.clipId);
   const since = row.uploadStatus === 'held' && row.pickedAt ? `, current since ${row.pickedAt.slice(11, 16)}` : '';
   log(`${DRY ? '[dry] ' : ''}${n > 1 ? 'trying again' : 'picking'} ${row.clipId} (try ${n}${since}) → publishAt ${at}`);
@@ -239,13 +240,28 @@ async function one(): Promise<'did' | 'refused' | 'next' | 'idle' | 'held' | 'au
   return 'did';
 }
 
-/** The pace now, recorded for the review page; logged when the next slot changes. */
+/** The pace now under the schedule in force, recorded for the review page; logged when the schedule or the next slot changes. */
 let lastSlot = '';
+let lastSchedule = '';
 function pace(): Pace {
-  const p = paceNow(PACE);
-  if (!DRY) writePace({ perDay: p.perDay, everyMin: p.everyMin, cap: p.cap, inDay: p.inDay, nextAt: iso(p.nextAt), ...(p.waitsFor ? { waitsFor: p.waitsFor } : {}) });
-  const slot = iso(p.nextAt);
-  if (p.nextAt > Date.now() && slot !== lastSlot) log(`${p.inDay} uploaded in the last 24 hours (${paceWords(p)}): the next upload is at ${slot}`);
+  const s = loadSchedule();
+  const words = s.problem ?? scheduleWords(s);
+  if (words !== lastSchedule) log(`schedule${lastSchedule ? ' changed' : ''}: ${words}`);
+  lastSchedule = words;
+  const p = paceNow(s);
+  if (!DRY)
+    writePace({
+      perDay: p.perDay,
+      everyMin: p.everyMin,
+      cap: p.cap,
+      inDay: p.inDay,
+      nextAt: iso(p.nextAt),
+      ...(p.waitsFor ? { waitsFor: p.waitsFor } : {}),
+      ...(p.window ? { window: p.window } : {}),
+      ...(p.paused ? { paused: true } : {}),
+    });
+  const slot = p.paused ? 'paused' : iso(p.nextAt);
+  if (p.nextAt > Date.now() && slot !== lastSlot) log(p.paused ? 'uploads are paused (Settings → Uploads)' : `${p.inDay} uploaded in the last 24 hours (${paceWords(p)}): the next upload is at ${slot}`);
   lastSlot = slot;
   return p;
 }
@@ -259,7 +275,7 @@ if (ONCE) {
     if (r === 'auth') log('the YouTube login is broken: run ./clip auth youtube');
   }
 } else {
-  log(`upload cron: ${paceWords(paceNow(PACE))}, publishAt +${LEAD_MIN}m; a held clip waits until its limit lifts${carefulUntil() ? `; careful period until ${carefulUntil()}` : ''}${DRY ? ' (dry)' : ''}`);
+  log(`upload cron: ${scheduleWords(loadSchedule())}; a held clip waits until its limit lifts${carefulUntil() ? `; careful period until ${carefulUntil()}` : ''}${DRY ? ' (dry)' : ''}`);
   // A restart keeps the try time a hold set: trying again at once would spend an upload call
   // (the project's daily upload quota counts refused ones) on a limit that is still there.
   const prev = readUploadStatus();
@@ -270,10 +286,11 @@ if (ONCE) {
   for (;;) {
     analyticsIfDue();
     // the pace: the gap after the last upload and the day's cap, from the publish records (so a
-    // restart, or an upload by hand, counts too). Re-read every few minutes while it waits.
+    // restart, or an upload by hand, counts too), under the schedule; re-read every minute while it
+    // waits, so a change in Settings → Uploads applies within a minute
     const p = pace();
     if (p.nextAt > Date.now() && !DRY) {
-      await sleep(Math.min(p.nextAt - Date.now(), 5 * 60_000));
+      await sleep(Math.min(p.nextAt - Date.now(), 60_000));
       continue;
     }
     const r = await one();

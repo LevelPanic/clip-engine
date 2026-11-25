@@ -44,6 +44,15 @@ test('the careful period defers what it would hold, and only while it is on', ()
   assert.equal(gateApproval({ ...ok, careful: { until: '2026-12-06', reasons: [] } }).action, 'upload');
 });
 
+test('Upload anyway skips the careful period, and only that: the never-post list, a sexual title and the length still refuse', () => {
+  const careful = { until: '2026-12-06', reasons: ['18+', 'a queue expert flagged the moment sexual'] };
+  assert.equal(gateApproval({ ...ok, careful, uploadAnyway: true }).action, 'upload');
+  assert.equal(gateApproval({ ...ok, careful, uploadAnyway: false }).action, 'defer');
+  assert.equal(gateApproval({ ...ok, careful, uploadAnyway: true, unsafe: [{ kind: 'nudity', why: 'nudity' }], unsafeText: 'nudity' }).action, 'set-aside');
+  assert.equal(gateApproval({ ...ok, careful, uploadAnyway: true, unsafe: [{ kind: 'title', why: 'sex' }], sexualWords: ['sex'] }).action, 'hold-title');
+  assert.equal(gateApproval({ ...ok, careful, uploadAnyway: true, durationS: 75 }).action, 'set-aside');
+});
+
 test('the order: a missing export beats the never-post list, which beats the careful period', () => {
   const unsafe = [{ kind: 'slur', why: 'a slur is said' }];
   const careful = { until: '2026-12-06', reasons: ['18+'] };

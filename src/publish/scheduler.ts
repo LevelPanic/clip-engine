@@ -30,6 +30,8 @@ export interface ApprovalFacts {
   sexualWords: string[];
   /** The careful period's end while one is on (channel.json), and what in this clip it would hold. */
   careful?: { until: string; reasons: string[] };
+  /** The reviewer chose Upload anyway on it (`review.uploadAnyway`): the careful period does not hold it. */
+  uploadAnyway?: boolean;
 }
 
 export type Gate =
@@ -53,8 +55,9 @@ export function gateApproval(f: ApprovalFacts): Gate {
   if (f.unsafe.length) {
     return { action: 'hold-title', why: `the title sells it on sex (${f.sexualWords.join(', ')}); edit the title and it uploads automatically`, logged: f.unsafe[0].why };
   }
-  // the careful period: only the cleanest approvals go up until it ends; the rest wait for it
-  if (f.careful?.reasons.length) return { action: 'defer', why: `careful period until ${f.careful.until} (channel.json): ${f.careful.reasons.join('; ')}. It goes up by itself after that` };
+  // the careful period: only the cleanest approvals go up until it ends; the rest wait for it, unless the
+  // reviewer chose Upload anyway (that skips this check only: the ones above still refuse)
+  if (f.careful?.reasons.length && !f.uploadAnyway) return { action: 'defer', why: `careful period until ${f.careful.until} (channel.json): ${f.careful.reasons.join('; ')}. It goes up by itself after that` };
   return { action: 'upload' };
 }
 

@@ -150,11 +150,13 @@ export function dropQueued(id: string): boolean {
 }
 
 /** Take the next job (by hand, listed creators, topics; oldest first) for `worker`, in one transaction. */
-export function claimNext(worker: string, leaseMs: number): WatchJob | undefined {
+export function claimNext(worker: string, leaseMs: number, kinds?: JobKind[]): WatchJob | undefined {
   const d = db();
   d.exec('BEGIN IMMEDIATE');
   try {
-    const r = d.prepare("SELECT * FROM watch_jobs WHERE state = 'queued' ORDER BY tier, created_at LIMIT 1").get() as Record<string, unknown> | undefined;
+    // `kinds`: only these (a paused watchlist takes change requests only); the rest wait their turn
+    const only = kinds ? ` AND kind IN (${kinds.map(() => '?').join(', ')})` : '';
+    const r = d.prepare(`SELECT * FROM watch_jobs WHERE state = 'queued'${only} ORDER BY tier, created_at LIMIT 1`).get(...(kinds ?? [])) as Record<string, unknown> | undefined;
     if (!r) {
       d.exec('COMMIT');
       return undefined;

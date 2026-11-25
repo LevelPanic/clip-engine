@@ -20,7 +20,8 @@ export type JobKind =
   | 'reframe'
   | 'split' // find the facecam and switch to the split facecam/gameplay layout
   | 'render'
-  | 'qa';
+  | 'qa'
+  | 'post-text'; // a new title or description for a clip, in the reviewer's direction (src/pipeline/postText.ts)
 
 export type JobState = 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
 

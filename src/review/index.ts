@@ -6,7 +6,7 @@ import { paths, readJsonIf } from '../core/paths';
 import { loadProject, saveProject, listClips } from '../project';
 import { loadCandidates } from '../candidates';
 import { REJECT_REASONS, type RejectReason, type Review, type ViralityScores } from '../core/schemas';
-import { recordReview } from './db';
+import { recordReview, releasePick } from './db';
 
 /** Reason keys from a list or a comma-separated string; anything unknown is an error, not dropped. */
 export function parseReasons(input: unknown): RejectReason[] | undefined {
@@ -55,6 +55,20 @@ export interface FeedbackRow {
   durationMs: number;
   markers: Record<string, number>; // count by type
   autoEdits: number; // engine-proposed markers the clip kept
+}
+
+/**
+ * Upload anyway: the reviewer lets an approval the careful period held go up (src/publish/scheduler.ts reads
+ * `review.uploadAnyway`). It goes back in the upload line in its turn; the pace still applies, and the
+ * never-post list and the credit still refuse whatever this says.
+ */
+export function uploadAnyway(clipId: string) {
+  const p = loadProject(clipId);
+  if (p.review?.status !== 'approved') throw new Error(`${clipId} is not approved: approve it first`);
+  p.review = { ...p.review, uploadAnyway: new Date().toISOString() };
+  saveProject(p);
+  releasePick(clipId);
+  return p.review;
 }
 
 export function setReview(clipId: string, status: Review['status'], note?: string, reasons?: RejectReason[], adult?: boolean) {

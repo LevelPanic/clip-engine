@@ -240,6 +240,7 @@ npm run test:e2e      # real Twitch, a few minutes
 | `docs/architecture.md` | how it fits together, and the reference material behind it (signals, sources, output spec) |
 | `docs/pipeline.md` | the full production process on a stream, stage by stage |
 | `docs/operations.md` | running the channel: the daemons, the upload scheduler, the review page, the watchlist, publishing |
+| `DESIGN.md` | the Studio's visual system: colour, type, space, components, and why |
 | `docs/changelog.md` | what was built, measured and decided, newest first |
 | `docs/research/` | the studies and reviews the rules cite |
 | `agents/`, `lenses/`, `markers/README.md` | the agents' contracts and vocabulary, the judge's rubrics, how to add a marker type |

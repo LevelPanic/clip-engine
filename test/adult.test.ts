@@ -125,3 +125,24 @@ test('an 18+ upload asks YouTube for the age rating; others do not', async () =>
   assert.equal((plain.body as { contentDetails?: unknown }).contentDetails, undefined);
   assert.match(plain.query, /part=snippet%2Cstatus&/);
 });
+
+test('Upload anyway: only on an approval; it puts the clip back in the upload line, and a new decision clears it', async () => {
+  const { setReview, uploadAnyway } = await import('../src/review');
+  const { deferPick, listReviews } = await import('../src/review/db');
+  const { loadProject } = await import('../src/project');
+  saveProject(project('ua1'));
+  setReview('ua1', 'review');
+  assert.throws(() => uploadAnyway('ua1'), /not approved/);
+  setReview('ua1', 'approved');
+  deferPick('ua1', 'careful period until 2026-12-06 (channel.json): it is 18+');
+  assert.equal(listReviews('approved').find((r) => r.clipId === 'ua1')?.uploadStatus, 'deferred');
+  const r = uploadAnyway('ua1');
+  assert.ok(r.uploadAnyway);
+  const row = listReviews('approved').find((x) => x.clipId === 'ua1')!;
+  assert.equal(row.uploadStatus, 'pending');
+  assert.equal(row.picked, 0);
+  assert.ok(loadProject('ua1').review?.uploadAnyway);
+  setReview('ua1', 'review');
+  setReview('ua1', 'approved');
+  assert.equal(loadProject('ua1').review?.uploadAnyway, undefined, 'a new decision is checked again');
+});

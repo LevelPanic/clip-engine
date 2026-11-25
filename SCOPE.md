@@ -80,13 +80,13 @@ exports/<clipId>.mp4    1080×1920
 - **v0.6: Twitch and live streams (built).** Twitch sources, chat and viewer-clip signals, windowed Whisper, range scans and repeat passes over a stream that's still live, `clip watch`, a test suite.
 - **Next:** see **On the plate** below, the backlog in priority order.
 
-### Where we left off (updated 2026-11-23)
+### Where we left off (updated 2026-11-24)
 
 **State**
 
 - **What runs:**
   - the Studio (`./clip studio`, http://localhost:4400);
-  - the watchlist (`tools/watchlist.ts --daemon`), which works on change requests first and then on the best community moments of the listed creators and topics, one job at a time;
+  - the watchlist (`tools/watchlist.ts --daemon`), which works on change requests first and then on the best community moments of the listed creators and topics, one job at a time. **Finding new clips is paused since 2026-11-24** (the nav bar's switch): it runs change requests only until **▶ Resume**. The Studio was redesigned the same day (`DESIGN.md`), and the review page gained editable post text with Regenerate title/description and Upload anyway on careful-period holds; the upload schedule is set in Settings → Uploads;
   - the observer, which reads chat and re-ranks the moments;
   - the upload scheduler, at most 8 uploads in any 24 hours, 3 hours apart;
   - the hourly cleanup.

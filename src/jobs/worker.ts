@@ -26,6 +26,7 @@ export const LIMITS: Record<JobKind, number> = {
   split: 1,
   render: 1,
   qa: 2,
+  'post-text': 2, // one model run each, light
 };
 
 /** The running worker's pid and heartbeat. */

@@ -332,7 +332,7 @@ function ClipSettings({ project, update, presets, onSavePreset, onApplyPreset, o
           <div className="hint">{STYLES.find((st) => st.key === styleKey)?.description}</div>
         </div>
         <div className="row wrap">
-          <button className="primary" onClick={() => void runAction('autoedit', { style: styleKey })} title="Fill in the style's edits as proposals; re-applying replaces the previous engine edits">
+          <button onClick={() => void runAction('autoedit', { style: styleKey })} title="Fill in the style's edits as proposals; re-applying replaces the previous engine edits">
             Apply style
           </button>
           <button

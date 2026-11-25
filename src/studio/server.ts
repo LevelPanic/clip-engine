@@ -11,7 +11,7 @@ import { ProjectSchema, type Project, type VideoMeta, type SignalsFile, type Tra
 import { loadProject, saveProject, listClips, listPresets, presetFromProject, presetFile, loadPreset, applyPreset, suggestedPost } from '../project';
 import { loadCandidates, makeClip, setCandidateStatus, duplicateClip, deleteClip } from '../candidates';
 import { resolveMedia, footageSummary, missingRanges, SECTION_MARGIN_MS } from '../ingest/media';
-import { enqueue, listJobs, latestJob, activeJobsFor, type Job } from '../jobs/queue';
+import { enqueue, getJob, listJobs, latestJob, activeJobsFor, type Job } from '../jobs/queue';
 import { ensureWorker } from '../jobs/worker';
 import { generateMarkerIndex } from '../markers/registry-node';
 import { loadScan } from '../scan';
@@ -412,6 +412,14 @@ export async function startStudio(port: number) {
     }),
   );
   app.get('/api/jobs', h((req) => listJobs({ limit: Number(req.query.limit ?? 100) }).map(slim)));
+  app.get(
+    '/api/jobs/:id',
+    h((req) => {
+      const j = getJob(Number(req.params.id));
+      if (!j) throw new Error(`no job ${req.params.id}`);
+      return slim(j);
+    }),
+  );
   app.post(
     '/api/batch',
     h(async (req) => {
@@ -520,6 +528,99 @@ export async function startStudio(port: number) {
       };
     }),
   );
+  // the nav bar's switch: pause finding new clips (the watchlist and the observer); change requests,
+  // the upload scheduler and the cleanup keep going (src/track/watchlist.ts)
+  const watchlistState = async () => {
+    const { discoveryPause, runningWatchlist } = await import('../track/watchlist');
+    const { runningObserver } = await import('../track/observer');
+    const { listJobs: watchJobs } = await import('../track/jobs');
+    const waiting = watchJobs({ states: ['queued'] });
+    return {
+      ...discoveryPause(),
+      watchlist: runningWatchlist() ?? null,
+      observer: !!runningObserver(),
+      waiting: { moments: waiting.filter((j) => j.kind === 'twitch-moment').length, changes: waiting.filter((j) => j.kind === 'revise').length },
+    };
+  };
+  app.get('/api/watchlist', h(watchlistState));
+  app.post(
+    '/api/watchlist',
+    h(async (req) => {
+      if (typeof req.body.paused !== 'boolean') throw new Error('paused must be true or false');
+      const { setDiscoveryPaused } = await import('../track/watchlist');
+      setDiscoveryPaused(req.body.paused);
+      return watchlistState();
+    }),
+  );
+  // the post's title and description (its caption), edited on the review page; the credit block and the
+  // hashtags under the description stay the engine's. An empty description goes back to the suggestion.
+  app.post(
+    '/api/clips/:id/post',
+    h(async (req) => {
+      const p = loadProject(String(req.params.id));
+      const title = typeof req.body.title === 'string' ? req.body.title.replace(/\s+/g, ' ').trim() : undefined;
+      const caption = typeof req.body.caption === 'string' ? req.body.caption.trim() : undefined;
+      if (title !== undefined && !title) throw new Error('A title cannot be empty.');
+      if (title && title.length > 100) throw new Error(`YouTube takes 100 characters at most; this is ${title.length}.`);
+      if (caption && caption.length > 2000) throw new Error(`Keep the description under 2,000 characters; this is ${caption.length}.`);
+      const next = saveProject({ ...p, post: { ...p.post, ...(title !== undefined ? { title } : {}), ...(caption !== undefined ? { caption } : {}) } });
+      const { postFor } = await import('../core/post');
+      const { sexualTitleWords } = await import('../qa/adult');
+      const post = postFor(next.post, suggestedPost(next));
+      const words = sexualTitleWords(post.title);
+      return { post, warnings: words.length ? [`The publisher refuses a title with ${words.join(', ')}: the clip waits until the title changes.`] : [] };
+    }),
+  );
+  // Regenerate title / description: one model run in the background (a job); the page waits for its options
+  app.post(
+    '/api/clips/:id/post-text',
+    h((req) => {
+      const p = loadProject(String(req.params.id));
+      const field = req.body.field === 'caption' ? 'caption' : 'title';
+      const note = typeof req.body.note === 'string' && req.body.note.trim() ? req.body.note.trim().slice(0, 500) : undefined;
+      const j = enqueue('post-text', { clipId: p.id, videoId: p.videoId, payload: { field, note }, priority: 9 });
+      ensureWorker();
+      return slim(j);
+    }),
+  );
+  app.post(
+    '/api/clips/:id/upload-anyway',
+    h(async (req) => {
+      // past the careful period only; the never-post list and the credit still refuse (src/publish/scheduler.ts)
+      const { uploadAnyway } = await import('../review');
+      return { review: uploadAnyway(String(req.params.id)) };
+    }),
+  );
+  // Settings → Uploads: the schedule the uploader follows (src/publish/schedule.ts), with what it would do
+  // now. POST { schedule, save } previews a draft (save false) or saves it; { reset: true } goes back to
+  // the settings' defaults.
+  const scheduleView = async (draft?: unknown) => {
+    const sch = await import('../publish/schedule');
+    const { paceNow } = await import('../publish/pace');
+    const s = draft === undefined ? sch.loadSchedule() : sch.checkSchedule(draft);
+    const p = paceNow(s);
+    return {
+      schedule: s,
+      saved: sch.scheduleSaved(),
+      defaults: sch.defaultSchedule(),
+      bounds: sch.SCHEDULE_BOUNDS,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      words: sch.scheduleWords(s),
+      warnings: sch.scheduleWarnings(s),
+      dailyMost: sch.dailyMost(s),
+      now: { inDay: p.inDay, cap: p.cap, nextAt: new Date(p.nextAt).toISOString(), waitsFor: p.waitsFor ?? null },
+    };
+  };
+  app.get('/api/upload-schedule', h(() => scheduleView()));
+  app.post(
+    '/api/upload-schedule',
+    h(async (req) => {
+      const sch = await import('../publish/schedule');
+      if (req.body.reset) return (sch.resetSchedule(), scheduleView());
+      if (req.body.save) return (sch.saveSchedule(req.body.schedule), scheduleView());
+      return scheduleView(req.body.schedule);
+    }),
+  );
   app.post(
     '/api/clips/:id/retry-upload',
     h(async (req) => {
@@ -590,7 +691,8 @@ export async function startStudio(port: number) {
     } catch {}
   });
   watch(paths.library, (rel) => {
-    if (rel === 'upload-status.json' || rel === 'upload-log.jsonl') return broadcast({ type: 'upload-status' });
+    if (rel === 'upload-status.json' || rel === 'upload-log.jsonl' || rel === 'upload-schedule.json') return broadcast({ type: 'upload-status' });
+    if (rel === 'watchlist-pause.json' || rel === 'watchlist-heartbeat.json') return broadcast({ type: 'watchlist' });
     const m = /^([^/]+)\/(candidates|signals|media|download|meta|scan)\.json$/.exec(rel);
     if (m) broadcast({ type: 'video', videoId: m[1], file: m[2] });
   });

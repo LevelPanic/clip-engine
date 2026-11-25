@@ -74,9 +74,9 @@ export const SETTINGS = {
   TRACK_ENDED_HOURS: n('observer', 48, 'An ended stream is followed this long (viewer clips keep coming).', 'h'),
 
   // the upload scheduler
-  UPLOADS_PER_DAY: n('uploads', 8, 'Uploads in any 24 hours at most.'),
-  UPLOAD_MIN: n('uploads', 180, 'Minutes between uploads at least.', 'min'),
-  LEAD_MIN: n('uploads', 5, 'An upload goes live this long after it is uploaded.', 'min'),
+  UPLOADS_PER_DAY: n('uploads', 8, 'Uploads in any 24 hours at most, until Settings → Uploads is saved in the Studio.'),
+  UPLOAD_MIN: n('uploads', 180, 'Minutes between uploads at least, until Settings → Uploads is saved.', 'min'),
+  LEAD_MIN: n('uploads', 5, 'An upload goes live this long after it is uploaded, until Settings → Uploads is saved.', 'min'),
   HOLD_RETRY_MIN: n('uploads', 60, 'A clip held by a passing error is tried again after this.', 'min', 'QUOTA_MIN'),
   REFUSED_PAUSE_MIN: n('uploads', 20, 'Pause after a refusal for good, so a fault cannot sweep the line aside.', 'min'),
   AUTH_RETRY_MIN: n('uploads', 10, 'While the YouTube login is broken, a token refresh is tried this often.', 'min'),

@@ -1,7 +1,7 @@
 // The Studio's UI components: one way to draw a button, a key hint, a chip, tabs, a nav bar, a page, a
 // callout, a field, a row you can select, and a loading/empty/error state. Styles are in ui.css and read
 // only the tokens in tokens.css. A page builds from these instead of inline styles and one-off classes.
-import React, { cloneElement, isValidElement, useId, useState } from 'react';
+import React, { cloneElement, createContext, isValidElement, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 type Tone = 'default' | 'good' | 'warn' | 'bad' | 'accent';
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
@@ -24,10 +24,10 @@ export function Button({ variant, kbd, className, children, ...rest }: React.But
 
 export const Kbd = ({ children }: { children: React.ReactNode }) => <kbd>{children}</kbd>;
 
-/** The keys a page answers to, in one format everywhere: `[['A', 'approve'], ['R', 'reject']]`. */
-export function ShortcutLegend({ keys, label = 'Keyboard shortcuts' }: { keys: [string, string][]; label?: string }) {
+/** The keys a page answers to, in one format everywhere: `[['A', 'approve'], ['R', 'reject']]`; `stacked` is one per line (in a popover). */
+export function ShortcutLegend({ keys, label = 'Keyboard shortcuts', stacked }: { keys: [string, string][]; label?: string; stacked?: boolean }) {
   return (
-    <div className="legend" aria-label={label}>
+    <div className={cx('legend', stacked && 'stacked')} aria-label={label}>
       {keys.map(([k, what]) => (
         <span key={k + what}>
           {k.split(' ').map((part) => (
@@ -59,7 +59,7 @@ export function Tabs<K extends string>({ tabs, value, onChange, label }: { tabs:
       {tabs.map((t) => (
         <button key={t.key} type="button" role="tab" aria-selected={t.key === value} onClick={() => onChange(t.key)}>
           {t.label}
-          {t.count !== undefined && ` (${t.count})`}
+          {t.count !== undefined && <span className="count">{t.count}</span>}
         </button>
       ))}
     </div>
@@ -68,26 +68,109 @@ export function Tabs<K extends string>({ tabs, value, onChange, label }: { tabs:
 
 // ---------- Navigation ----------
 
-export type Section = 'library' | 'review' | 'jobs' | 'video';
+export type Section = 'library' | 'review' | 'jobs' | 'settings' | 'video';
+
+/** What the app puts at the right end of every nav bar (the watchlist's switch), set once in App.tsx. */
+export const NavEnd = createContext<React.ReactNode>(null);
+
+/** The Studio's sections, and one line on each that the nav shows when you rest on it (pages keep the space for the work). */
+const SECTIONS: { key: Section; href: string; label: string; about: string }[] = [
+  { key: 'library', href: '#/', label: 'Library', about: 'The videos and streams the engine has read, and the clips made from them.' },
+  { key: 'review', href: '#/review', label: 'Review', about: 'Watch each clip and decide with one key. Approved clips go to the upload line.' },
+  { key: 'jobs', href: '#/jobs', label: 'Jobs', about: 'Renders, downloads and other Studio work, newest first.' },
+  { key: 'settings', href: '#/settings', label: 'Settings', about: 'How the channel uploads: how many a day, how far apart, the posting hours, and a pause.' },
+];
 
 /** The bar at the top of every page but the editor: the Studio's sections, the current one marked. */
 export function Nav({ current, children }: { current: Section; children?: React.ReactNode }) {
-  const link = (s: Section, href: string, label: string) => (
-    <a href={href} aria-current={current === s ? 'page' : undefined}>
-      {label}
-    </a>
-  );
+  const end = useContext(NavEnd);
+  const base = useId();
   return (
     <nav className="nav" aria-label="Studio">
       <a className="brand" href="#/">
-        Clip Studio
+        <span className="mark" aria-hidden="true" />
+        <span className="brand-name">Clip Studio</span>
       </a>
-      {link('library', '#/', 'Library')}
-      {link('review', '#/review', 'Review')}
-      {link('jobs', '#/jobs', 'Jobs')}
-      {children && <span className="grow" />}
+      {SECTIONS.map(({ key, href, label, about }) => (
+        <span key={key} className="nav-item">
+          <a href={href} aria-current={current === key ? 'page' : undefined} aria-describedby={`${base}-${key}`}>
+            {label}
+          </a>
+          <span className="nav-pop" role="tooltip" id={`${base}-${key}`}>
+            {about}
+          </span>
+        </span>
+      ))}
+      {(children || end) && <span className="grow" />}
       {children}
+      {end}
     </nav>
+  );
+}
+
+/** A button that opens a small panel under it (a page's keyboard shortcuts); Esc or a click elsewhere closes it. */
+export function Popover({
+  trigger,
+  label,
+  open,
+  onOpenChange,
+  align = 'right',
+  small,
+  children,
+}: {
+  trigger: React.ReactNode;
+  label: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Which edge of the button the panel lines up with. */
+  align?: 'left' | 'right';
+  small?: boolean;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const id = useId();
+  // fixed to the screen under its button, so a scrolling panel around it cannot clip it
+  const [pos, setPos] = useState<React.CSSProperties>();
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = ref.current?.getBoundingClientRect();
+      if (r) setPos(align === 'left' ? { top: r.bottom + 6, left: Math.max(8, r.left) } : { top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) });
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [open, align]);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) onOpenChange(false);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onOpenChange(false);
+    };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', away);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [open, onOpenChange]);
+  return (
+    <span className="popover-anchor" ref={ref}>
+      <Button variant="ghost" className={cx(small && 'small-button')} aria-expanded={open} aria-controls={id} onClick={() => onOpenChange(!open)}>
+        {trigger}
+      </Button>
+      {open && (
+        <div className="popover" style={pos} id={id} role="dialog" aria-label={label}>
+          {children}
+        </div>
+      )}
+    </span>
   );
 }
 
@@ -102,6 +185,19 @@ export function Page({ width, nav, children }: { width?: 'medium' | 'wide'; nav?
       {nav && <Nav current={nav} />}
       {children}
     </div>
+  );
+}
+
+/** A page's heading: its title, one line on what it is for, and the page's own actions on the right. */
+export function PageHead({ title, description, children }: { title: React.ReactNode; description?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <header className="page-head">
+      <div className="page-head-text">
+        <h1>{title}</h1>
+        {description && <p>{description}</p>}
+      </div>
+      {children}
+    </header>
   );
 }
 
@@ -176,7 +272,7 @@ export function PageState({ kind, children, onRetry }: { kind: 'loading' | 'empt
 export function Thumb({ videoId }: { videoId: string }) {
   const [failed, setFailed] = React.useState(false);
   if (failed) return <span className="thumb empty-thumb">no picture</span>;
-  return <img className="thumb" src={`/api/videos/${videoId}/thumbnail`} alt="" width={96} height={54} loading="lazy" onError={() => setFailed(true)} />;
+  return <img className="thumb" src={`/api/videos/${videoId}/thumbnail`} alt="" width={112} height={63} loading="lazy" onError={() => setFailed(true)} />;
 }
 
 // ---------- Copy ----------

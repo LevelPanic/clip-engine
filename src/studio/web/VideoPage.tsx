@@ -8,7 +8,7 @@ import { durationInFrames, WIDTH, HEIGHT, type ClipProps } from '../../compositi
 import { defaultCaptions, defaultFraming, type Candidate, type SignalsFile, type VideoMeta, type Word, type Project } from '../../core/schemas';
 import { fmtTime, parseTime, FPS } from '../../core/time';
 import { SIGNAL_COLORS } from './ui/tokens';
-import { Button, Callout, Chip, Nav, PageState, ShortcutLegend, rowKeys } from './ui';
+import { Button, Callout, Chip, Nav, PageHead, PageState, ShortcutLegend, rowKeys } from './ui';
 
 interface VideoData {
   meta: VideoMeta;
@@ -160,38 +160,37 @@ export function VideoPage({ videoId }: { videoId: string }) {
   return (
     <div className="page wide">
       <Nav current="video" />
-      <div className="row top">
-        <div className="grow">
-          <h1>{meta.title}</h1>
-          <div className="muted">
+      <PageHead
+        title={meta.title}
+        description={
+          <>
             {meta.channel} · {fmtTime(meta.durationMs, 0)}
             {meta.live ? (
               <>
                 {' '}
-                <Chip on tone="bad">
-                  ● live, growing
-                </Chip>
+                <Chip tone="bad">live, growing</Chip>
               </>
-            ) : null} ·{' '}
+            ) : null}{' '}
+            ·{' '}
             <a href={meta.url} target="_blank" rel="noreferrer">
               {meta.platform === 'twitch' ? 'Twitch' : 'YouTube'}
             </a>{' '}
             · {footageLabel(d.footage, d.jobs)}
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {d.footage.stillImage && (
-        <Callout tone="warn" className="mt-4 warn">
-          ⚠ This upload is a still image (an audio-only podcast with cover art), so shorts from it will be static art with captions. Look for the
+        <Callout tone="warn" className="mt-4">
+          This upload is a still image (an audio-only podcast with cover art), so shorts from it will be static art with captions. Look for the
           episode's video version, or plan an audiogram-style edit.
         </Callout>
       )}
       {(meta.platform === 'twitch' || d.scan.passes.length > 0) && <ScanPanel videoId={videoId} meta={meta} scan={d.scan} jobs={d.jobs} />}
 
       {signals && (
-        <div className="card pad-sm mt-4">
-          <div className="row wrap mb-1">
+        <div className="card pad mt-4">
+          <div className="row wrap gap-2 mb-3">
             {Object.entries(signals.available).filter(([k]) => (meta.platform === 'twitch' ? !['comments', 'heatmap', 'teaser'].includes(k) : !['chat', 'clips'].includes(k))).map(([k, on]) => (
               <span key={k} className={`chip ${on ? 'on' : ''}`} title={on ? 'signal found' : 'not available for this video'}>
                 <span className="dot" style={{ background: on ? SIGNAL_COLORS[k] : 'var(--line-strong)' }} />
@@ -280,7 +279,7 @@ export function VideoPage({ videoId }: { videoId: string }) {
                           ? 'Good hook, missing payoff: find a longer cut that lands it'
                           : 'Not worth the audience’s time'
                     }
-                    className={`chip ${c.verdict === 'post' ? 'good' : c.verdict === 'recut' ? 'amber' : 'muted'}`}
+                    className={`chip ${c.verdict === 'post' ? 'tone-good' : c.verdict === 'recut' ? 'tone-warn' : ''}`}
                   >
                     {c.verdict}
                   </span>
@@ -296,7 +295,7 @@ export function VideoPage({ videoId }: { videoId: string }) {
               <div className="row wrap mt-1">
                 <ClipState info={d.clips?.[c.id]} />
                 <span className="grow" />
-                <button className="primary" disabled={busy || c.status === 'skipped'} onClick={(e) => (e.stopPropagation(), c.clipId ? go(`#/clip/${c.clipId}`) : void make(c))} title="Open it in the editor">
+                <button disabled={busy || c.status === 'skipped'} onClick={(e) => (e.stopPropagation(), c.clipId ? go(`#/clip/${c.clipId}`) : void make(c))} title="Open it in the editor">
                   Edit
                 </button>
                 <button disabled={busy || c.status === 'skipped'} onClick={(e) => (e.stopPropagation(), void exportCands([c.id]))} title={`Render it now (${exportStyle === 'none' ? 'as is' : `style: ${exportStyle}`}); it lands in the review queue`}>
@@ -596,9 +595,9 @@ function ScanPanel({ videoId, meta, scan, jobs }: { videoId: string; meta: Video
   // a watcher mid-pass holds the scan lock; a second scan would only fail
   const busy = !!running || (!!w && scan.watchAlive && (w.state === 'scanning' || w.state === 'judging'));
   return (
-    <div className="card pad-sm mt-4">
+    <div className="card pad mt-4">
       <div className="row wrap gap-2">
-        <strong>Stream scan</strong>
+        <h3 className="section-title">Stream scan</h3>
         <span className="muted">
           {merged.length ? `scanned ${merged.map((r) => `${fmtTime(r.startMs, 0)}–${fmtTime(r.endMs, 0)}`).join(', ')}` : 'not scanned yet'}
           {last ? ` · ${scan.passes.length} pass${scan.passes.length > 1 ? 'es' : ''}, last ${ago(last.at)}` : ''}
@@ -608,7 +607,7 @@ function ScanPanel({ videoId, meta, scan, jobs }: { videoId: string; meta: Video
             watching · {w.state === 'waiting' && w.nextAt ? `next pass ${Math.max(0, Math.round((Date.parse(w.nextAt) - Date.now()) / 60_000))} min` : w.state}
           </span>
         )}
-        {w && !scan.watchAlive && w.state !== 'ended' && <span className="chip warn">watcher stopped</span>}
+        {w && !scan.watchAlive && w.state !== 'ended' && <span className="chip tone-warn">watcher stopped</span>}
         <span className="grow" />
         {running && <span className="chip on">{running.kind === 'judge' ? 'judging…' : `scanning${running.progress ? ` · ${running.progress}` : '…'}`}</span>}
       </div>
@@ -618,8 +617,8 @@ function ScanPanel({ videoId, meta, scan, jobs }: { videoId: string; meta: Video
           ⚠ The last pass was scanned but not judged: {scan.judgeError}
         </div>
       ) : null}
-      <div className="row wrap mt-3">
-        <button className="primary" disabled={busy || !scan.passes.length} onClick={() => void start({ cont: true })} title="Scan from where the last pass stopped up to now (2 min overlap), then judge it into candidates">
+      <div className="row wrap mt-4">
+        <button disabled={busy || !scan.passes.length} onClick={() => void start({ cont: true })} title="Scan from where the last pass stopped up to now (2 min overlap), then judge it into candidates">
           Scan new part
         </button>
         <span className="muted">or a range</span>

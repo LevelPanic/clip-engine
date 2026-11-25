@@ -16,20 +16,32 @@ export const UNKNOWN_LIFT_MS = 6 * H;
 /** A refusal by YouTube's limit lowers the cap for this long after it. */
 export const ALLOWANCE_MS = 2 * DAY;
 
+/** A daily window uploads may go in, in a time zone: "09:00" to "23:00", or overnight ("22:00" to "02:00"). */
+export interface UploadWindow {
+  from: string;
+  to: string;
+  timeZone: string;
+}
+
 export interface PaceRule {
   perDay: number;
   everyMin: number;
+  /** Only upload inside this window; absent: any time of day. */
+  window?: UploadWindow;
+  /** Nothing goes up until it is resumed. */
+  paused?: boolean;
 }
 
-export interface Pace extends PaceRule {
+export interface Pace extends Omit<PaceRule, 'paused'> {
+  paused?: boolean;
   /** Uploads allowed in any 24 hours: `perDay`, or fewer when YouTube's limit last let fewer through. */
   cap: number;
   /** Uploads in the 24 hours before now. */
   inDay: number;
   /** When the next upload may go; at or before now, it may go now. */
   nextAt: number;
-  /** What it waits for: the gap after the last upload, or the day's cap. */
-  waitsFor?: 'spacing' | 'cap';
+  /** What it waits for: the gap after the last upload, the day's cap, the posting hours, or a pause. */
+  waitsFor?: 'spacing' | 'cap' | 'window' | 'paused';
   /** YouTube's limit refused an upload after it let this many through in 24 hours (the cap's source when lower). */
   allowance?: { allowed: number; refusedAt: number };
 }
@@ -46,16 +58,47 @@ export function paceAt(o: PaceRule & { uploads: number[]; limitRefusals: number[
   const spacingAt = ups.length ? ups[ups.length - 1] + o.everyMin * MIN : -Infinity;
   // the day's cap lifts when enough of the last 24 hours' uploads are a day old
   const capAt = day.length >= cap ? day[day.length - cap] + DAY : -Infinity;
-  const nextAt = Math.max(spacingAt, capAt, o.now);
+  let nextAt = Math.max(spacingAt, capAt, o.now);
+  let waitsFor: Pace['waitsFor'] = nextAt > o.now ? (capAt >= spacingAt ? 'cap' : 'spacing') : undefined;
+  // outside the posting hours the next one waits for them to open
+  if (o.window) {
+    const open = windowOpenAt(nextAt, o.window);
+    if (open > nextAt) (nextAt = open), (waitsFor = 'window');
+  }
+  // paused: a year out stands for "until resumed" (the uploader looks again every minute)
+  if (o.paused) (nextAt = o.now + 365 * DAY), (waitsFor = 'paused');
   return {
     perDay: o.perDay,
     everyMin: o.everyMin,
+    ...(o.window ? { window: o.window } : {}),
+    ...(o.paused ? { paused: true } : {}),
     cap,
     inDay: day.length,
     nextAt,
-    ...(nextAt > o.now ? { waitsFor: capAt >= spacingAt ? ('cap' as const) : ('spacing' as const) } : {}),
+    ...(waitsFor ? { waitsFor } : {}),
     ...(allowed !== null ? { allowance: { allowed, refusedAt } } : {}),
   };
+}
+
+/** How far into its day `t` is, in a time zone (ms). */
+function msIntoDay(t: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date(t));
+  const n = (k: string) => Number(parts.find((p) => p.type === k)?.value ?? 0);
+  return ((n('hour') * 60 + n('minute')) * 60 + n('second')) * 1000 + (((t % 1000) + 1000) % 1000);
+}
+
+const hhmm = (s: string) => {
+  const [h, m] = s.split(':').map(Number);
+  return (h * 60 + m) * MIN;
+};
+
+/** `t` if it is inside the window, else when the window next opens. A day that changes the clock (DST) can be an hour out. */
+export function windowOpenAt(t: number, w: UploadWindow): number {
+  const into = msIntoDay(t, w.timeZone);
+  const from = hhmm(w.from);
+  const to = hhmm(w.to);
+  const inside = from < to ? into >= from && into < to : into >= from || into < to;
+  return inside ? t : t + ((from - into + DAY) % DAY);
 }
 
 /**
@@ -70,10 +113,7 @@ export function limitLiftsAt(uploads: number[], now: number): number {
 
 /** The next midnight in Pacific time, when the Cloud project's YouTube quotas reset. */
 export function pacificMidnightAfter(now: number): number {
-  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hourCycle: 'h23', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(new Date(now));
-  const n = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
-  const into = ((n('hour') * 60 + n('minute')) * 60 + n('second')) * 1000 + (now % 1000);
-  return now + DAY - into;
+  return now + DAY - msIntoDay(now, 'America/Los_Angeles');
 }
 
 /** The scheduler's pace now, from the publish records and the upload log. */
@@ -86,7 +126,14 @@ export function paceNow(rule: PaceRule, now = Date.now()): Pace {
 
 /** "3 hours apart", "8 in 24 hours": the rule in words, for logs and the review page. */
 export function paceWords(p: Pace): string {
-  const gap = p.everyMin % 60 === 0 ? `${p.everyMin / 60} hour${p.everyMin === 60 ? '' : 's'}` : `${p.everyMin} minutes`;
+  if (p.paused) return 'paused (Settings → Uploads)';
   const capped = p.cap < p.perDay && p.allowance ? `, held to ${p.cap} because YouTube's limit refused the ${p.allowance.allowed + 1}th` : '';
-  return `at most ${p.cap} in 24 hours, ${gap} apart${capped}`;
+  return `at most ${p.cap} in 24 hours, ${gapWords(p.everyMin)} apart${p.window ? `, between ${p.window.from} and ${p.window.to} (${p.window.timeZone})` : ''}${capped}`;
+}
+
+/** "3 hours", "90 minutes", "1 hour 30 minutes". */
+export function gapWords(min: number): string {
+  if (min % 60 === 0) return `${min / 60} hour${min === 60 ? '' : 's'}`;
+  if (min < 60) return `${min} minutes`;
+  return `${Math.floor(min / 60)} hour${min < 120 ? '' : 's'} ${min % 60} minutes`;
 }

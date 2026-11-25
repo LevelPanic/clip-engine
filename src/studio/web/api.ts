@@ -29,6 +29,7 @@ export type StudioEvent =
   | { type: 'video'; videoId: string; file: string }
   | { type: 'export'; clipId: string }
   | { type: 'upload-status' }
+  | { type: 'watchlist' }
   | { type: 'job'; job: SlimJob };
 
 export interface SlimJob {
@@ -137,7 +138,7 @@ export function useStore<T>(store: Store<T>): T {
 
 // ---------- routing ----------
 
-export type Route = { page: 'library' } | { page: 'review'; id?: string } | { page: 'jobs' } | { page: 'video'; id: string } | { page: 'clip'; id: string };
+export type Route = { page: 'library' } | { page: 'review'; id?: string } | { page: 'jobs' } | { page: 'settings' } | { page: 'video'; id: string } | { page: 'clip'; id: string };
 
 export function parseRoute(hash: string): Route {
   const [, page, id] = hash.replace(/^#/, '').split('/');
@@ -146,6 +147,7 @@ export function parseRoute(hash: string): Route {
   // #/review/<clipId> opens the review page on that clip (its tab), e.g. back from the editor
   if (page === 'review') return id ? { page: 'review', id } : { page: 'review' };
   if (page === 'jobs') return { page: 'jobs' };
+  if (page === 'settings') return { page: 'settings' };
   return { page: 'library' };
 }
 

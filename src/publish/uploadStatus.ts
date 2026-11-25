@@ -24,7 +24,7 @@ export interface UploadStatus {
   /** How often a held clip is tried (HOLD_RETRY_MIN): a passing error only; a limit is waited out to when it lifts. */
   retryEveryMin?: number;
   /** The posting pace (src/publish/pace.ts): the rule, today's count and when the next may go. Kept across state changes. */
-  pace?: { perDay: number; everyMin: number; cap: number; inDay: number; nextAt: string; waitsFor?: 'spacing' | 'cap' };
+  pace?: { perDay: number; everyMin: number; cap: number; inDay: number; nextAt: string; waitsFor?: 'spacing' | 'cap' | 'window' | 'paused'; window?: { from: string; to: string; timeZone: string }; paused?: boolean };
 }
 
 export const uploadStatusFile = () => path.join(paths.library, 'upload-status.json');

@@ -4,6 +4,10 @@ import type { Handler } from '../jobs/worker';
 import type { JobKind } from '../jobs/queue';
 
 export const handlers: Partial<Record<JobKind, Handler>> = {
+  'post-text': async (j, progress) => {
+    const { regeneratePostText } = await import('./postText');
+    return regeneratePostText({ clipId: j.clipId!, field: j.payload.field === 'caption' ? 'caption' : 'title', note: typeof j.payload.note === 'string' ? j.payload.note : undefined, log: progress });
+  },
   ingest: async (j, progress) => {
     const { ingest } = await import('../ingest/ingest');
     const r = await ingest(String(j.payload.url ?? j.videoId), { audio: true, full: false, refresh: false, wait: false, log: progress });

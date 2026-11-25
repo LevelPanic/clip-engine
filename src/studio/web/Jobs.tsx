@@ -1,12 +1,11 @@
 // Jobs: what the worker is doing, and how long each kind of job takes (the time-per-clip numbers).
 import React, { useCallback, useEffect, useState } from 'react';
 import { api, useEvents, type SlimJob } from './api';
-import { Page, PageState } from './ui';
+import { Chip, Page, PageHead, PageState } from './ui';
 
 type Job = SlimJob & { createdAt: string; startedAt: string | null; finishedAt: string | null; batchId: string | null };
 
 const secs = (j: Job) => (j.startedAt && j.finishedAt ? (Date.parse(j.finishedAt) - Date.parse(j.startedAt)) / 1000 : null);
-const stateClass = (s: Job['state']) => (s === 'failed' ? 'bad' : s === 'done' ? 'good' : 'warn');
 
 export function Jobs() {
   const [jobs, setJobs] = useState<Job[] | null>(null);
@@ -40,45 +39,68 @@ export function Jobs() {
 
   return (
     <Page width="medium" nav="jobs">
-      <h1>Jobs</h1>
+      <PageHead title="Jobs" description="Renders, downloads and other Studio work, newest first. The watchlist's clip jobs are on its own status page." />
       {error && <PageState kind="error" onRetry={() => void load()}>Could not load the jobs: {error}</PageState>}
       {!jobs && !error && <PageState kind="loading" />}
       {jobs && !jobs.length && <PageState kind="empty">No jobs yet. Renders, downloads and batches show up here while they run.</PageState>}
       {jobs && jobs.length > 0 && (
         <>
-          <h2>Time per job (median of the last 300)</h2>
+          <h2>Time per job <span className="muted">median of the last 300</span></h2>
           <div className="card list">
-            {summary.map((s) => (
-              <div key={s.kind} className="item">
-                <span className="strong" style={{ width: 110 }}>
-                  {s.kind}
-                </span>
-                <span className="grow muted">
-                  {s.done} done{s.failed ? ` · ${s.failed} failed` : ''}
-                  {s.active ? ` · ${s.active} active` : ''}
-                </span>
-                <span className="mono">{s.median !== null ? `${s.median.toFixed(1)} s` : '—'}</span>
-              </div>
-            ))}
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Kind</th>
+                  <th>Runs</th>
+                  <th className="num">Median</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.map((s) => (
+                  <tr key={s.kind}>
+                    <td className="strong">{s.kind}</td>
+                    <td className="muted">
+                      {s.done} done{s.failed ? ` · ${s.failed} failed` : ''}
+                      {s.active ? ` · ${s.active} active` : ''}
+                    </td>
+                    <td className="num">{s.median !== null ? `${s.median.toFixed(1)} s` : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <h2>Recent</h2>
           <div className="card list">
-            {jobs.map((j) => (
-              <div key={j.id} className="item compact">
-                <span className="mono muted" style={{ width: 48 }}>
-                  #{j.id}
-                </span>
-                <span style={{ width: 100 }}>{j.kind}</span>
-                <span className={stateClass(j.state)} style={{ width: 80 }}>
-                  {j.state}
-                </span>
-                <span className="mono" style={{ width: 200 }}>
-                  {j.clipId ? <a href={`#/clip/${j.clipId}`}>{j.clipId}</a> : j.videoId ? <a href={`#/video/${j.videoId}`}>{j.videoId}</a> : ''}
-                </span>
-                <span className="grow muted ellipsis">{j.state === 'failed' ? j.error?.split('\n')[0] : j.progress}</span>
-                <span className="mono muted">{secs(j) !== null ? `${secs(j)!.toFixed(1)} s` : ''}</span>
-              </div>
-            ))}
+            <table className="table">
+              <thead>
+                <tr>
+                  <th className="num">Job</th>
+                  <th>Kind</th>
+                  <th>State</th>
+                  <th>Clip or video</th>
+                  <th>Progress</th>
+                  <th className="num">Took</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobs.map((j) => (
+                  <tr key={j.id}>
+                    <td className="num muted">#{j.id}</td>
+                    <td>{j.kind}</td>
+                    <td>
+                      <Chip small tone={j.state === 'done' ? 'good' : j.state === 'failed' ? 'bad' : j.state === 'running' ? 'accent' : 'default'}>
+                        {j.state}
+                      </Chip>
+                    </td>
+                    <td className="mono">{j.clipId ? <a href={`#/clip/${j.clipId}`}>{j.clipId}</a> : j.videoId ? <a href={`#/video/${j.videoId}`}>{j.videoId}</a> : ''}</td>
+                    <td className="muted clip">
+                      <div className="ellipsis">{j.state === 'failed' ? j.error?.split('\n')[0] : j.progress}</div>
+                    </td>
+                    <td className="num muted">{secs(j) !== null ? `${secs(j)!.toFixed(1)} s` : ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </>
       )}

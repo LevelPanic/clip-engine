@@ -15,6 +15,7 @@ import { claim, complete, fail, markDone, readUpTo, recover, summary, unqueueFro
 import { listMoments, listStreams, saveCoverage, setStreamStatus, tierOf, updateCoverage, type StreamRow } from '../src/track/db';
 import { rankAndStore, unreadable } from '../src/track/rank';
 import { runningObserver, writeHeartbeat } from '../src/track/observer';
+import { discoveryPause } from '../src/track/watchlist';
 import { setting } from '../src/core/config';
 
 const args = process.argv.slice(2);
@@ -147,7 +148,18 @@ if (has('--daemon') || has('--once')) {
   process.on('SIGINT', stop);
   log(`observer: chat in reads of up to ${CHUNK_MIN} min (a live stream's new minutes in batches of ${LIVE_BATCH_MIN}), every stream re-ranked every ${RANK_EVERY_MIN} min`);
   let lastBacklog = 0;
+  let wasPaused = false;
   for (;;) {
+    // finding new clips paused in the Studio: read nothing; the ledger says where to pick up on resume
+    const paused = discoveryPause().paused;
+    if (paused !== wasPaused) log(paused ? 'paused (the Studio): no reading or ranking until it is resumed' : 'resumed (the Studio)');
+    wasPaused = paused;
+    if (paused) {
+      heartbeat();
+      if (has('--once')) break;
+      await sleep(30_000);
+      continue;
+    }
     const streams = twitchTracked();
     closeEnded(streams);
     await rankDue(streams);

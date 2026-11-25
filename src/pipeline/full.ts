@@ -78,7 +78,8 @@ export function cli(args: string[], timeout = 30 * 60_000): Promise<{ ok: boolea
   });
 }
 
-async function runAgent(o: { title: string; prompt: string; timeoutMs: number; log: (s: string) => void }): Promise<string> {
+/** One run of the pipeline's model through OpenCode (its whole output is kept in .cache/full/); the last lines of what it said. */
+export async function runAgent(o: { title: string; prompt: string; timeoutMs: number; log: (s: string) => void }): Promise<string> {
   const opencode = findOpencode();
   if (!opencode) throw new Error('OpenCode CLI not found');
   const model = setting('CLIP_PIPELINE_MODEL');

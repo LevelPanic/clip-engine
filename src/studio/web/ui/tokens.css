@@ -1,93 +1,126 @@
-/* The Studio's design tokens: every colour, size, space, radius, shadow and layer the UI uses.
+/* The Studio's design tokens: every colour, size, space, radius, shadow, motion and layer the UI uses.
    styles.css and the ui/ components read these; a page never writes a raw colour or size.
-   Colours that canvas and SVG code need as values (the signal colours) are in tokens.ts. */
+   Colours that canvas and SVG code need as values (the signal colours) are in tokens.ts.
+   Why these values: DESIGN.md at the project root. */
 :root {
   color-scheme: dark;
 
-  /* surfaces, darkest first */
-  --bg: #0e1014;
-  --panel: #161921;
-  --panel2: #1c2029;
-  --hover: #222734;
-  --surface-sel: #1d2130;
+  /* surfaces, darkest first: a neutral graphite, so the video and the state colours carry the colour */
+  --bg: #0b0c0f;
+  --panel: #121419;
+  --panel2: #181b21;
+  --hover: #1f232b;
+  --surface-sel: #172133; /* a selected row: the accent's hue, barely */
   --media-bg: #000;
-  --dim: rgba(0, 0, 0, 0.45);
+  --dim: rgba(0, 0, 0, 0.5);
 
-  /* lines */
-  --line-soft: #1d212a;
-  --line: #272c37;
-  --tick: #2c3240;
-  --line-strong: #3a4150;
-  --line-field: #5f6779; /* 3:1 or more against the field and the panel (WCAG 1.4.11) */
+  /* lines: separate with these or with space, never both a line and a shadow on one card */
+  --line-soft: #171a20;
+  --line: #23272f;
+  --tick: #2b3039;
+  --line-strong: #363c47;
+  --line-field: #666d7b; /* 3:1 or more against the field and the panel (WCAG 1.4.11) */
 
   /* text */
-  --text: #e7e9ee;
-  --text-2: #cfd3dc;
-  --muted: #8a92a6; /* 5.2:1 or more on every surface */
+  --text: #eceef2;
+  --text-2: #c3c8d1;
+  --muted: #8f96a3; /* 5.2:1 or more on every surface */
 
-  /* the accent */
-  --accent: #7c5cff;
-  --accent2: #9d85ff; /* links and accent text: 6:1 on the surfaces */
-  --accent-strong: #7354f7; /* a filled button: white on it is 4.8:1 */
-  --accent-strong-hover: #6546ea;
-  --accent-tint: rgba(124, 92, 255, 0.18);
-  --accent-tint-soft: rgba(124, 92, 255, 0.1);
-  --accent-deep: #3b2f80;
-  --proposal-bg: #2a2140;
+  /* the accent: one blue, for what is interactive or selected (links, focus, the current tab) */
+  --accent: #4d8dff;
+  --accent2: #8ab4ff; /* links and accent text: 7.5:1 or more on the surfaces */
+  --accent-strong: #2f6fe4; /* a filled accent surface: white on it is 4.6:1 */
+  --accent-strong-hover: #2560cc;
+  --accent-tint: rgba(77, 141, 255, 0.16);
+  --accent-tint-soft: rgba(77, 141, 255, 0.08);
+  --accent-deep: #1b3260;
+  --proposal-bg: #141d2e;
 
-  /* states */
-  --good: #22c55e;
-  --good-tint: #1e3a2a;
-  --good-text: #9be3b5;
-  --warn: #f5b84a;
-  --amber: #fbbf24;
-  --bad: #ef4444;
-  --bad-tint: rgba(239, 68, 68, 0.22);
-  --bad-text: #ffb4b4;
+  /* the main action: one per view, near-white on the graphite (16:1) */
+  --primary: #eceef2;
+  --primary-hover: #ffffff;
+  --on-primary: #0b0c0f;
+
+  /* states: colour means something here (approved, careful, failed), so it is not decoration */
+  --good: #3ccf7f;
+  --good-tint: #10291c;
+  --good-text: #94e5b8;
+  --warn: #eab24c;
+  --warn-tint: #2a2112;
+  --amber: #f2be3c;
+  --bad: #f0564f;
+  --bad-tint: rgba(240, 86, 79, 0.16);
+  --bad-text: #ffb2ad;
   --playhead: #ff4d6d;
   --info: #38bdf8; /* the split editor's game box */
   --checker-a: #1d1d1d; /* the split editor's transparency checkerboard */
   --checker-b: #2b2b2b;
 
-  /* type */
-  --font-ui: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --fs-xs: 10px;
-  --fs-sm: 11px;
-  --fs-md: 12px;
-  --fs-base: 13px;
-  --fs-lg: 14px;
-  --fs-xl: 16px;
-  --fs-h1: 20px;
+  /* type: Instrument Sans for the interface, JetBrains Mono for ids and timecodes (ui/fonts.ts loads both) */
+  --font-ui: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --fs-xs: 11px; /* timeline ticks and tags only */
+  --fs-sm: 12px; /* meta, chips, key hints */
+  --fs-md: 13px; /* secondary text, dense panels */
+  --fs-base: 14px; /* body */
+  --fs-lg: 15px; /* list titles */
+  --fs-xl: 18px; /* a panel's title */
+  --fs-h2: 16px; /* a section */
+  --fs-h1: 26px; /* a page */
+  --lh-tight: 1.25;
+  --lh: 1.5;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --tracking-tight: -0.015em; /* headings only */
 
-  /* space */
+  /* space: a 4 px scale; related things sit close, separate groups get the larger steps */
   --s-1: 2px;
   --s-2: 4px;
   --s-3: 6px;
   --s-4: 8px;
-  --s-5: 10px;
-  --s-6: 12px;
-  --s-7: 14px;
-  --s-8: 16px;
-  --s-9: 24px;
+  --s-5: 12px;
+  --s-6: 16px;
+  --s-7: 20px;
+  --s-8: 24px;
+  --s-9: 32px;
+  --s-10: 48px;
+  --s-11: 64px;
 
-  /* radius */
+  /* radius: small and consistent; media gets the largest */
   --r-xs: 3px;
-  --r-sm: 4px;
-  --r-md: 6px;
-  --r-lg: 8px;
-  --r-xl: 10px;
+  --r-sm: 5px;
+  --r-md: 7px;
+  --r-lg: 10px;
+  --r-xl: 14px;
   --r-pill: 999px;
   --radius: var(--r-lg);
 
-  /* shadow and focus */
-  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-media: 0 6px 30px rgba(0, 0, 0, 0.5);
-  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent2);
+  /* shadow (floating layers only: menus, toasts, the player) and focus */
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-media: 0 10px 40px rgba(0, 0, 0, 0.6);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+
+  /* motion: quick, no bounce */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+
+  /* sizes */
+  --nav-h: 56px;
+  --control-h: 32px;
+  --control-h-sm: 26px;
 
   /* layers */
   --z-timeline-items: 4;
+  --z-sticky: 20;
   --z-menu: 50;
   --z-bar: 100;
   --z-toast: 100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+  }
 }

@@ -28,6 +28,7 @@ import { revisionKey, revisionsToQueue } from '../src/track/revise';
 import { unreadable } from '../src/track/rank';
 import { jobEnding } from '../src/track/runner';
 import { runningObserver } from '../src/track/observer';
+import { claimableKinds, discoveryPause, writeWatchlistHeartbeat } from '../src/track/watchlist';
 import { armCounts, claimNext, dropQueued, finishJob, insertJob, listJobs, renewLease, requeueStale, saveStage, workerAlive, workerId, type WatchJob } from '../src/track/jobs';
 import { paint } from '../src/track/coverage';
 import { listReviews } from '../src/review/db';
@@ -107,6 +108,13 @@ const LEASE_MS = 10 * 60_000;
 const activeJobs = () => listJobs({ states: ['queued', 'running'] });
 /** The job running now (a stop puts it back in line). */
 let current: Job | undefined;
+
+/** The heartbeat the Studio reads (is the watchlist running, and on what): every minute and whenever a job starts or ends. */
+function beat() {
+  if (DRY || !has('--daemon')) return;
+  const job = current && { kind: current.kind, creator: current.creator, videoId: current.videoId, momentId: current.momentId };
+  writeWatchlistHeartbeat({ job, queued: activeJobs().filter((j) => j.state === 'queued').length });
+}
 const entry = (c: Creator) => (state.creators[c.name] ??= { platform: c.platform, handle: c.handle, seen: {} });
 /** A write to the tracker (library/tracking.sqlite); a dry run only reads. */
 const track = (fn: () => void) => {
@@ -345,7 +353,7 @@ function pickMoment(busy: Set<string>): { m: ReturnType<typeof nextMoments>[numb
 }
 
 function enqueueMoment(): boolean {
-  if (DRY) return false;
+  if (DRY || discoveryPause().paused) return false;
   const live = listJobs({ states: ['queued', 'running'], kind: 'twitch-moment' });
   const busy = new Set(live.map((j) => `${j.videoId}|${j.momentId}`));
   const picked = pickMoment(busy);
@@ -381,8 +389,11 @@ function enqueueMoment(): boolean {
 }
 
 async function checkAll() {
-  log(`checking ${creators.length} creators${DRY ? ' (dry)' : ''}`);
-  for (const c of creators) {
+  // paused in the Studio: no creator or topic checks and no new moment jobs; change requests still run
+  const paused = discoveryPause().paused;
+  if (paused) log('finding new clips is paused (the Studio): no creator or topic checks; change requests still run');
+  else log(`checking ${creators.length} creators${DRY ? ' (dry)' : ''}`);
+  for (const c of paused ? [] : creators) {
     const e = entry(c);
     const source = c.platform === 'youtube' ? (c.source ?? 'videos') : undefined;
     // A channel that changes platform or starts using the /streams tab has a different catalogue;
@@ -414,7 +425,7 @@ async function checkAll() {
   }
   // after the creators, so a stream a creator check just registered is not taken again by a topic
   try {
-    await checkTopics();
+    if (!paused) await checkTopics();
   } catch (err) {
     log(`topics: ${(err as Error).message.split('\n')[0]}`);
   }
@@ -602,9 +613,11 @@ async function worker(max = MAX_JOBS): Promise<number> {
   let n = 0;
   while (n < max && !DRY) {
     requeueStale(workerAlive);
-    const job = claimNext(WORKER, LEASE_MS);
+    // paused: change requests only; a waiting moment job keeps its place for the resume
+    const job = claimNext(WORKER, LEASE_MS, claimableKinds(discoveryPause().paused));
     if (!job) break;
     current = job;
+    beat();
     log(`job ${job.kind} ${job.topic ? `[${job.topic}] ` : ''}${job.creator} ${job.videoId}${job.momentId ? ` ${job.momentId}` : ''}${job.stage ? ` (resuming after ${job.stage})` : ''}`);
     // keep the claim alive while the stages run (each is a child process; this loop stays free)
     const renew = setInterval(() => {
@@ -620,6 +633,7 @@ async function worker(max = MAX_JOBS): Promise<number> {
     }
     if (!finishJob(job.id, WORKER, end)) log(`job ${job.id}: the claim was lost, so its result was not written`);
     current = undefined;
+    beat();
     saveState();
     n++;
     // the next moment goes in as soon as one is done, not at the next check
@@ -665,7 +679,7 @@ function writePage() {
   const approvedUnpicked = reviews.filter((r) => r.status === 'approved' && r.picked === 0).length;
   const html = `<!doctype html><meta charset="utf-8"><title>Watchlist</title>
 <style>${STUDIO_TOKENS}body{background:var(--bg);color:var(--text);font:var(--fs-base)/1.45 var(--font-ui);padding:28px}table{border-collapse:collapse;width:100%;font-size:var(--fs-base)}th,td{text-align:left;padding:var(--s-4);border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:var(--fs-sm);text-transform:uppercase}.box{display:inline-block;margin:0 18px var(--s-6) 0;padding:var(--s-5) var(--s-7);border:1px solid var(--line);border-radius:var(--r-xl);background:var(--panel)}code{color:var(--accent2)}h1,h2{font-weight:600}</style>
-<h1>Watchlist</h1><p style="color:var(--muted)">Updated ${state.updatedAt}. Review at <code>http://localhost:4400/#/review</code>.</p>
+<h1>Watchlist</h1><p style="color:var(--muted)">Updated ${state.updatedAt}. Review at <code>http://localhost:4400/#/review</code>.</p>${discoveryPause().paused ? `<p style="color:var(--warn)"><b>Finding new clips is paused</b> (since ${discoveryPause().at ?? '?'}): change requests still run. Resume it in the Studio.</p>` : ''}
 <div><span class="box">Review <b>${count('review')}</b></span><span class="box">Approved, not picked <b>${approvedUnpicked}</b></span><span class="box">Rejected <b>${count('rejected')}</b></span><span class="box">Queue <b>${q.length}</b></span></div>
 <table><thead><tr><th>Creator</th><th>Platform</th><th>Content</th><th>Live</th><th>Last check</th><th>Seen</th><th>Latest</th><th>Error</th></tr></thead><tbody>${rows}</tbody></table>
 <h2 style="margin-top:26px">Streams</h2><table><thead><tr><th>Creator</th><th>State</th><th>From</th><th>Length</th><th>Moments</th><th>Title</th></tr></thead><tbody>${streamRows}</tbody></table>
@@ -720,7 +734,7 @@ if (has('--once') || has('--dry-run') || has('--daemon')) {
     // stays free). The worker runs back to back while anything waits, and when idle looks each minute
     // for a stream added by hand (`clip track` ranks it at once).
     let checking = false;
-    setInterval(async () => {
+    const check = async () => {
       if (checking) return; // the last check is still running
       checking = true;
       try {
@@ -730,8 +744,19 @@ if (has('--once') || has('--dry-run') || has('--daemon')) {
       } finally {
         checking = false;
       }
-    }, CHECK_MIN * 60_000);
+    };
+    setInterval(check, CHECK_MIN * 60_000);
+    beat();
+    setInterval(beat, 60_000);
+    let wasPaused = discoveryPause().paused;
     for (;;) {
+      // resumed in the Studio: check the creators and topics now, not at the next timer
+      const paused = discoveryPause().paused;
+      if (paused !== wasPaused) {
+        log(paused ? 'finding new clips paused (the Studio): change requests still run; a running clip job finishes' : 'finding new clips resumed (the Studio)');
+        wasPaused = paused;
+        if (!paused) void check();
+      }
       enqueueRevisions();
       enqueueMoment();
       const ran = await worker(1);
